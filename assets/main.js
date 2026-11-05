@@ -1,11 +1,12 @@
 import { SoundManager } from "./audio.js";
+import { DIRECTION_DELTA } from "./dungeon.js";
 import { canDescend, createFreshRun, experienceToNext, GameEngine, getAttack, getDefense, MAX_HUNGER } from "./engine.js";
 import { itemDisplayName, itemDurability, itemIcon, itemKindLabel, itemMaxDurability } from "./items.js";
 import { getShopSellPrice, remainingShopGoods, unpaidShopGoods } from "./shop.js";
 import { RenderManager } from "./renderer.js";
 import { DEFAULT_AUDIO_SETTINGS, SaveManager } from "./storage.js";
 import { DUNGEON_MODES, MODE_ORDER, getModeConfig } from "./modes.js";
-const APP_VERSION = '4.7.3';
+const APP_VERSION = '4.8.0';
 const byId = (id) => {
     const element = document.getElementById(id);
     if (!element)
@@ -159,11 +160,8 @@ class GameApp {
         }
     }
     handleDirection(direction) {
-        const delta = {
-            up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 },
-        };
         const player = this.state?.player;
-        const step = delta[direction];
+        const step = DIRECTION_DELTA[direction];
         const attacks = Boolean(player && this.state?.monsters.some((monster) => monster.x === player.x + step.x && monster.y === player.y + step.y));
         void this.performAction(() => this.engine?.move(direction), attacks ? 'attack' : 'move');
     }

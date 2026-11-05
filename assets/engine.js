@@ -1,4 +1,4 @@
-import { generateDungeon, isWalkable, nextPathStep, pointKey } from "./dungeon.js";
+import { canStepBetween, DIRECTION_DELTA, generateDungeon, isWalkable, nextPathStep, pointKey } from "./dungeon.js";
 import { createFloorLoot, createItem, itemDisplayName, itemDurability, itemEnhancement } from "./items.js";
 import { floorSeed, makeSeed, Random } from "./random.js";
 import { getModeConfig } from "./modes.js";
@@ -7,12 +7,6 @@ export const MAX_HUNGER = 120;
 export const HUNGER_DECAY_EVERY_ACTIONS = 4;
 const FED_HP_RECOVERY_TURNS = 9;
 const STARVATION_DAMAGE_TURNS = 6;
-const DELTA = {
-    up: { x: 0, y: -1 },
-    down: { x: 0, y: 1 },
-    left: { x: -1, y: 0 },
-    right: { x: 1, y: 0 },
-};
 // Six depth bands provide distinct enemy families throughout the five campaigns.
 export const MONSTER_TIERS = [
     [
@@ -383,8 +377,12 @@ export class GameEngine {
     move(direction) {
         if (this.state.status !== 'playing')
             return;
-        const delta = DELTA[direction];
+        const delta = DIRECTION_DELTA[direction];
         const next = { x: this.state.player.x + delta.x, y: this.state.player.y + delta.y };
+        if (!canStepBetween(this.state.dungeon.tiles, this.state.player, next)) {
+            this.state.message = '壁がある。別の道を探そう。';
+            return;
+        }
         const target = this.state.monsters.find((monster) => monster.x === next.x && monster.y === next.y);
         if (target) {
             const random = this.actionRandom();
@@ -394,10 +392,6 @@ export class GameEngine {
         }
         if (this.state.shop && !this.state.shop.hostile && pointKey(next) === pointKey(this.state.shop.keeper)) {
             this.state.message = '石翼の番商が通路を守っている。近づいて「店主」から取引しよう。';
-            return;
-        }
-        if (!isWalkable(this.state.dungeon.tiles, next)) {
-            this.state.message = '壁がある。別の道を探そう。';
             return;
         }
         this.state.player.x = next.x;
@@ -799,8 +793,12 @@ export class GameEngine {
         }
     }
     performMonsterAction(monster, random) {
-        const distance = Math.abs(monster.x - this.state.player.x) + Math.abs(monster.y - this.state.player.y);
-        if (distance === 1) {
+        const dx = this.state.player.x - monster.x;
+        const dy = this.state.player.y - monster.y;
+        const adjacent = Math.max(Math.abs(dx), Math.abs(dy)) === 1 &&
+            canStepBetween(this.state.dungeon.tiles, monster, this.state.player);
+        const distance = Math.max(Math.abs(dx), Math.abs(dy));
+        if (adjacent) {
             const damage = Math.max(1, monster.attack + random.int(-1, 1) - getDefense(this.state));
             this.state.player.hp = Math.max(0, this.state.player.hp - damage);
             this.combatDamageReceived = true;

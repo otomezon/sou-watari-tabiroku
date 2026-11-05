@@ -3,12 +3,11 @@ const WIDTH = 38;
 const HEIGHT = 38;
 const MIN_ROOMS = 4;
 const MAX_ROOMS = 6;
-const DIRECTIONS = ['up', 'right', 'down', 'left'];
-const DELTA = {
-    up: { x: 0, y: -1 },
-    down: { x: 0, y: 1 },
-    left: { x: -1, y: 0 },
-    right: { x: 1, y: 0 },
+const CARDINAL_DIRECTIONS = ['up', 'right', 'down', 'left'];
+const DIRECTIONS_8 = ['up', 'right', 'down', 'left', 'up-right', 'down-right', 'down-left', 'up-left'];
+const DIRECTION_DELTA = {
+    up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 },
+    'up-left': { x: -1, y: -1 }, 'up-right': { x: 1, y: -1 }, 'down-left': { x: -1, y: 1 }, 'down-right': { x: 1, y: 1 },
 };
 export function generateDungeon(seed) {
     const random = new Random(seed);
@@ -78,6 +77,18 @@ function carveVertical(tiles, y1, y2, x) {
 export function isWalkable(tiles, point) {
     return Boolean(tiles[point.y]?.[point.x] === 1);
 }
+
+export function canStepBetween(tiles, from, to) {
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    if (Math.abs(dx) > 1 || Math.abs(dy) > 1 || (dx === 0 && dy === 0)) return false;
+    if (!isWalkable(tiles, to)) return false;
+    if (dx !== 0 && dy !== 0) {
+        return isWalkable(tiles, { x: from.x + dx, y: from.y }) && isWalkable(tiles, { x: from.x, y: from.y + dy });
+    }
+    return true;
+}
+
 export function isReachable(tiles, from, to) {
     if (!isWalkable(tiles, from) || !isWalkable(tiles, to))
         return false;
@@ -88,8 +99,8 @@ export function isReachable(tiles, from, to) {
         const current = queue[head];
         if (current.x === to.x && current.y === to.y)
             return true;
-        for (const direction of DIRECTIONS) {
-            const delta = DELTA[direction];
+        for (const direction of CARDINAL_DIRECTIONS) {
+            const delta = DIRECTION_DELTA[direction];
             const next = { x: current.x + delta.x, y: current.y + delta.y };
             const nextKey = key(next);
             if (!seen.has(nextKey) && isWalkable(tiles, next)) {
@@ -109,14 +120,19 @@ export function nextPathStep(tiles, from, target, blocked) {
         const current = queue[head];
         if (current.x === target.x && current.y === target.y)
             return firstStep.get(key(current)) ?? null;
-        for (const direction of DIRECTIONS) {
-            const delta = DELTA[direction];
+        for (const direction of DIRECTIONS_8) {
+            const delta = DIRECTION_DELTA[direction];
             const next = { x: current.x + delta.x, y: current.y + delta.y };
             const nextKey = key(next);
-            if (seen.has(nextKey) || !isWalkable(tiles, next))
+            if (seen.has(nextKey) || !canStepBetween(tiles, current, next))
                 continue;
             if (blocked.has(nextKey) && !(next.x === target.x && next.y === target.y))
                 continue;
+            if (delta.x !== 0 && delta.y !== 0) {
+                const sideX = key({ x: current.x + delta.x, y: current.y });
+                const sideY = key({ x: current.x, y: current.y + delta.y });
+                if (blocked.has(sideX) && blocked.has(sideY)) continue;
+            }
             seen.add(nextKey);
             firstStep.set(nextKey, firstStep.get(key(current)) ?? next);
             queue.push(next);
