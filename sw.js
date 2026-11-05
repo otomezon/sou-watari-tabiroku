@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sou-watari-tabiroku-v4-9-1';
+const CACHE_NAME = 'sou-watari-tabiroku-v4-9-2';
 const APP_ROOT = new URL('./', self.location.href);
 const appUrl = (path) => new URL(path, APP_ROOT).href;
 const SHELL = [
@@ -7,7 +7,7 @@ const SHELL = [
   './audio/tutorial-theme.mp3', './audio/beginner-theme.mp3',
   './audio/intermediate-theme.mp3', './audio/advanced-theme.mp3',
   './audio/expert-theme.mp3', './audio/boss-theme.mp3',
-  './audio/level-up-fanfare-v3.wav', './audio/game-over.mp3',
+  './audio/game-over.mp3',
 ].map(appUrl);
 
 self.addEventListener('install', (event) => {
