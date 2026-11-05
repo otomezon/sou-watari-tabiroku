@@ -6,7 +6,7 @@ import { getShopSellPrice, remainingShopGoods, unpaidShopGoods } from "./shop.js
 import { RenderManager } from "./renderer.js";
 import { DEFAULT_AUDIO_SETTINGS, SaveManager } from "./storage.js";
 import { DUNGEON_MODES, MODE_ORDER, getModeConfig } from "./modes.js";
-const APP_VERSION = '4.9.1';
+const APP_VERSION = '4.9.2';
 const byId = (id) => {
     const element = document.getElementById(id);
     if (!element)
@@ -170,7 +170,6 @@ class GameApp {
             return;
         this.busy = true;
         const oldTurn = this.state.turn;
-        const oldMonsters = this.state.monsters.length;
         const oldLevel = this.state.player.level;
         const oldStatus = this.state.status;
         try {
@@ -182,22 +181,18 @@ class GameApp {
                 const hitCount = this.engine.getCombatHitCount();
                 const damageCues = Array.from({ length: hitCount }, () => 'damage');
                 const leveledUp = this.state.player.level > oldLevel;
-                if (leveledUp && postActionStatus === 'gameover')
-                    this.sound.effectSequence(['level', ...damageCues, 'gameover']);
-                else if (leveledUp && postActionStatus === 'clear')
-                    this.sound.effectSequence(['level', ...damageCues, 'clear']);
-                else if (postActionStatus === 'gameover')
-                    this.sound.effectSequence([...damageCues, 'gameover']);
-                else if (postActionStatus === 'clear')
-                    this.sound.effectSequence([...damageCues, 'clear']);
-                else if (leveledUp)
-                    this.sound.effectSequence(['level', ...damageCues]);
-                else if (defaultEffect === 'attack' && hitCount > 0)
-                    this.sound.effectSequence(['attack', ...damageCues]);
-                else if (hitCount > 0)
-                    this.sound.effectSequence(damageCues);
-                else if (this.state.monsters.length < oldMonsters)
-                    this.sound.effect('defeat');
+                const actionCues = defaultEffect === 'attack' ? ['attack'] : [];
+                const resultCues = postActionStatus === 'gameover'
+                    ? ['gameover']
+                    : postActionStatus === 'clear' ? ['clear'] : [];
+                const cues = [
+                    ...actionCues,
+                    ...(leveledUp ? ['level'] : []),
+                    ...damageCues,
+                    ...resultCues,
+                ];
+                if (cues.length)
+                    this.sound.effectSequence(cues);
                 else
                     this.sound.effect(defaultEffect);
                 if (postActionStatus !== 'playing') {
