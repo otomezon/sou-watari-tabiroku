@@ -48,8 +48,17 @@
         <section id="game-screen" class="screen game-screen hidden" aria-label="ゲーム画面">
           <section class="status-panel">
             <div class="status-topline">
-              <div class="floor-label"><span class="floor-icon">▥</span><span id="floor-label">地下 1 階</span></div>
-              <div class="turn-label">TOTAL TURN <strong id="turn-value">0</strong><span id="gold-value" class="gold-chip">0G</span></div>
+              <div class="floor-summary" aria-label="現在の階層">
+                <span class="floor-icon" aria-hidden="true">▥</span>
+                <div class="floor-copy">
+                  <span id="dungeon-name" class="floor-dungeon">苔むす古坑</span>
+                  <strong id="floor-label" class="floor-label">地下 1 階</strong>
+                </div>
+              </div>
+              <div class="run-meta">
+                <div class="turn-label"><span>TURN</span><strong id="turn-value">0</strong></div>
+                <span id="gold-value" class="gold-chip">0G</span>
+              </div>
             </div>
             <div class="hp-row">
               <span class="hp-label">HP</span>

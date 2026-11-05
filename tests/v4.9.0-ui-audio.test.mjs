@@ -79,8 +79,8 @@ test('attack, level-up and received-damage cues are assembled in a deliberate or
 });
 test('release versions and save schema are consistent', async () => {
   const [main,manifest,sw,engine] = await Promise.all([read('assets/main.js'),read('manifest.webmanifest'),read('sw.js'),read('assets/engine.js')]);
-  assert.match(main, /APP_VERSION = '4\.9\.2'/);
-  assert.match(manifest, /"version": "4\.9\.2"/);
-  assert.match(sw, /sou-watari-tabiroku-v4-9-2/);
+  assert.match(main, /APP_VERSION = '4\.9\.3'/);
+  assert.match(manifest, /"version": "4\.9\.3"/);
+  assert.match(sw, /sou-watari-tabiroku-v4-9-3/);
   assert.match(engine, /schemaVersion: 11/);
 });

@@ -318,7 +318,6 @@ main {
   .status-topline { margin-bottom: 4px; }
   .stat-grid { padding-top: 4px; margin-top: 4px; }
   .dungeon-frame { padding: 4px 6px; }
-  .dungeon-caption { font-size: 7px; margin-top: 3px; }
   .message-panel { height: 40px; min-height: 40px; max-height: 40px; padding-top: 4px; padding-bottom: 4px; }
   .controls-panel { padding-top: 4px; padding-bottom: 5px; }
   .dpad { grid-template-rows: repeat(3, 52px); gap: 5px; }
@@ -369,8 +368,6 @@ main {
 .mode-card-top strong { color: var(--gold-bright); font-size: 13px; }
 .mode-card-top small { color: #a4b0a8; font-size: 10px; white-space: nowrap; }
 .mode-card-description { color: #93a19a; font-size: 10px; line-height: 1.55; }
-.mode-recommended { border-color: rgba(215,181,109,.62); background: rgba(67,74,53,.25); }
-.mode-recommended .mode-card-top strong::after { content: '  おすすめ'; color: #d9bd75; font-size: 9px; font-weight: 500; }
 @media (max-height: 690px) { .mode-card { min-height: 64px; padding: 8px 11px; } .mode-list { gap: 6px; } }
 
 
@@ -748,3 +745,106 @@ main {
 .dpad-wait span { font-size: 14px; font-weight: 800; letter-spacing: .08em; }
 .dpad-wait small { color: #c7b78f; font-size: 9px; line-height: 1; }
 .dpad-wait:active { background: linear-gradient(180deg, #5a5d4c, #41493d); }
+
+
+/* v4.9.3: make the current floor the primary, never-truncated HUD element. */
+.status-topline {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 10px;
+}
+.floor-summary {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 1px 0 8px;
+  border-bottom: 1px solid rgba(215,181,109,.16);
+}
+.floor-icon {
+  flex: 0 0 auto;
+  margin: 0;
+  color: var(--gold);
+  font-size: 22px;
+  line-height: 1;
+  text-align: center;
+}
+.floor-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.floor-dungeon {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: #a9b6ab;
+  font-size: 10px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#floor-label {
+  display: block;
+  width: auto;
+  min-width: 0;
+  overflow: visible;
+  color: var(--gold-bright);
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.25;
+  text-overflow: clip;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.run-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+.turn-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 5px;
+  min-width: 0;
+  white-space: nowrap;
+  letter-spacing: .12em;
+}
+.turn-label strong {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  overflow: visible;
+  margin: 0;
+  color: var(--ink);
+  font-size: 12px;
+  text-align: right;
+  text-overflow: clip;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.gold-chip {
+  display: inline-flex;
+  flex: 0 1 auto;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  min-width: 66px;
+  max-width: 48%;
+  margin: 0;
+  overflow: hidden;
+  padding: 3px 8px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}

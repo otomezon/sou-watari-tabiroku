@@ -6,7 +6,7 @@ import { getShopSellPrice, remainingShopGoods, unpaidShopGoods } from "./shop.js
 import { RenderManager } from "./renderer.js";
 import { DEFAULT_AUDIO_SETTINGS, SaveManager } from "./storage.js";
 import { DUNGEON_MODES, MODE_ORDER, getModeConfig } from "./modes.js";
-const APP_VERSION = '4.9.2';
+const APP_VERSION = '4.9.3';
 const byId = (id) => {
     const element = document.getElementById(id);
     if (!element)
@@ -100,7 +100,7 @@ class GameApp {
         list.append(node('p', 'modal-note', '挑戦するダンジョンを選んでください。深さ・魔物・装備品・専用BGMがそれぞれ異なります。'));
         for (const modeId of MODE_ORDER) {
             const mode = DUNGEON_MODES[modeId];
-            const card = node('button', `mode-card${modeId === 'beginner' ? ' mode-recommended' : ''}`);
+            const card = node('button', 'mode-card');
             const top = node('span', 'mode-card-top');
             top.append(node('strong', '', mode.name), node('small', '', mode.subtitle));
             card.append(top, node('span', 'mode-card-description', mode.description));
@@ -237,7 +237,8 @@ class GameApp {
             return;
         const state = this.state;
         const mode = getModeConfig(state.modeId);
-        byId('floor-label').textContent = `${mode.name} · ${state.floor === mode.floors ? '最深部' : `地下 ${state.floor} 階`}`;
+        byId('dungeon-name').textContent = `${mode.name}${state.floor === mode.floors ? ' · 最深部' : ''}`;
+        byId('floor-label').textContent = `地下 ${state.floor} 階`;
         byId('turn-value').textContent = String(state.turn);
         byId('gold-value').textContent = `${state.gold.toLocaleString('ja-JP')}G`;
         byId('hp-value').textContent = `${state.player.hp} / ${state.player.maxHp}`;

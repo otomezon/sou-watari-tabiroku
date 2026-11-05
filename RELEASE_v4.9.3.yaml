@@ -1,0 +1,23 @@
+release:
+  project: 層渡りの旅録
+  version: 4.9.3
+  previous_version: 4.9.2
+  type: patch
+  title_screen:
+    beginner_recommendation_label: removed
+    mode_cards_equal_visual_priority: true
+  hud:
+    current_floor:
+      format: 地下 N 階
+      always_visible: true
+      truncation: false
+      deepest_floor_includes_number: true
+    dungeon_name: separate_label
+    turn_and_gold: grouped_separately
+    hierarchy: floor_then_run_metadata_then_player_status
+  app_version: 4.9.3
+  manifest_version: 4.9.3
+  cache: sou-watari-tabiroku-v4-9-3
+  save_schema: 11
+  migration_required: false
+  regression_tests: 63
