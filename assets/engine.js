@@ -513,7 +513,7 @@ export class GameEngine {
             return false;
         good.stolen = true;
         shop.stolenDebt += good.price;
-        shop.selectedGoodId = good.id;
+        shop.selectedGoodId = null;
         // Keep the unpaid item's uid distinct so an exact return can be performed later.
         this.state.inventory.push({ item: good.item, count: 1 });
         this.state.message = `${itemDisplayName(good.item)}を手に取った。購入するまでは未払い扱いになる。`;
@@ -564,59 +564,13 @@ export class GameEngine {
     stealShopGood(goodId) {
         return this.pickUpShopGood(goodId);
     }
-    selectUnpaidShopGood(goodId) {
-        const shop = this.state.shop;
-        if (!this.canTalkToShopkeeper() || !shop)
-            return false;
-        const good = shop.goods.find((entry) => entry.id === goodId && entry.stolen && !entry.sold);
-        if (!good)
-            return false;
-        shop.selectedGoodId = good.id;
-        this.state.message = `${itemDisplayName(good.item)}を購入対象に選んだ。`;
-        this.state.updatedAt = Date.now();
-        return true;
+    /** All picked-up unpaid goods are purchase targets; settle them together. */
+    buyPickedUpShopGoods() {
+        return this.payShopDebt();
     }
-    /** Toggle the purchase target; deselection never pays for or removes the unpaid item. */
-    toggleUnpaidShopGoodSelection(goodId) {
-        const shop = this.state.shop;
-        if (!this.canTalkToShopkeeper() || !shop)
-            return false;
-        const good = shop.goods.find((entry) => entry.id === goodId && entry.stolen && !entry.sold);
-        if (!good)
-            return false;
-        if (shop.selectedGoodId === good.id) {
-            shop.selectedGoodId = null;
-            this.state.message = `${itemDisplayName(good.item)}の購入対象を解除した。未払いのまま所持品に残っている。`;
-        }
-        else {
-            shop.selectedGoodId = good.id;
-            this.state.message = `${itemDisplayName(good.item)}を購入対象に選んだ。`;
-        }
-        this.state.updatedAt = Date.now();
-        return true;
-    }
-    /** Pay only for the currently selected picked-up item. */
+    /** Backward-compatible alias for old callers. */
     buySelectedShopGood() {
-        const shop = this.state.shop;
-        if (!this.canTalkToShopkeeper() || !shop || !shop.selectedGoodId)
-            return false;
-        const good = shop.goods.find((entry) => entry.id === shop.selectedGoodId && entry.stolen && !entry.sold);
-        if (!good) {
-            shop.selectedGoodId = null;
-            return false;
-        }
-        if (this.state.gold < good.price) {
-            this.state.message = `所持金が足りない。${itemDisplayName(good.item)}の購入には${good.price}G必要。`;
-            return false;
-        }
-        this.state.gold -= good.price;
-        shop.stolenDebt = Math.max(0, shop.stolenDebt - good.price);
-        good.stolen = false;
-        good.sold = true;
-        shop.selectedGoodId = null;
-        this.state.message = `${itemDisplayName(good.item)}を${good.price}Gで購入した。`;
-        this.state.updatedAt = Date.now();
-        return true;
+        return this.buyPickedUpShopGoods();
     }
     sellInventoryItem(uid) {
         if (!this.canTalkToShopkeeper())
