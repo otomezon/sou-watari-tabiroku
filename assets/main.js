@@ -5,7 +5,7 @@ import { getShopSellPrice, remainingShopGoods, unpaidShopGoods } from "./shop.js
 import { RenderManager } from "./renderer.js";
 import { DEFAULT_AUDIO_SETTINGS, SaveManager } from "./storage.js";
 import { DUNGEON_MODES, MODE_ORDER, getModeConfig } from "./modes.js";
-const APP_VERSION = '4.7.2';
+const APP_VERSION = '4.7.3';
 const byId = (id) => {
     const element = document.getElementById(id);
     if (!element)
@@ -454,34 +454,28 @@ class GameApp {
             content.append(debtRow);
         }
         const pendingGoods = unpaidShopGoods(shop.goods);
-        const selectedGood = pendingGoods.find((good) => good.id === shop.selectedGoodId);
-        const selectedRow = node('div', 'shop-selected');
-        const selectedInfo = node('div', 'shop-selected-info');
-        selectedInfo.append(node('strong', '', selectedGood ? `選択中：${itemDisplayName(selectedGood.item)}` : '購入する商品を選んでください'), node('small', '', selectedGood ? `${selectedGood.price.toLocaleString('ja-JP')} G` : '商品を「拾う」と、ここから購入できます'));
-        const purchase = node('button', 'small-button shop-buy shop-purchase', '選択中を購入');
-        purchase.disabled = !selectedGood || this.state.gold < selectedGood.price;
-        purchase.title = selectedGood && this.state.gold < selectedGood.price ? `あと${(selectedGood.price - this.state.gold).toLocaleString('ja-JP')}G必要` : '';
-        purchase.addEventListener('click', () => void this.runShopTransaction(() => this.engine?.buySelectedShopGood() ?? false));
-        selectedRow.append(selectedInfo, purchase);
-        content.append(selectedRow);
         if (pendingGoods.length) {
+            const purchaseRow = node('div', 'shop-selected');
+            const purchaseInfo = node('div', 'shop-selected-info');
+            purchaseInfo.append(node('strong', '', `拾った商品 ${pendingGoods.length}点（すべて購入対象）`), node('small', '', `合計 ${shop.stolenDebt.toLocaleString('ja-JP')} G`));
+            const purchase = node('button', 'small-button shop-buy shop-purchase', 'まとめて購入');
+            purchase.disabled = this.state.gold < shop.stolenDebt;
+            purchase.title = purchase.disabled ? `あと${(shop.stolenDebt - this.state.gold).toLocaleString('ja-JP')}G必要` : '拾った商品をすべて購入します';
+            purchase.addEventListener('click', () => void this.runShopTransaction(() => this.engine?.buyPickedUpShopGoods() ?? false));
+            purchaseRow.append(purchaseInfo, purchase);
+            content.append(purchaseRow);
             content.append(node('h3', 'shop-heading', '拾った商品（未払い）'));
             for (const good of pendingGoods) {
-                const row = node('div', `inventory-entry shop-entry${good.id === shop.selectedGoodId ? ' shop-entry-selected' : ''}`);
+                const row = node('div', 'inventory-entry shop-entry');
                 row.append(node('div', 'item-icon', itemIcon(good.item.kind)));
                 const info = node('div', 'item-info');
                 info.append(node('strong', '', itemDisplayName(good.item)));
                 info.append(node('small', '', `${itemKindLabel(good.item.kind)} · ${good.price.toLocaleString('ja-JP')}G`));
                 row.append(info);
-                const isSelected = good.id === shop.selectedGoodId;
-                const select = node('button', 'small-button shop-select', isSelected ? '解除' : '選択');
-                select.title = isSelected ? '購入対象の選択を解除します（未払い商品は所持品に残ります）' : 'この未払い商品を購入対象に選びます';
-                select.setAttribute('aria-pressed', String(isSelected));
-                select.addEventListener('click', () => void this.runShopTransaction(() => this.engine?.toggleUnpaidShopGoodSelection(good.id) ?? false));
                 const giveBack = node('button', 'small-button shop-return', '戻す');
                 giveBack.title = 'この商品を所持品から取り除き、店の商品棚へ戻します';
                 giveBack.addEventListener('click', () => void this.runShopTransaction(() => this.engine?.returnUnpaidShopGood(good.id) ?? false));
-                row.append(select, giveBack);
+                row.append(giveBack);
                 content.append(row);
             }
         }
@@ -498,7 +492,7 @@ class GameApp {
             row.append(info);
             row.append(node('strong', 'shop-price', `${good.price.toLocaleString('ja-JP')}G`));
             const pickup = node('button', 'small-button shop-pickup', '拾う');
-            pickup.title = '拾った商品は未払いになり、別ボタンで購入できます';
+            pickup.title = '拾った商品はすべて購入対象になります。不要なら「戻す」で棚へ戻せます';
             pickup.addEventListener('click', () => void this.runShopTransaction(() => this.engine?.pickUpShopGood(good.id) ?? false));
             row.append(pickup);
             content.append(row);
