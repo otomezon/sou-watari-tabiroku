@@ -6,7 +6,7 @@ import { getShopSellPrice, remainingShopGoods, unpaidShopGoods } from "./shop.js
 import { RenderManager } from "./renderer.js";
 import { DEFAULT_AUDIO_SETTINGS, SaveManager } from "./storage.js";
 import { DUNGEON_MODES, MODE_ORDER, getModeConfig } from "./modes.js";
-const APP_VERSION = '4.9.4';
+const APP_VERSION = '4.9.5';
 const byId = (id) => {
     const element = document.getElementById(id);
     if (!element)
@@ -250,10 +250,6 @@ class GameApp {
         byId('exp-value').textContent = `${state.player.exp} / ${experienceToNext(state.player.level)}`;
         byId('attack-value').textContent = String(getAttack(state));
         byId('defense-value').textContent = String(getDefense(state));
-        const hasRareMonster = state.monsters.some((monster) => monster.rareVariant);
-        byId('enemy-count').textContent = state.floor === mode.floors
-            ? `${state.monsters[0]?.name ?? 'ボス'} HP ${state.monsters[0]?.hp ?? 0} / ${state.monsters[0]?.maxHp ?? 0}`
-            : state.monsters.length ? (hasRareMonster ? '希少個体の気配！' : '魔物の気配') : '周囲は静かだ';
         byId('game-message').textContent = state.message;
         const shopButton = byId('shop-button');
         shopButton.disabled = !this.engine?.canTalkToShopkeeper();

@@ -924,3 +924,8 @@ main {
   .stat-grid strong { font-size: 9px; }
   #exp-value, #gold-value { font-size: 8px; }
 }
+
+/* v4.9.5: remove decorative nested map frame and enlarge the actual visible tiles. */
+.dungeon-frame { display:flex; min-width:0; min-height:0; align-items:center; justify-content:center; margin:0; padding:0; overflow:hidden; background:transparent; border:0; border-radius:0; box-shadow:none; }
+.dungeon-heading { display:none; }
+#dungeon-canvas { display:block; flex:0 1 auto; width:100%; height:auto; max-width:100%; max-height:100%; margin:0 auto; padding:0; border:0; border-radius:0; outline:0; box-shadow:none; object-fit:contain; image-rendering:pixelated; }

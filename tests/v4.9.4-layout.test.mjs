@@ -38,9 +38,9 @@ test('map receives more layout space while preserving usable controls', async ()
   assert.match(css, /\.dpad-button\s*\{[^}]*min-height:\s*48px/s);
 });
 
-test('PWA cache version is 4.9.4', async () => {
+test('PWA cache version is 4.9.5', async () => {
   const [main, manifest, sw] = await Promise.all([read('assets/main.js'), read('manifest.webmanifest'), read('sw.js')]);
-  assert.match(main, /APP_VERSION = '4\.9\.4'/);
-  assert.match(manifest, /"version": "4\.9\.4"/);
+  assert.match(main, /APP_VERSION = '4.9.5'/);
+  assert.match(manifest, /"version": "4.9.5"/);
   assert.match(sw, /sou-watari-tabiroku-v4-9-4/);
 });
