@@ -105,20 +105,26 @@ const TEMPLATES = [
 ];
 let nextUid = 1;
 function rollEnhancement(floor, random, quality = 'normal') {
-    // +1 is no longer the dominant upgraded result. Better floors shift weight
-    // toward +2/+3/+4; +5 is exclusive to the final floor and remains very rare.
+    // Early floors are intentionally modest. The +3 to +5 outcomes unlock gradually
+    // so better enhancement values become a reward for reaching deeper layers.
     const normalWeights = floor <= 3
-        ? [45, 20, 19, 11, 5]
+        ? [78, 17, 5]
         : floor <= 6
-            ? [38, 18, 22, 15, 7]
-            : floor <= 9
-                ? [32, 16, 24, 18, 10]
-                : [28, 14, 24, 21, 11, 2];
+            ? [60, 22, 12, 5, 1]
+            : floor <= 10
+                ? [45, 22, 17, 11, 4, 1]
+                : floor <= 18
+                    ? [34, 19, 19, 16, 8, 4]
+                    : [25, 15, 20, 20, 13, 7];
     const premiumWeights = floor <= 3
-        ? [16, 18, 26, 24, 13, 3]
-        : floor <= 9
-            ? [12, 16, 26, 25, 16, 5]
-            : [8, 14, 25, 27, 19, 7];
+        ? [68, 22, 8, 2]
+        : floor <= 6
+            ? [54, 22, 14, 7, 3]
+            : floor <= 10
+                ? [40, 22, 18, 13, 6, 1]
+                : floor <= 18
+                    ? [30, 19, 20, 17, 10, 4]
+                    : [22, 15, 20, 20, 15, 8];
     const weights = quality === 'premium' ? premiumWeights : normalWeights;
     const roll = random.next() * 100;
     let cumulative = 0;
@@ -128,6 +134,13 @@ function rollEnhancement(floor, random, quality = 'normal') {
             return enhancement;
     }
     return 0;
+}
+/** Premium drops may preview a little future gear, but never skip the early progression. */
+function getItemSelectionFloor(floor, modeId, quality) {
+    if (quality === 'normal')
+        return floor;
+    const lookAhead = floor >= 12 ? 3 : floor >= 6 ? 2 : floor >= 3 ? 1 : 0;
+    return Math.min(getModeConfig(modeId).floors, floor + lookAhead);
 }
 /** Floor caches are scarcer; their absolute equipment chance stays close to v2.2. */
 export function createFloorLoot(floor, random, modeId) {
@@ -140,11 +153,11 @@ export function createFloorLoot(floor, random, modeId) {
     return createItem(floor, random, 'potion', modeId);
 }
 export function createItem(floor, random, kind, modeId = 'beginner', quality = 'normal') {
-    const selectionFloor = quality === 'premium' ? Math.min(getModeConfig(modeId).floors, floor + 3) : floor;
+    const selectionFloor = getItemSelectionFloor(floor, modeId, quality);
     const candidates = TEMPLATES.filter((item) => item.minFloor <= selectionFloor && (!item.modeId || item.modeId === modeId) && (!kind || item.kind === kind));
     const template = random.pick(candidates);
     const baseStat = template.attack ?? template.defense ?? 0;
-    const enhancement = template.kind === 'weapon' || template.kind === 'shield' || template.kind === 'armor' ? rollEnhancement(selectionFloor, random, quality) : 0;
+    const enhancement = template.kind === 'weapon' || template.kind === 'shield' || template.kind === 'armor' ? rollEnhancement(floor, random, quality) : 0;
     // Better equipment is built to last longer: base stat and enhancement both add durability.
     const baseDurability = template.durability ?? 0;
     const maxDurability = baseDurability > 0 ? Math.min(600, baseDurability + baseStat * 7 + enhancement * 12) : 0;

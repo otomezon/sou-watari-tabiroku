@@ -709,13 +709,13 @@ export class GameEngine {
         if (monster.rareVariant) {
             // Rare action-speed monsters are tougher encounters and have a premium loot table.
             let drop = null;
-            if (lootRoll < 0.28)
+            if (lootRoll < 0.18)
                 drop = createItem(this.state.floor, random, random.pick(['weapon', 'shield', 'armor']), this.state.modeId, 'premium');
-            else if (lootRoll < 0.38)
+            else if (lootRoll < 0.25)
                 drop = createItem(this.state.floor, random, 'valuable', this.state.modeId, 'premium');
-            else if (lootRoll < 0.45)
+            else if (lootRoll < 0.30)
                 drop = createItem(this.state.floor, random, 'potion', this.state.modeId, 'premium');
-            else if (lootRoll < 0.50)
+            else if (lootRoll < 0.35)
                 drop = createItem(this.state.floor, random, 'food', this.state.modeId, 'premium');
             if (drop) {
                 this.state.groundItems.push({ x: monster.x, y: monster.y, item: drop });
@@ -743,9 +743,9 @@ export class GameEngine {
             this.state.groundItems.push({ x: monster.x, y: monster.y, item: drop });
             this.state.message += ` ${drop.name}を落とした。`;
         }
-        if (random.chance(monster.rareVariant ? Math.min(0.80, drops.enemyDropGold * 3.5) : drops.enemyDropGold)) {
-            const goldBase = random.int(15 + this.state.floor * 4, 35 + this.state.floor * 8);
-            const amount = monster.rareVariant ? goldBase * 3 : goldBase;
+        if (random.chance(monster.rareVariant ? Math.min(0.70, drops.enemyDropGold * 2.5) : drops.enemyDropGold)) {
+            const goldBase = random.int(12 + this.state.floor * 3, 30 + this.state.floor * 7);
+            const amount = Math.round(goldBase * (monster.rareVariant ? 2 : 0.85));
             const existing = this.state.groundGold.find((entry) => entry.x === monster.x && entry.y === monster.y);
             if (existing)
                 existing.amount += amount;
