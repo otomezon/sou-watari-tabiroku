@@ -64,7 +64,7 @@ test('all release version identifiers and cache namespace are bumped', async () 
         readProjectFile('manifest.webmanifest'),
         readProjectFile('sw.js'),
     ]);
-    assert.match(main, /APP_VERSION = '4\.9\.1'/);
-    assert.match(manifest, /"version": "4\.9\.1"/);
-    assert.match(sw, /sou-watari-tabiroku-v4-9-1/);
+    assert.match(main, /APP_VERSION = '4\.9\.2'/);
+    assert.match(manifest, /"version": "4\.9\.2"/);
+    assert.match(sw, /sou-watari-tabiroku-v4-9-2/);
 });
