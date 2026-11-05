@@ -1,0 +1,49 @@
+patch:
+  project: 層渡りの旅録
+  version: 4.9.3
+  previous_version: 4.9.2
+  release_type: patch
+  title: タイトル画面の難易度表示整理・プレイHUD改善
+
+  title_screen:
+    beginner_recommendation_label: removed
+    mode_cards_equal_visual_priority: true
+
+  gameplay_hud:
+    hierarchy:
+      - current_floor
+      - turn_and_gold
+      - hp_and_hunger
+      - level_exp_attack_defense
+    dungeon_name_separate_from_floor: true
+    current_floor:
+      format: 地下 N 階
+      shown_on_deepest_floor: true
+      truncation: forbidden
+      visual_priority: primary
+    turn_and_gold:
+      grouped_separately: true
+      tabular_numerals: true
+
+  compatibility:
+    save_schema: 11
+    migration_required: false
+    gameplay_balance: unchanged
+    enemy_ai: unchanged
+    map_generation: unchanged
+    audio: unchanged
+
+  versioning:
+    app_version: 4.9.3
+    manifest_version: 4.9.3
+    service_worker_cache: sou-watari-tabiroku-v4-9-3
+
+  acceptance:
+    - タイトル画面に初級の「おすすめ」表示が存在しない。
+    - ダンジョン選択カードにおすすめ専用スタイルが適用されない。
+    - プレイ中にダンジョン名と現在階が別要素で表示される。
+    - すべての階で「地下 N 階」と階数が省略されずに表示される。
+    - 最深部でも階数を表示し、最深部であることも分かる。
+    - ターン数と所持金を分離し、階数表示の幅を確保する。
+    - PWAバージョンとService Workerキャッシュが4.9.3に統一される。
+    - セーブスキーマv11との互換性を維持する。

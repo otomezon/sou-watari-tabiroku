@@ -1,0 +1,33 @@
+release:
+  project: 層渡りの旅録
+  version: 4.8.2
+  previous_version: 4.8.1
+  type: patch
+  purpose: スマートフォン向け8方向操作パッドの視認性・押下フィードバック・誤タップ抑制を改善。
+  ui:
+    dpad_layout: 3x3_eight_way_with_wait_center
+    wait_button:
+      label: 待機
+      sublabel: 1ターン
+      aria_label: その場で1ターン待機
+      visual_distinction: 控えめな金色アクセント
+    direction_buttons:
+      count: 8
+      spacing_px: 8
+      pressed_feedback: transform_scale_brightness_shadow
+      keyboard_focus: gold_outline
+      touch_action: manipulation
+    repeat_movement: false
+  gameplay_balance_changed: false
+  cache:
+    service_worker_cache: sou-watari-tabiroku-v4-8-2
+  compatibility:
+    save_schema: 11
+    migration_required: false
+  verification:
+    node_tests: 119/119
+    mobile_control_static: 13/13
+    pwa_static: 26/26
+    preview_http_assets: 26/26
+    vite_production_build: blocked_missing_node_types
+    ios_android_device_qa: not_run

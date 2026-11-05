@@ -1,0 +1,33 @@
+patch_design:
+  project: 層渡りの旅録
+  version: 4.7.3
+  based_on: 4.7.2
+  intent: 店内の商品操作を最小限にし、拾った商品すべてを自動的に購入対象とする
+  shop_ui:
+    available_item_actions:
+      - 拾う
+      - 戻す
+    removed_item_actions:
+      - 選択
+      - 解除
+      - 選択中を購入
+    purchase:
+      label: まとめて購入
+      scope: 現在拾っている未払い商品すべて
+      amount: stolenDebt
+      insufficient_funds: 購入不可、所持金・商品状態・負債は変更しない
+    return:
+      scope: 指定した未払い商品1点
+      inventory: 所持品または装備から対象のみ除去
+      stock: 元の商品棚へ戻す
+      debt: 対象商品の価格分だけ減額
+  compatibility:
+    legacy_selectedGoodId: 保存形式の読み込み互換のみ維持し、購入対象判定には使わない
+    save_schema: 11
+    migration_required: false
+  verification:
+    node_tests: 108/108
+    layout_tests: 10/10
+    shop_tests: 27/27
+    browser_typescript: pass
+    standalone_preview: pass

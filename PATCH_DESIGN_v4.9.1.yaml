@@ -1,0 +1,76 @@
+patch:
+  project: 層渡りの旅録
+  version: 4.9.1
+  previous_version: 4.9.0
+  release_type: patch
+  title: レベルアップファンファーレ再制作・連続被弾音の統一
+
+  reference_direction:
+    inspiration: トルネコ等のクラシックなダンジョンRPGにある、短く明快で冒険感のある達成ジングル
+    design_traits:
+      - 上向きに進む短い主旋律
+      - 金管風の明るいリードと簡潔な和声
+      - 最後の和音で明るく解決
+      - 長く引き延ばさず操作テンポを阻害しない
+    copyright_boundary:
+      copied_melody: false
+      sampled_recording: false
+      existing_game_audio: false
+      implementation: オリジナル合成WAV
+
+  level_up_fanfare:
+    previous_asset: audio/level-up-fanfare-v2.wav
+    new_asset: audio/level-up-fanfare-v3.wav
+    format: WAV PCM 16-bit mono 32000 Hz
+    duration_seconds: 1.58
+    musical_key: C major
+    composition:
+      lead: C-E-G-C-D-Eの上昇フレーズ
+      accompaniment:
+        - 低音の短い金管風アクセント
+        - 最後のCメジャー和音
+        - 柔らかなストリングス風の持続音
+        - 高音ベルの短いアクセント
+      envelope: 短いアタックと自然な減衰
+    playback:
+      event_key: level
+      preload_after_first_user_gesture: true
+      offline_precache: true
+      sequence_delay_seconds: 1.75
+
+  damage_sound:
+    ordinary_hit:
+      sound: 現行通常被弾音のまま
+      synthesis:
+        low_impact: triangle 138Hz to 62Hz
+        midrange_crack: square 286Hz to 126Hz
+    repeated_hits:
+      fast_enemy_hits: 2
+      interval_seconds: 0.24
+      identical_timbre: true
+      identical_pitch: true
+      pitch_variation: false
+      implementation: 通常被弾音イベントを2つ順番に再生
+    settings: 既存の効果音音量・ミュートを継承
+
+  versioning:
+    app_version: 4.9.1
+    manifest_version: 4.9.1
+    service_worker_cache: sou-watari-tabiroku-v4-9-1
+    offline_asset: ./audio/level-up-fanfare-v3.wav
+
+  compatibility:
+    save_schema: 11
+    migration_required: false
+    gameplay_balance: v4.9.0を維持
+
+  acceptance:
+    - ファンファーレが約1.58秒の明るい上昇フレーズと和音で構成される。
+    - 既存ゲームの旋律や録音をコピーせず、オリジナル音源である。
+    - 新WAVをService Workerでオフラインキャッシュする。
+    - 通常被弾音はv4.9.0と同じ音色・音程で鳴る。
+    - 倍速敵の2回被弾は同一の被弾音を0.24秒間隔で2回再生する。
+    - damageIndexや連続回数ごとの音程変化を使用しない。
+    - レベルアップ後の後続キュー開始を1.75秒へ調整する。
+    - APP_VERSION、manifest、Service Workerキャッシュ名を4.9.1に統一する。
+    - セーブスキーマv11を維持する。

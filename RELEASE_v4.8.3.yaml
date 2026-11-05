@@ -1,0 +1,45 @@
+release:
+  project: 層渡りの旅録
+  version: 4.8.3
+  previous_version: 4.8.2
+  type: patch
+  purpose: 敵のHP・攻撃・防御に連動した小さなレベル表示を追加し、遭遇時の危険度判断を助ける。
+  ui:
+    renderer: Canvas
+    label: Lv{level}
+    placement: enemy_tile_bottom_left
+    tile_size_px: 32
+    max_badge_width_px: 18
+    rare_speed_badges_preserved: true
+    boss_badge_theme: dark_crimson
+    legend: "Lv＝敵の能力値目安"
+  level:
+    display_only: true
+    formula: "max(1, round((maxHp + attack * 6 + defense * 4) / 36))"
+    weights:
+      hp: 1
+      attack: 6
+      defense: 4
+      points_per_level: 36
+    use_max_hp_not_current_hp: true
+    apply_after_campaign_floor_scaling: true
+    apply_after_rare_variant_scaling: true
+    action_speed_is_separate_indicator: true
+  entities:
+    normal_monsters: true
+    slow_variants: true
+    fast_variants: true
+    bosses: true
+    hostile_shopkeeper: true
+    passive_shopkeeper: false
+  gameplay_balance_changed: false
+  save:
+    schema_version: 11
+    migration_required: false
+    level_persisted: false
+  cache:
+    service_worker_cache: sou-watari-tabiroku-v4-8-3
+  verification:
+    enemy_level_unit_and_render_tests: 10/10
+    module_syntax_check: pass
+    ios_android_device_qa: not_run

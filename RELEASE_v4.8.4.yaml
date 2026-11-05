@@ -1,0 +1,13 @@
+release:
+  project: 層渡りの旅録
+  version: 4.8.4
+  previous_version: 4.8.3
+  type: patch
+  recovery: { food_hunger_multiplier: 1.25, potion_hp_multiplier: 1.75, potion_secondary_hunger: unchanged, rounding: Math.round }
+  drops: { floor_equipment_delta: +0.02, floor_potion_delta: -0.02, enemy_equipment_delta: +0.001, enemy_potion_delta: -0.002, rare_equipment: "18%→19%", rare_potion: "5%→4%" }
+  monster_level: { tier_blend: smoothstep, tier_position: "progress × (maxMonsterTier - 1)", per_monster: true, base_stat_scale: unchanged }
+  fast_enemy: { rare_hp: 1.25, rare_attack: 1.20, rare_defense_bonus: 1, rare_exp: 2.3, boss_attack: 0.80, shopkeeper_attack: 0.90, actions_per_turn: 2 }
+  save_schema: 11
+  migration_required: false
+  cache: sou-watari-tabiroku-v4-8-4
+  regression_tests: 18

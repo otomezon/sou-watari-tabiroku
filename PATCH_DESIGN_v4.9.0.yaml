@@ -1,0 +1,118 @@
+patch:
+  project: 層渡りの旅録
+  version: 4.9.0
+  previous_version: 4.8.4
+  release_type: minor
+  title: モンスタービジュアル・探索表示領域・サウンド品質の拡張
+
+  monster_visuals:
+    catalog_size: 60
+    drawing:
+      renderer: assets/renderer.js
+      tile_size: 32
+      palette: 既存の種類別カラーを維持し、体形・輪郭・付属パーツを追加
+      shape_families:
+        blob: [slime]
+        wing: [bat, cave-moth, crystal-gargoyle]
+        humanoid: [kobold, goblin, orc]
+        fungus: [mushroom]
+        crab: [cave-crab]
+        beast: [moss-pup, wolf, giant-rat, bog-frog, cave-ape, shadow-hound, hellhound, corpse-eater]
+        serpent: [glow-worm, lamia, fire-lizard, basilisk, salamander]
+        plant: [root-sprite, ember-ent]
+        insect: [sting-beetle]
+        scorpion: [copper-scorpion]
+        skeleton: [skeleton, abyss-reaper, astral-lich]
+        skeleton_beast: [bone-hound]
+        armored: [goblin-guard, dark-knight, cursed-paladin, abyss-knight, night-emperor]
+        spider: [giant-spider]
+        ghost: [wraith, blood-wisp, phantom-lord]
+        golem: [guardian-statue, iron-golem, ash-golem, ancient-warden, primal-guardian]
+        giant: [troll, magma-giant, calamity-beast]
+        dragon: [wyvern, black-drake, frost-drake, void-dragon]
+        demon: [stone-imp, succubus, demon-general, dimensional-fiend]
+        bird: [storm-harpy, star-phoenix]
+        eye: [beholder, star-eater]
+        hydra: [void-hydra]
+      special_details:
+        - star-phoenix: 翼の光点と冠羽
+        - void-hydra: 3つの頭と追加の角
+        - cursed-paladin_and_abyss-knight: 兜の紋章
+      ui_preservation:
+        health_bar: 上端を維持
+        level_badge: 下部左を維持
+        rare_speed_badge: 下部右を維持
+        boss_and_shopkeeper: 専用描画を維持
+    save_data:
+      persisted: false
+      save_schema: 11
+
+  exploration_view:
+    removed_caption:
+      selector: .dungeon-caption
+      first_line: あなた・魔物・アイテム・階段・お金の凡例
+      second_line: Lv＝敵の能力値目安・希少個体の鈍足/倍速説明
+    result: 探索エリアの補助凡例を撤去し、その高さをダンジョンキャンバスに使用
+    layout:
+      keep_grid_row: auto minmax(0, 1fr) 40px auto auto
+      canvas_intrinsic_size: 544x320
+      canvas_tiles: 17x10
+      player_and_enemy_sprite_identification: 絵柄で識別
+    accessibility:
+      canvas_aria_label: ダンジョン探索エリアと種類ごとの魔物の姿を説明
+      removed_text_not_replaced: true
+
+  sound:
+    attack:
+      implementation: Web Audio synthesis
+      components:
+        - descending sawtooth blade sweep
+        - bright triangle metallic contact
+        - short low sine body
+      sequence_spacing_seconds: 0.18
+    damage_received:
+      implementation: Web Audio synthesis
+      components:
+        - low descending triangle impact
+        - square-wave midrange crack
+        - alternating pitch for consecutive impacts
+      sequence_spacing_seconds: 0.27
+      fast_enemy:
+        hits_per_player_action: 2
+        requirement: 2発の被弾音を別々に聞き取れる間隔で再生
+      gain: 既存の効果音音量・ミュート設定を使用
+    level_up:
+      previous_asset: audio/level-up-fanfare.mp3
+      new_asset: audio/level-up-fanfare-v2.wav
+      format: WAV PCM 16-bit mono 22050 Hz
+      duration_seconds: 3.05
+      composition:
+        - 上昇する4音のベル調アルペジオ
+        - Gメジャーの温かい和音へ解決
+        - 高音の短い余韻
+      sourcing: オリジナル合成音。第三者の録音・サンプル不使用
+      offline_precache: true
+    event_sequence:
+      level_up_with_damage: レベルアップ音の後に被弾キューを順番に再生
+      cue_buffering: 初回ユーザー操作後に先読み
+
+  versioning:
+    app_version: 4.9.0
+    manifest_version: 4.9.0
+    service_worker_cache: sou-watari-tabiroku-v4-9-0
+    new_precache_asset: ./audio/level-up-fanfare-v2.wav
+
+  compatibility:
+    save_schema: 11
+    migration_required: false
+    gameplay_balance: v4.8.4から変更なし
+
+  acceptance:
+    - 60種類すべてにシルエット定義があり、複数の描画系統で見た目を描き分ける。
+    - HPバー・Lvバッジ・希少個体印・ボス/店主専用描画を維持する。
+    - 探索エリア直下の指定凡例2行を取り除く。
+    - 攻撃音と被弾音を音色と音程の変化で識別できる。
+    - 倍速敵の2回攻撃で被弾音が2回、0.27秒間隔で鳴る。
+    - レベルアップ時に新WAVファンファーレを再生し、Service Workerでキャッシュする。
+    - APP_VERSION・manifest・Service Workerキャッシュ名を4.9.0に一致させる。
+    - 既存セーブスキーマv11を維持する。

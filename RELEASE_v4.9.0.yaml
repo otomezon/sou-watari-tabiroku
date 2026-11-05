@@ -1,0 +1,20 @@
+release:
+  project: 層渡りの旅録
+  version: 4.9.0
+  previous_version: 4.8.4
+  type: minor
+  features:
+    monster_visuals: 60種類を22系統のピクセルシルエットで描画
+    dungeon_viewport: 補助凡例2行を撤去しキャンバス表示領域へ割当
+    attack_sound: 斬撃スイープと金属接触音
+    damage_sound: 低音衝撃と中音クラッシュ、連続音間隔0.27秒
+    fast_enemy_sound: 2回攻撃の各被弾を分離再生
+    level_up_fanfare: audio/level-up-fanfare-v2.wav、3.05秒、オリジナル合成音
+  save_schema: 11
+  migration_required: false
+  app_version: 4.9.0
+  manifest_version: 4.9.0
+  service_worker_cache: sou-watari-tabiroku-v4-9-0
+  offline_assets:
+    - audio/level-up-fanfare-v2.wav
+  regression_cases: 13
