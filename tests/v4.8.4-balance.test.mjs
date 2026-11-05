@@ -62,7 +62,8 @@ test('rare loot shifts one percentage point from potions to premium gear',async(
 });
 test('normal enemies use smooth adjacent-tier selection',async()=>{
  const s=await readProjectFile('assets/engine.js');
- assert.match(s,/getMonsterTierBlend\(progress, mode\.maxMonsterTier\)/);
+ assert.match(s,/const tierProgress = \(floor - 1\) \/ Math\.max\(1, mode\.floors - 2\)/);
+  assert.match(s,/getMonsterTierBlend\(tierProgress, mode\.maxMonsterTier\)/);
  assert.match(s,/random\.chance\(tierBlend\.upperChance\)/);
 });
 test('fast rare variants receive lower HP, attack, defense and EXP',async()=>{

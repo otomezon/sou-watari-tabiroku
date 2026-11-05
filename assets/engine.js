@@ -293,7 +293,8 @@ function populateFloor(state, runRandom) {
     }
     else {
         const progress = mode.floors <= 1 ? 0 : (floor - 1) / (mode.floors - 1);
-        const tierBlend = getMonsterTierBlend(progress, mode.maxMonsterTier);
+        const tierProgress = (floor - 1) / Math.max(1, mode.floors - 2);
+        const tierBlend = getMonsterTierBlend(tierProgress, mode.maxMonsterTier);
         const lowerTier = MONSTER_TIERS[tierBlend.lowerTierIndex] ?? MONSTER_TIERS[0];
         const upperTier = MONSTER_TIERS[tierBlend.upperTierIndex] ?? lowerTier;
         const count = random.int(mode.minMonsters, mode.maxMonsters);
