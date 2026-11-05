@@ -720,3 +720,42 @@ main {
 .dungeon-frame {
   min-height: 0;
 }
+
+
+/* v4.8.2: clearer mobile controls, distinct wait action, and consistent tap-target gutters. */
+.dpad { gap: 8px; }
+.dpad-button {
+  min-height: 48px;
+  border-radius: 10px;
+  transition: transform 70ms ease, box-shadow 70ms ease, background-color 70ms ease, filter 70ms ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+}
+.dpad-button:active {
+  transform: translateY(2px) scale(.985);
+  box-shadow: 0 1px 0 #142429, inset 0 0 0 1px rgba(255,255,255,.12);
+  background: linear-gradient(180deg, #496568, #31494c);
+  filter: brightness(1.12);
+}
+.dpad-button:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 2px solid var(--gold-bright);
+  outline-offset: 2px;
+}
+.dpad-wait {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  color: var(--gold-bright);
+  border-color: rgba(215,181,109,.72);
+  background: linear-gradient(180deg, #414746, #303a38);
+  box-shadow: 0 3px 0 #182321, inset 0 0 0 1px rgba(215,181,109,.08);
+}
+.dpad-wait span { font-size: 14px; font-weight: 800; letter-spacing: .08em; }
+.dpad-wait small { color: #c7b78f; font-size: 9px; line-height: 1; }
+.dpad-wait:active { background: linear-gradient(180deg, #5a5d4c, #41493d); }
