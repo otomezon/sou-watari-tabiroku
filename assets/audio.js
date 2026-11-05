@@ -1,7 +1,6 @@
 import { DEFAULT_AUDIO_SETTINGS } from "./storage.js";
 import { getModeConfig } from "./modes.js";
 const EVENT_CUE_URLS = {
-    level: './audio/level-up-fanfare-v3.wav',
     gameover: './audio/game-over.mp3',
 };
 const TRACK_URLS = {
@@ -57,7 +56,6 @@ export class SoundManager {
         if (this.context.state === 'suspended')
             await this.context.resume();
         // Preload mandatory event cues after the first user gesture so they are ready at the moment they are needed.
-        void this.loadEventCue('level').catch((error) => console.warn('Level-up cue preload failed.', error));
         void this.loadEventCue('gameover').catch((error) => console.warn('Game-over cue preload failed.', error));
     }
     /** Starts the mode-specific exploration loop or the shared boss theme. */
@@ -173,7 +171,11 @@ export class SoundManager {
     }
     /** Short action sounds use synthesis; mandatory progression/end cues use authored audio assets. */
     effect(effect) {
-        if (effect === 'level' || effect === 'gameover') {
+        if (effect === 'level') {
+            this.playLevelUpFanfare();
+            return;
+        }
+        if (effect === 'gameover') {
             void this.playEventCue(effect);
             return;
         }
@@ -185,9 +187,12 @@ export class SoundManager {
         const now = this.context.currentTime;
         let offset = 0;
         for (const effect of effects) {
-            if (effect === 'level' || effect === 'gameover') {
+            if (effect === 'level') {
+                this.playLevelUpFanfare(now + offset);
+                offset += 3.05;
+            } else if (effect === 'gameover') {
                 void this.playEventCue(effect, now + offset);
-                offset += effect === 'level' ? 1.75 : 3.8;
+                offset += 3.8;
             } else if (effect === 'attack') {
                 this.playAttackEffect(now + offset);
                 offset += 0.18;
@@ -276,6 +281,60 @@ export class SoundManager {
         this.playTransientTone(138, 62, 'triangle', startAt, 0.17, 0.27);
         this.playTransientTone(286, 126, 'square', startAt + 0.006, 0.115, 0.105);
     }
+    playFanfareTone(frequency, startAt, duration, peak, waveform = 'sawtooth', cutoff = 2600, attack = 0.012) {
+        if (!this.context || !this.sfxGain)
+            return;
+        const oscillator = this.context.createOscillator();
+        const filter = this.context.createBiquadFilter();
+        const envelope = this.context.createGain();
+        oscillator.type = waveform;
+        oscillator.frequency.setValueAtTime(frequency, startAt);
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(cutoff, startAt);
+        filter.Q.setValueAtTime(0.72, startAt);
+        envelope.gain.setValueAtTime(0.0001, startAt);
+        envelope.gain.exponentialRampToValueAtTime(peak, startAt + attack);
+        envelope.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+        oscillator.connect(filter).connect(envelope).connect(this.sfxGain);
+        oscillator.start(startAt);
+        oscillator.stop(startAt + duration + 0.025);
+        oscillator.onended = () => {
+            oscillator.disconnect();
+            filter.disconnect();
+            envelope.disconnect();
+        };
+    }
+    playLevelUpFanfare(requestedStart) {
+        if (!this.context || !this.sfxGain || this.settings.muteSfx || this.settings.sfxVolume <= 0)
+            return;
+        const start = Math.max(this.context.currentTime + 0.018, requestedStart ?? this.context.currentTime + 0.018);
+
+        // Original three-part phrase in D major: IV (G) -> V (A) -> I (D).
+        // Broken-chord calls and responses replace the previous simple rising scale.
+        const melody = [
+            [0.04, 587.33, 0.19], [0.24, 493.88, 0.16], [0.42, 587.33, 0.18], [0.62, 783.99, 0.31],
+            [1.00, 659.25, 0.17], [1.19, 554.37, 0.16], [1.37, 659.25, 0.18], [1.57, 880.00, 0.32],
+            [1.98, 739.99, 0.15], [2.15, 880.00, 0.15], [2.33, 1174.66, 0.58],
+        ];
+        for (const [time, frequency, duration] of melody)
+            this.playFanfareTone(frequency, start + time, duration, 0.092, 'sawtooth', 2850, 0.012);
+
+        // Soft string-like triads give each phrase a clear harmonic home.
+        const chords = [
+            [0.00, 0.94, [196.00, 246.94, 293.66]],       // G major
+            [0.94, 0.91, [220.00, 277.18, 329.63]],       // A major
+            [1.85, 1.12, [146.83, 185.00, 220.00, 293.66]], // D major
+        ];
+        for (const [time, duration, notes] of chords) {
+            for (const frequency of notes)
+                this.playFanfareTone(frequency, start + time, duration, 0.022, 'triangle', 1750, 0.12);
+        }
+
+        // Root pulses and a small bell at the final tonic make the resolution easy to hear.
+        for (const [time, frequency] of [[0.00, 98.00], [0.94, 110.00], [1.85, 73.42]])
+            this.playFanfareTone(frequency, start + time, 0.29, 0.065, 'sine', 720, 0.008);
+        this.playFanfareTone(2349.32, start + 2.48, 0.42, 0.025, 'sine', 5200, 0.004);
+    }
     playEffect(effect, startAt) {
         if (!this.context || !this.sfxGain)
             return;
@@ -284,7 +343,6 @@ export class SoundManager {
             // Attack and damage intentionally use a single stable pitch, just like the movement cue.
             attack: { frequency: 392, duration: 0.075, type: 'triangle', level: 0.18 },
             damage: { frequency: 174.61, duration: 0.095, type: 'sine', level: 0.20 },
-            defeat: { frequency: 523.25, duration: 0.18, type: 'triangle', level: 0.18, sweep: 659.25 },
             item: { frequency: 659.25, duration: 0.20, type: 'sine', level: 0.16, sweep: 783.99 },
             level: { frequency: 440, duration: 0.38, type: 'triangle', level: 0.18, sweep: 880 },
             boss: { frequency: 110, duration: 0.40, type: 'sawtooth', level: 0.13, sweep: 73.42 },
