@@ -57,27 +57,30 @@ test('sequential damage cues are spaced so two fast hits are distinct', async ()
   assert.match(source, /offset \+= 0\.24/);
   assert.match(source, /playDamageEffect\(now \+ offset\)/);
 });
-test('new fanfare is referenced and precached for offline play', async () => {
+test('the new procedural fanfare is available without a separate audio asset', async () => {
   const [audio,sw] = await Promise.all([read('assets/audio.js'),read('sw.js')]);
-  assert.match(audio, /level-up-fanfare-v3\.wav/);
-  assert.match(sw, /audio\/level-up-fanfare-v3\.wav/);
+  assert.match(audio, /playLevelUpFanfare/);
+  assert.doesNotMatch(audio, /level-up-fanfare-v3\.wav/);
+  assert.doesNotMatch(sw, /level-up-fanfare-v3\.wav/);
 });
-test('level-up WAV has a valid PCM header and mono 16-bit format', async () => {
-  const wav = await readFile(new URL('audio/level-up-fanfare-v3.wav', root));
-  assert.equal(wav.toString('ascii', 0, 4), 'RIFF');
-  assert.equal(wav.toString('ascii', 8, 12), 'WAVE');
-  assert.equal(wav.readUInt16LE(20), 1);
-  assert.equal(wav.readUInt16LE(22), 1);
-  assert.equal(wav.readUInt16LE(34), 16);
+test('level-up fanfare uses a melodic response and a G-A-D harmonic cadence', async () => {
+  const audio = await read('assets/audio.js');
+  assert.match(audio, /const melody = \[/);
+  assert.match(audio, /const chords = \[/);
+  assert.match(audio, /G major/);
+  assert.match(audio, /A major/);
+  assert.match(audio, /D major/);
 });
-test('level-up and damage cues can both play on the same turn', async () => {
+test('attack, level-up and received-damage cues are assembled in a deliberate order', async () => {
   const source = await read('assets/main.js');
-  assert.match(source, /effectSequence\(\['level', \.\.\.damageCues\]\)/);
+  assert.match(source, /const actionCues = defaultEffect === 'attack' \? \['attack'\] : \[\]/);
+  assert.match(source, /\.\.\.actionCues,[\s\S]*?\.\.\.\(leveledUp \? \['level'\] : \[\]\),[\s\S]*?\.\.\.damageCues/);
+  assert.doesNotMatch(source, /effect\('defeat'\)/);
 });
 test('release versions and save schema are consistent', async () => {
   const [main,manifest,sw,engine] = await Promise.all([read('assets/main.js'),read('manifest.webmanifest'),read('sw.js'),read('assets/engine.js')]);
-  assert.match(main, /APP_VERSION = '4\.9\.1'/);
-  assert.match(manifest, /"version": "4\.9\.1"/);
-  assert.match(sw, /sou-watari-tabiroku-v4-9-0/);
+  assert.match(main, /APP_VERSION = '4\.9\.2'/);
+  assert.match(manifest, /"version": "4\.9\.2"/);
+  assert.match(sw, /sou-watari-tabiroku-v4-9-2/);
   assert.match(engine, /schemaVersion: 11/);
 });
