@@ -9,9 +9,9 @@
 - 1タップ1行動を維持（長押し連続移動なし）
 - ゲームバランスとセーブスキーマv11は変更なし
 
-## 起動
+## Hosting
 
-GitHub PagesなどのHTTPS静的ホスティングで公開してください。index.html、assets/、audio/、icons/、sw.js、manifest.webmanifestを同じ公開ルートに配置します。
+GitHub Pages用workflowは `.github/workflows/deploy-pages.yml` にあります。初回は Settings → Pages で Source を GitHub Actions に設定してください。公開時は index.html、assets/、audio/、icons/、sw.js、manifest.webmanifest がルートに配置されます。
 
 ## 検証
 
@@ -22,5 +22,3 @@ GitHub PagesなどのHTTPS静的ホスティングで公開してください。
 - ブラウザー用TypeScriptコンパイル／プレビュー生成：PASS
 - Vite本番ビルド：環境の@types/node不足（TS2688）により未完了
 - iOS/Android実機QA：未実施
-
-GitHub Pages用workflowは .github/workflows/deploy-pages.yml にあります。リポジトリの Settings → Pages で Source を GitHub Actions に設定してください。

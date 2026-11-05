@@ -1,8 +1,9 @@
-層渡りの旅録 v4.8.1 — 静的ホスティング用
+層渡りの旅録 v4.8.2 — 静的ホスティング用
 
-このフォルダ内の全ファイル・フォルダを公開ディレクトリ直下へ配置してください。
+このリポジトリのルートを公開ディレクトリとして配信します。
 index.html、assets/、audio/、icons/、sw.js、manifest.webmanifest が同じ階層に並ぶ構成です。
-HTTPSで配信するとPWAインストール・Service Worker・オフラインキャッシュが利用できます。
+HTTPSで配信するとPWAインストール・Service Worker・オフラインキャッシュを利用できます。
 
-v4.8.1: 主人公とモンスターが8方向へ移動。斜め移動は1操作1ターンで、壁角のすり抜けを防止します。斜め隣接の近接攻撃も双方に対応。敵の攻撃頻度と威力は据え置きです。
-操作パッドは3×3配置で8方向に対応し、中央は待機です。セーブスキーマv11を維持し、旧セーブと互換です。
+GitHub Pages用workflowは .github/workflows/deploy-pages.yml にあります。初回は Settings > Pages で Source を GitHub Actions に設定してください。
+
+v4.8.2: 中央ボタンを「待機／1ターン」と明示。ボタン間隔を8pxに統一し、押下フィードバックとフォーカス表示を追加。ゲームバランスとセーブスキーマv11は維持。Service Workerキャッシュはsou-watari-tabiroku-v4-8-2。
