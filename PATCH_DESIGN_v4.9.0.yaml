@@ -22,7 +22,6 @@ patch:
         plant: [root-sprite, ember-ent]
         insect: [sting-beetle]
         scorpion: [copper-scorpion]
-        scorpion: [copper-scorpion]
         skeleton: [skeleton, abyss-reaper, astral-lich]
         skeleton_beast: [bone-hound]
         armored: [goblin-guard, dark-knight, cursed-paladin, abyss-knight, night-emperor]
