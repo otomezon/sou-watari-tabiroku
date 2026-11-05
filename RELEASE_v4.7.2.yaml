@@ -1,0 +1,24 @@
+release:
+  project: 層渡りの旅録
+  version: 4.7.2
+  previous_version: 4.7.1
+  type: patch
+  features:
+    - return_picked_up_unpaid_good_to_original_shelf
+    - remove_exact_item_from_inventory_or_equipment
+    - refund_only_returned_item_price_from_debt
+    - retain_other_unpaid_goods_and_selection
+    - isolate_unpaid_item_identity_from_stackable_inventory
+    - support_safe_v4_7_1_legacy_merged_stack_return
+    - prevent_sale_of_unpaid_items
+    - refuse_return_of_consumed_or_missing_items
+  save_schema: 11
+  save_migration_required: false
+  checks:
+    node: 108/108
+    layout: 10/10
+    portrait_balance: 52/52
+    patch_specific: 11/11
+    pwa_static: 24/24
+    source_design_consistency: 19/19
+    local_http: 26/26
