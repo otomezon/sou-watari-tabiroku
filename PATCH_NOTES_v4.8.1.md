@@ -10,4 +10,4 @@ Patch release for a startup-blocking module export mismatch in the v4.8.0 GitHub
 ## Verification
 - Named export exists and both importing modules reference it.
 - Node regression suite: 115/115 pass.
-- Browser startup and movement smoke test included in the v4.8.1 package.
+- Chromium UI interaction test was not completed in this environment because browser navigation to the local test server was blocked; physical iOS/Android QA also remains outstanding.

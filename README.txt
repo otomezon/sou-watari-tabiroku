@@ -41,3 +41,6 @@ v4.8.1 minor:
 - GitHub Pagesの公開設定はリポジトリ側で有効化が必要。
 
 推奨リポジトリ名: sou-watari-tabiroku（npm package: sou-watari-tabiroku-pwa）。
+
+
+v4.8.1 hotfix: exported DIRECTION_DELTA from the dungeon module, fixing the ES module startup failure in the GitHub JavaScript assets. Service Worker cache namespace bumped to v4-8-1. Node tests 116/116 and module-linkage check pass; browser UI runtime testing and physical-device QA remain outstanding.

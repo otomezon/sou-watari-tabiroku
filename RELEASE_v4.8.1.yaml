@@ -17,4 +17,4 @@ release:
   verification:
     node_tests: 115/115
     browser_module_linkage: pass
-    browser_startup_movement_smoke: included
+    browser_ui_smoke: not_run_environment_blocked
