@@ -6,7 +6,7 @@ import { getShopSellPrice, remainingShopGoods, unpaidShopGoods } from "./shop.js
 import { RenderManager } from "./renderer.js";
 import { DEFAULT_AUDIO_SETTINGS, SaveManager } from "./storage.js";
 import { DUNGEON_MODES, MODE_ORDER, getModeConfig } from "./modes.js";
-const APP_VERSION = '4.9.5';
+const APP_VERSION = '4.9.6';
 const byId = (id) => {
     const element = document.getElementById(id);
     if (!element)
