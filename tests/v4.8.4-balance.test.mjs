@@ -32,7 +32,7 @@ test('tier blend starts at the lowest tier and reaches the highest tier',()=>{
  assert.deepEqual(getMonsterTierBlend(1,6),{lowerTierIndex:5,upperTierIndex:5,upperChance:0});
 });
 test('tier blend uses smoothstep midpoint weight',()=>{
- assert.deepEqual(getMonsterTierBlend(0.5,5),{lowerTierIndex:2,upperTierIndex:3,upperChance:0.5});
+ assert.deepEqual(getMonsterTierBlend(0.625,5),{lowerTierIndex:2,upperTierIndex:3,upperChance:0.5});
 });
 test('tier blend probability progresses monotonically and remains bounded',()=>{
  const rows=Array.from({length:101},(_,i)=>getMonsterTierBlend(i/100,6));
