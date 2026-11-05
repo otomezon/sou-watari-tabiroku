@@ -11,7 +11,7 @@
 
 ## Hosting
 
-GitHub Pages用workflowは `.github/workflows/deploy-pages.yml` にあります。初回は Settings → Pages で Source を GitHub Actions に設定してください。公開時は index.html、assets/、audio/、icons/、sw.js、manifest.webmanifest がルートに配置されます。
+Cloudflare PagesはGitHub連携でmainブランチへの更新を自動デプロイします。公開ルートはリポジトリ直下のindex.html、assets/、audio/、icons/、sw.js、manifest.webmanifestです。
 
 ## 検証
 
