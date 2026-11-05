@@ -23,7 +23,7 @@ test('level-up fanfare no longer depends on a downloaded audio asset',async()=>{
 });
 test('service worker cache namespace is bumped for the procedural cue release',async()=>{
  const sw=await read('sw.js');
- assert.match(sw,/sou-watari-tabiroku-v4-9-3/);
+ assert.match(sw,/sou-watari-tabiroku-v4-9-4/);
  assert.doesNotMatch(sw,/level-up-fanfare-v3\.wav/);
 });
 test('level-up queue leaves room for the new 3-second cue',async()=>{
@@ -41,11 +41,11 @@ test('repeated damage events are separated by 0.24 seconds',async()=>{
  const audio=await read('assets/audio.js');
  assert.match(audio,/this\.playDamageEffect\(now \+ offset\);\s*offset \+= 0\.24/);
 });
-test('all app version markers and cache namespace are bumped to 4.9.3',async()=>{
+test('all app version markers and cache namespace are bumped to 4.9.4',async()=>{
  const [main,manifest,sw]=await Promise.all([read('assets/main.js'),read('manifest.webmanifest'),read('sw.js')]);
- assert.match(main,/APP_VERSION = '4\.9\.3'/);
- assert.match(manifest,/"version": "4\.9\.3"/);
- assert.match(sw,/sou-watari-tabiroku-v4-9-3/);
+ assert.match(main,/APP_VERSION = '4\.9\.4'/);
+ assert.match(manifest,/"version": "4\.9\.4"/);
+ assert.match(sw,/sou-watari-tabiroku-v4-9-4/);
 });
 test('attack sound is kept on a killing blow and the separate defeat cue is removed',async()=>{
  const main=await read('assets/main.js');

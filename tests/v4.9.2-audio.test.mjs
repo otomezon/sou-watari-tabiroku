@@ -46,11 +46,11 @@ test('identical repeated damage cue timing remains unchanged', async () => {
   assert.match(audio, /this\.playDamageEffect\(now \+ offset\);\s*offset \+= 0\.24/);
 });
 
-test('PWA versions and cache namespace are aligned at 4.9.3', async () => {
+test('PWA versions and cache namespace are aligned at 4.9.4', async () => {
   const [main, manifest, sw] = await Promise.all([read('assets/main.js'), read('manifest.webmanifest'), read('sw.js')]);
-  assert.match(main, /APP_VERSION = '4\.9\.3'/);
-  assert.match(manifest, /"version": "4\.9\.3"/);
-  assert.match(sw, /sou-watari-tabiroku-v4-9-3/);
+  assert.match(main, /APP_VERSION = '4\.9\.4'/);
+  assert.match(manifest, /"version": "4\.9\.4"/);
+  assert.match(sw, /sou-watari-tabiroku-v4-9-4/);
 });
 
 test('save schema v11 is retained', async () => {

@@ -1,0 +1,13 @@
+release:
+  project: 層渡りの旅録
+  version: 4.9.4
+  previous_version: 4.9.3
+  type: patch
+  title: 探索画面レイアウト再調整
+  floor_display: one_line_untruncated
+  turn_gold: moved_after_attack_defense_in_stat_row
+  map_display: expanded_beyond_v4_9_2
+  controls_minimum_tap_target_px: 48
+  save_schema: 11
+  migration_required: false
+  regression_tests: 68
