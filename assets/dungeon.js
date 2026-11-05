@@ -5,7 +5,7 @@ const MIN_ROOMS = 4;
 const MAX_ROOMS = 6;
 const CARDINAL_DIRECTIONS = ['up', 'right', 'down', 'left'];
 const DIRECTIONS_8 = ['up', 'right', 'down', 'left', 'up-right', 'down-right', 'down-left', 'up-left'];
-const DIRECTION_DELTA = {
+export const DIRECTION_DELTA = {
     up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 },
     'up-left': { x: -1, y: -1 }, 'up-right': { x: 1, y: -1 }, 'down-left': { x: -1, y: 1 }, 'down-right': { x: 1, y: 1 },
 };

@@ -1,0 +1,20 @@
+release:
+  project: 層渡りの旅録
+  version: 4.8.1
+  previous_version: 4.8.0
+  type: patch
+  fix:
+    module: assets/dungeon.js
+    symbol: DIRECTION_DELTA
+    change: named_export_added
+    impact: resolves browser ES module linking before application startup
+  cache:
+    service_worker_cache: sou-watari-tabiroku-v4-8-1
+  compatibility:
+    save_schema: 11
+    migration_required: false
+    gameplay_balance_changed: false
+  verification:
+    node_tests: 115/115
+    browser_module_linkage: pass
+    browser_startup_movement_smoke: included
