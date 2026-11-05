@@ -5,7 +5,7 @@ import { getShopSellPrice, remainingShopGoods, unpaidShopGoods } from "./shop.js
 import { RenderManager } from "./renderer.js";
 import { DEFAULT_AUDIO_SETTINGS, SaveManager } from "./storage.js";
 import { DUNGEON_MODES, MODE_ORDER, getModeConfig } from "./modes.js";
-const APP_VERSION = '4.7.1';
+const APP_VERSION = '4.7.2';
 const byId = (id) => {
     const element = document.getElementById(id);
     if (!element)
@@ -478,7 +478,10 @@ class GameApp {
                 select.title = isSelected ? '購入対象の選択を解除します（未払い商品は所持品に残ります）' : 'この未払い商品を購入対象に選びます';
                 select.setAttribute('aria-pressed', String(isSelected));
                 select.addEventListener('click', () => void this.runShopTransaction(() => this.engine?.toggleUnpaidShopGoodSelection(good.id) ?? false));
-                row.append(select);
+                const giveBack = node('button', 'small-button shop-return', '戻す');
+                giveBack.title = 'この商品を所持品から取り除き、店の商品棚へ戻します';
+                giveBack.addEventListener('click', () => void this.runShopTransaction(() => this.engine?.returnUnpaidShopGood(good.id) ?? false));
+                row.append(select, giveBack);
                 content.append(row);
             }
         }
@@ -501,7 +504,13 @@ class GameApp {
             content.append(row);
         }
         content.append(node('h3', 'shop-heading', '売却'));
-        const sellable = this.state.inventory;
+        const inventory = this.state.inventory;
+        const unpaidItemIds = new Set(pendingGoods.map((good) => good.item.uid));
+        const legacyUnpaidTemplates = new Set(pendingGoods
+            .filter((good) => ["potion", "food", "valuable"].includes(good.item.kind) &&
+            !inventory.some((stack) => stack.item.uid === good.item.uid))
+            .map((good) => good.item.templateId));
+        const sellable = inventory.filter((stack) => !unpaidItemIds.has(stack.item.uid) && !legacyUnpaidTemplates.has(stack.item.templateId));
         if (!sellable.length)
             content.append(node('div', 'empty-state', '売却できる持ち物がありません。'));
         for (const stack of sellable) {
