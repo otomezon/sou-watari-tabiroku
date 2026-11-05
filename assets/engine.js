@@ -2,6 +2,7 @@ import { canStepBetween, DIRECTION_DELTA, generateDungeon, isWalkable, nextPathS
 import { createFloorLoot, createItem, itemDisplayName, itemDurability, itemEnhancement } from "./items.js";
 import { floorSeed, makeSeed, Random } from "./random.js";
 import { getModeConfig } from "./modes.js";
+import { getItemRecovery, getMonsterTierBlend } from "./balance.mjs";
 import { getShopBuyPrice, getShopSellPrice } from "./shop.js";
 export const MAX_HUNGER = 120;
 export const HUNGER_DECAY_EVERY_ACTIONS = 4;
@@ -211,11 +212,11 @@ function createRegularMonster(state, point, random, index, progress, template) {
         monster.actionSpeed = 'fast';
         monster.rareVariant = true;
         monster.name = `俊敏な${template.name}`;
-        monster.hp = Math.ceil(monster.hp * 1.32);
+        monster.hp = Math.ceil(monster.hp * 1.25);
         monster.maxHp = monster.hp;
-        monster.attack = Math.ceil(monster.attack * 1.35);
-        monster.defense += 2;
-        monster.exp = Math.ceil(monster.exp * 2.5);
+        monster.attack = Math.ceil(monster.attack * 1.20);
+        monster.defense += 1;
+        monster.exp = Math.ceil(monster.exp * 2.3);
     }
     return monster;
 }
@@ -265,7 +266,7 @@ function populateFloor(state, runRandom) {
             const formRoll = random.next();
             const form = formRoll < 0.20 ? 'slow' : formRoll < 0.40 ? 'fast' : 'normal';
             const hp = Math.round(mode.bossHp * (form === 'slow' ? 1.12 : form === 'fast' ? 0.93 : 1));
-            const attack = Math.ceil(mode.bossAttack * (form === 'slow' ? 1.8 : form === 'fast' ? 0.85 : 1));
+            const attack = Math.ceil(mode.bossAttack * (form === 'slow' ? 1.8 : form === 'fast' ? 0.80 : 1));
             const formName = form === 'slow' ? `${mode.bossName}・剛腕形態` : form === 'fast' ? `${mode.bossName}・疾風形態` : mode.bossName;
             state.monsters.push({
                 id: `boss-${state.modeId}-${state.seed}`, kind: 'boss', name: formName,
@@ -292,14 +293,18 @@ function populateFloor(state, runRandom) {
     }
     else {
         const progress = mode.floors <= 1 ? 0 : (floor - 1) / (mode.floors - 1);
-        const tierIndex = Math.min(mode.maxMonsterTier - 1, Math.floor(progress * mode.maxMonsterTier));
-        const tier = MONSTER_TIERS[tierIndex] ?? MONSTER_TIERS[0];
+        const tierBlend = getMonsterTierBlend(progress, mode.maxMonsterTier);
+        const lowerTier = MONSTER_TIERS[tierBlend.lowerTierIndex] ?? MONSTER_TIERS[0];
+        const upperTier = MONSTER_TIERS[tierBlend.upperTierIndex] ?? lowerTier;
         const count = random.int(mode.minMonsters, mode.maxMonsters);
         for (let index = 0; index < count; index += 1) {
             const point = takePoint();
             if (!point)
                 break;
-            const template = random.pick(tier);
+            const useUpperTier = tierBlend.upperTierIndex !== tierBlend.lowerTierIndex &&
+                tierBlend.upperChance > 0 && random.chance(tierBlend.upperChance);
+            const templateTier = useUpperTier ? upperTier : lowerTier;
+            const template = random.pick(templateTier);
             state.monsters.push(createRegularMonster(state, point, random, index, progress, template));
         }
         if (random.chance(mode.floorLootChance)) {
@@ -417,8 +422,9 @@ export class GameEngine {
         if (!stack)
             return false;
         const item = stack.item;
-        const hpRecovery = Math.min(item.heal, this.state.player.maxHp - this.state.player.hp);
-        const hungerRecovery = Math.min(item.hungerRestore ?? 0, MAX_HUNGER - this.state.player.hunger);
+        const itemRecovery = getItemRecovery(item);
+        const hpRecovery = Math.min(itemRecovery.heal, this.state.player.maxHp - this.state.player.hp);
+        const hungerRecovery = Math.min(itemRecovery.hungerRestore, MAX_HUNGER - this.state.player.hunger);
         if (hpRecovery <= 0 && hungerRecovery <= 0) {
             this.state.message = item.kind === 'food' ? '満腹だ。今は食べる必要がない。' : 'HPも満腹度も十分だ。今は使う必要がない。';
             return false;
@@ -628,7 +634,7 @@ export class GameEngine {
         this.state.monsters.push({
             id: `stonewing-keeper-${shop.id}`, kind: 'stonewing-keeper', name: '石翼の番商',
             x: keeperPoint.x, y: keeperPoint.y, hp, maxHp: hp,
-            attack: 14 + Math.floor(this.state.floor * 1.1) + Math.round(getModeConfig(this.state.modeId).difficultyScale * 2),
+            attack: Math.max(1, Math.round((14 + Math.floor(this.state.floor * 1.1) + Math.round(getModeConfig(this.state.modeId).difficultyScale * 2)) * 0.90)),
             defense: 4 + Math.floor(this.state.floor * 0.12), exp: 0, boss: false,
             actionSpeed: 'fast', actionProgress: 0, rareVariant: true, shopkeeper: true,
         });
@@ -722,9 +728,9 @@ export class GameEngine {
         if (monster.rareVariant) {
             // Rare action-speed monsters are tougher encounters and have a premium loot table.
             let drop = null;
-            if (lootRoll < 0.18)
+            if (lootRoll < 0.19)
                 drop = createItem(this.state.floor, random, random.pick(['weapon', 'shield', 'armor']), this.state.modeId, 'premium');
-            else if (lootRoll < 0.25)
+            else if (lootRoll < 0.26)
                 drop = createItem(this.state.floor, random, 'valuable', this.state.modeId, 'premium');
             else if (lootRoll < 0.30)
                 drop = createItem(this.state.floor, random, 'potion', this.state.modeId, 'premium');

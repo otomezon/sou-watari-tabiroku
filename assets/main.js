@@ -1,12 +1,12 @@
 import { SoundManager } from "./audio.js";
 import { DIRECTION_DELTA } from "./dungeon.js";
 import { canDescend, createFreshRun, experienceToNext, GameEngine, getAttack, getDefense, MAX_HUNGER } from "./engine.js";
-import { itemDisplayName, itemDurability, itemIcon, itemKindLabel, itemMaxDurability } from "./items.js";
+import { itemDescription, itemDisplayName, itemDurability, itemIcon, itemKindLabel, itemMaxDurability } from "./items.js";
 import { getShopSellPrice, remainingShopGoods, unpaidShopGoods } from "./shop.js";
 import { RenderManager } from "./renderer.js";
 import { DEFAULT_AUDIO_SETTINGS, SaveManager } from "./storage.js";
 import { DUNGEON_MODES, MODE_ORDER, getModeConfig } from "./modes.js";
-const APP_VERSION = '4.8.3';
+const APP_VERSION = '4.8.4';
 const byId = (id) => {
     const element = document.getElementById(id);
     if (!element)
@@ -348,7 +348,7 @@ class GameApp {
         const isGear = stack.item.kind === 'weapon' || stack.item.kind === 'shield' || stack.item.kind === 'armor';
         const isStackable = stack.item.kind === 'potion' || stack.item.kind === 'food' || stack.item.kind === 'valuable';
         const condition = !isGear ? '' : ` · 耐久 ${itemDurability(stack.item)}/${itemMaxDurability(stack.item)}`;
-        info.append(node('small', '', `${itemKindLabel(stack.item.kind)} · ${stack.item.description}${condition}`));
+        info.append(node('small', '', `${itemKindLabel(stack.item.kind)} · ${itemDescription(stack.item)}${condition}`));
         row.append(info);
         if (isStackable)
             row.append(node('span', 'item-count', `×${stack.count}`));
@@ -416,7 +416,7 @@ class GameApp {
                 row.append(node('div', 'item-icon', itemIcon(entry.item.kind)));
                 const info = node('div', 'item-info');
                 info.append(node('strong', '', itemDisplayName(entry.item)));
-                info.append(node('small', '', `${itemKindLabel(entry.item.kind)} · ${entry.item.description} · 耐久 ${itemDurability(entry.item)}/${itemMaxDurability(entry.item)}`));
+                info.append(node('small', '', `${itemKindLabel(entry.item.kind)} · ${itemDescription(entry.item)} · 耐久 ${itemDurability(entry.item)}/${itemMaxDurability(entry.item)}`));
                 row.append(info);
                 const button = node('button', 'small-button', '装備');
                 button.addEventListener('click', () => {
@@ -486,7 +486,7 @@ class GameApp {
             row.append(node('div', 'item-icon', itemIcon(good.item.kind)));
             const info = node('div', 'item-info');
             info.append(node('strong', '', itemDisplayName(good.item)));
-            info.append(node('small', '', `${itemKindLabel(good.item.kind)} · ${good.item.description}`));
+            info.append(node('small', '', `${itemKindLabel(good.item.kind)} · ${itemDescription(good.item)}`));
             row.append(info);
             row.append(node('strong', 'shop-price', `${good.price.toLocaleString('ja-JP')}G`));
             const pickup = node('button', 'small-button shop-pickup', '拾う');

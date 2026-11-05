@@ -1,4 +1,5 @@
 import { getModeConfig } from "./modes.js";
+export { getItemRecovery, itemDescription } from "./balance.mjs";
 // Equipment is deliberately broad in quality and durability so replacement loot
 // matters throughout a run. Healing items remain stackable.
 const TEMPLATES = [
@@ -146,10 +147,15 @@ function getItemSelectionFloor(floor, modeId, quality) {
 export function createFloorLoot(floor, random, modeId) {
     const roll = random.next();
     const mode = getModeConfig(modeId);
-    if (roll < mode.equipmentWeight)
+    const equipmentThreshold = mode.equipmentWeight;
+    const foodThreshold = equipmentThreshold + mode.foodWeight;
+    const potionThreshold = foodThreshold + (mode.potionWeight ?? Math.max(0, 1 - foodThreshold));
+    if (roll < equipmentThreshold)
         return createItem(floor, random, random.pick(['weapon', 'shield', 'armor']), modeId);
-    if (roll < mode.equipmentWeight + mode.foodWeight)
+    if (roll < foodThreshold)
         return createItem(floor, random, 'food', modeId);
+    if (roll < potionThreshold)
+        return createItem(floor, random, 'potion', modeId);
     return createItem(floor, random, 'potion', modeId);
 }
 export function createItem(floor, random, kind, modeId = 'beginner', quality = 'normal') {
