@@ -5,7 +5,7 @@ import { getShopSellPrice, remainingShopGoods, unpaidShopGoods } from "./shop.js
 import { RenderManager } from "./renderer.js";
 import { DEFAULT_AUDIO_SETTINGS, SaveManager } from "./storage.js";
 import { DUNGEON_MODES, MODE_ORDER, getModeConfig } from "./modes.js";
-const APP_VERSION = '4.7.0';
+const APP_VERSION = '4.7.1';
 const byId = (id) => {
     const element = document.getElementById(id);
     if (!element)
@@ -473,9 +473,11 @@ class GameApp {
                 info.append(node('strong', '', itemDisplayName(good.item)));
                 info.append(node('small', '', `${itemKindLabel(good.item.kind)} · ${good.price.toLocaleString('ja-JP')}G`));
                 row.append(info);
-                const select = node('button', 'small-button shop-select', good.id === shop.selectedGoodId ? '選択中' : '選択');
-                select.disabled = good.id === shop.selectedGoodId;
-                select.addEventListener('click', () => void this.runShopTransaction(() => this.engine?.selectUnpaidShopGood(good.id) ?? false));
+                const isSelected = good.id === shop.selectedGoodId;
+                const select = node('button', 'small-button shop-select', isSelected ? '解除' : '選択');
+                select.title = isSelected ? '購入対象の選択を解除します（未払い商品は所持品に残ります）' : 'この未払い商品を購入対象に選びます';
+                select.setAttribute('aria-pressed', String(isSelected));
+                select.addEventListener('click', () => void this.runShopTransaction(() => this.engine?.toggleUnpaidShopGoodSelection(good.id) ?? false));
                 row.append(select);
                 content.append(row);
             }
