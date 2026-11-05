@@ -9,3 +9,7 @@ Five campaign themes:
 - boss-theme.mp3: shared boss battle theme; forceful low-string ostinato, brass melody, bass and cinematic percussion.
 
 All six tracks are original compositions synthesized locally for this project. No third-party samples, loops, recordings or external music services are used. All tracks are bundled in the Service Worker shell for offline play after the first successful load.
+
+
+v4.9.0:
+- level-up-fanfare-v2.wav is an original synthesized level-up cue: a rising bell-like arpeggio resolving into a warm major chord. No third-party samples or recordings are used; the cue is precached for offline play.

@@ -53,10 +53,9 @@ test('renderer draws the level badge beside the preserved rare-speed marker', as
     assert.match(renderer, /speed === 'fast' \? 'Ⅱ' : speed === 'slow' \? '½' : '★'/);
 });
 
-test('canvas help text explains level and speed marks accessibly', async () => {
+test('canvas remains accessible after the explanatory caption is removed', async () => {
     const html = await readProjectFile('index.html');
-    assert.match(html, /Lv＝敵の能力値目安/);
-    assert.match(html, /敵には能力値から算出したレベルが表示され/);
+    assert.match(html, /id="dungeon-canvas"[^>]*aria-label=/);
 });
 
 test('all release version identifiers and cache namespace are bumped', async () => {
@@ -65,7 +64,7 @@ test('all release version identifiers and cache namespace are bumped', async () 
         readProjectFile('manifest.webmanifest'),
         readProjectFile('sw.js'),
     ]);
-    assert.match(main, /APP_VERSION = '4\.8\.3'/);
-    assert.match(manifest, /"version": "4\.8\.3"/);
-    assert.match(sw, /sou-watari-tabiroku-v4-8-3/);
+    assert.match(main, /APP_VERSION = '4\.9\.0'/);
+    assert.match(manifest, /"version": "4\.9\.0"/);
+    assert.match(sw, /sou-watari-tabiroku-v4-9-0/);
 });

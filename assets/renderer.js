@@ -5,6 +5,14 @@ const COLS = 17;
 const ROWS = 10;
 const WIDTH = COLS * TILE;
 const HEIGHT = ROWS * TILE;
+export const MONSTER_SHAPE_BY_KIND = {
+ slime:'blob',bat:'wing',kobold:'humanoid',mushroom:'fungus','cave-moth':'wing','cave-crab':'crab','moss-pup':'beast','glow-worm':'serpent','stone-imp':'demon','root-sprite':'plant',
+ goblin:'humanoid',skeleton:'skeleton',wolf:'beast','giant-rat':'beast','sting-beetle':'insect','bone-hound':'skeletonBeast','bog-frog':'beast','goblin-guard':'armored','cave-ape':'beast','copper-scorpion':'scorpion',
+ orc:'humanoid',wraith:'ghost','dark-knight':'armored','giant-spider':'spider',troll:'giant',lamia:'serpent','shadow-hound':'beast','guardian-statue':'golem','blood-wisp':'ghost','iron-golem':'golem',
+ 'fire-lizard':'serpent','ash-golem':'golem',basilisk:'serpent',wyvern:'dragon',succubus:'demon',salamander:'serpent','crystal-gargoyle':'wing','storm-harpy':'bird',hellhound:'beast','ember-ent':'plant',
+ 'black-drake':'dragon','abyss-reaper':'skeleton','cursed-paladin':'armored','magma-giant':'giant','phantom-lord':'ghost','frost-drake':'dragon','demon-general':'demon',beholder:'eye','abyss-knight':'armored','corpse-eater':'beast',
+ 'void-hydra':'hydra','astral-lich':'skeleton','calamity-beast':'giant','star-eater':'eye','ancient-warden':'golem','void-dragon':'dragon','star-phoenix':'bird','night-emperor':'armored','dimensional-fiend':'demon','primal-guardian':'golem'
+};
 export class RenderManager {
     context;
     canvas;
@@ -267,6 +275,39 @@ export class RenderManager {
         ctx.fillRect(x + 10, y + 26, 5, 4);
         ctx.fillRect(x + 19, y + 26, 5, 4);
     }
+    drawMonsterSprite(x,y,kind,body) {
+        const ctx=this.context, rect=(a,b,w,h,c=body)=>{ctx.fillStyle=c;ctx.fillRect(x+a,y+b,w,h);};
+        const eye=(a=12,b=20,y0=13,c='#f0d7ae')=>{rect(a,y0,3,3,c);rect(b,y0,3,3,c);rect(a+1,y0+1,1,2,'#20272a');rect(b+1,y0+1,1,2,'#20272a');};
+        const sh='rgba(24,30,32,.5)';
+        switch(MONSTER_SHAPE_BY_KIND[kind]||'humanoid'){
+            case 'blob':rect(7,15,19,9);rect(10,10,13,7);rect(14,7,6,4);eye(11,20,15);break;
+            case 'wing':rect(2,11,9,10,sh);rect(21,11,9,10,sh);rect(4,9,7,7);rect(21,9,7,7);rect(11,10,10,13);rect(13,6,6,8);eye(12,19,11);break;
+            case 'beast':rect(5,13,19,9);rect(19,8,9,10);rect(21,6,3,4);rect(26,7,3,4);rect(7,20,4,6,sh);rect(13,20,4,6);rect(21,20,4,6);rect(25,13,5,3);eye(22,26,11);break;
+            case 'humanoid':rect(10,14,13,9);rect(12,7,9,8);rect(10,21,4,5,sh);rect(19,21,4,5,sh);rect(6,14,5,8);rect(22,14,5,8);rect(12,5,3,3,'#f0d7ae');rect(19,5,3,3,'#f0d7ae');eye(13,19,11);break;
+            case 'fungus':rect(12,15,8,11,'#d6c4a4');rect(8,13,16,5);rect(5,9,22,7);rect(9,6,14,5);rect(8,10,4,3,'#f0d7ae');rect(19,9,4,3,'#f0d7ae');break;
+            case 'insect':rect(10,11,13,12,sh);rect(11,12,11,10);rect(12,7,9,6);rect(7,14,4,3,'#f0d7ae');rect(22,14,4,3,'#f0d7ae');rect(7,21,4,3);rect(22,21,4,3);rect(10,7,1,5,'#f0d7ae');rect(21,7,1,5,'#f0d7ae');eye(13,19,10);break;
+            case 'crab':rect(7,12,18,10,sh);rect(8,10,16,10);rect(2,12,7,7);rect(23,12,7,7);rect(1,8,5,6);rect(26,8,5,6);rect(8,21,3,4);rect(21,21,3,4);eye(12,20,11);break;
+            case 'scorpion':rect(9,14,14,8);rect(12,10,9,6);rect(3,17,8,3);rect(1,14,5,5);rect(23,12,4,5);rect(25,8,3,5);rect(24,4,5,5,'#f0d7ae');rect(8,21,3,4);rect(21,21,3,4);eye(13,19,12);break;
+            case 'spider':rect(11,12,11,10);rect(9,9,8,8);for(const [a,b,w,h] of [[3,8,8,2],[1,12,9,2],[3,18,7,2],[20,8,8,2],[22,12,9,2],[22,18,7,2]])rect(a,b,w,h,sh);rect(6,8,5,5);rect(23,8,5,5);eye(11,19,13);break;
+            case 'serpent':rect(4,19,8,4);rect(9,15,8,4);rect(14,11,8,4);rect(19,7,9,8);rect(23,5,4,4);eye(22,26,9);break;
+            case 'ghost':rect(9,9,14,13);rect(7,14,4,7);rect(21,14,4,7);rect(10,6,12,6);rect(9,21,4,4);rect(15,22,4,3);rect(21,21,4,4);eye(12,19,13,'#26313b');break;
+            case 'plant':rect(14,13,5,12,'#8e704b');rect(12,8,9,8);rect(5,9,9,6);rect(18,7,9,7);rect(9,4,8,6);rect(7,14,5,4,'#a9c578');rect(21,13,5,4,'#a9c578');eye(13,19,11);break;
+            case 'armored':rect(9,13,15,11,sh);rect(11,13,11,9);rect(12,6,10,9);rect(10,4,14,5,'#d5c69c');rect(5,14,6,8);rect(23,14,5,8);rect(7,12,3,10,'#9baeb0');rect(25,10,2,15,'#d9c58c');eye(13,19,10);break;
+            case 'golem':rect(6,10,20,15,sh);rect(8,8,16,15);rect(10,4,12,7);rect(4,13,5,9);rect(23,13,5,9);rect(10,23,5,4,'#303c40');rect(19,23,5,4,'#303c40');rect(12,15,3,3,'#f6d48a');rect(19,15,3,3,'#f6d48a');break;
+            case 'dragon':rect(3,17,8,4,sh);rect(8,14,14,8);rect(20,9,9,8);rect(23,6,4,5);rect(8,9,9,6,sh);rect(5,7,8,8);rect(9,5,3,6,'#f0d7ae');rect(15,4,3,6,'#f0d7ae');rect(12,21,4,5,sh);rect(20,21,4,5,sh);eye(23,27,10);break;
+            case 'bird':rect(3,12,10,8,sh);rect(19,12,10,8,sh);rect(7,9,8,9);rect(17,9,8,9);rect(12,10,9,13);rect(13,5,7,7);rect(16,3,3,5,'#f0d7ae');rect(20,10,7,3,'#e7bb6d');rect(12,21,3,5,sh);rect(19,21,3,5,sh);eye(14,19,9);break;
+            case 'eye':rect(7,7,18,17,sh);rect(9,8,14,14);rect(12,11,8,7,'#f0d7ae');rect(15,10,3,10,'#7c4251');rect(15,12,3,5,'#20272a');rect(6,11,3,3,'#f0d7ae');rect(24,11,3,3,'#f0d7ae');rect(13,4,2,4,sh);rect(18,3,2,5,sh);break;
+            case 'giant':rect(5,9,22,16,sh);rect(8,7,16,16);rect(10,3,12,8);rect(3,12,7,11);rect(22,12,7,11);rect(9,22,5,5,sh);rect(19,22,5,5,sh);eye(11,19,14);break;
+            case 'hydra':rect(8,15,17,9,sh);rect(12,12,11,9);rect(7,7,5,11);rect(14,4,5,14);rect(21,7,5,11);rect(5,5,8,5);rect(12,2,9,5);rect(20,5,8,5);rect(7,8,2,2,'#f0d7ae');rect(15,5,2,2,'#f0d7ae');rect(22,8,2,2,'#f0d7ae');break;
+            case 'demon':rect(3,11,9,11,sh);rect(20,11,9,11,sh);rect(10,13,13,10);rect(12,6,9,9);rect(10,3,4,7,'#f0d7ae');rect(20,3,4,7,'#f0d7ae');rect(11,22,4,5,sh);rect(19,22,4,5,sh);eye(13,19,11);break;
+            case 'skeleton':rect(11,6,11,10,'#d1c9ae');rect(12,8,2,2,'#273033');rect(19,8,2,2,'#273033');rect(13,16,7,2,'#f0d7ae');rect(11,18,2,5,'#f0d7ae');rect(20,18,2,5,'#f0d7ae');rect(7,15,5,2,'#f0d7ae');rect(21,15,5,2,'#f0d7ae');rect(10,23,4,3,sh);rect(19,23,4,3,sh);break;
+            case 'skeletonBeast':rect(5,14,19,8,'#b5ae9b');rect(20,9,8,9);rect(7,20,3,6,sh);rect(14,20,3,6,sh);rect(22,20,3,6,sh);rect(3,12,5,3,'#f0d7ae');rect(11,15,11,2,'#eee4c8');eye(22,26,12);break;
+            default:rect(8,13,16,11);rect(11,7,10,9);eye();
+        }
+        if(kind==='star-phoenix'){rect(14,2,4,4,'#fff1b0');rect(5,8,4,3,'#e4a85d');rect(24,8,4,3,'#e4a85d');}
+        else if(kind==='void-hydra'){rect(7,4,3,3,'#a8a0dc');rect(22,4,3,3,'#a8a0dc');}
+        else if(kind==='cursed-paladin'||kind==='abyss-knight')rect(15,3,2,5,'#d4c58f');
+    }
     drawMonster(x, y, monster) {
         const ctx = this.context;
         ctx.fillStyle = 'rgba(5,10,11,.4)';
@@ -301,25 +342,7 @@ export class RenderManager {
                 'void-dragon': '#645b9a', 'star-phoenix': '#c28b65', 'night-emperor': '#75618f', 'dimensional-fiend': '#905c9c', 'primal-guardian': '#a09a70',
             };
             const body = colors[monster.kind] ?? '#a66c62';
-            ctx.fillStyle = body;
-            if (monster.kind === 'bat') {
-                ctx.fillRect(x + 3, y + 11, 26, 11);
-                ctx.fillRect(x + 10, y + 7, 12, 15);
-            }
-            else if (monster.kind === 'slime') {
-                ctx.fillRect(x + 7, y + 12, 19, 13);
-                ctx.fillRect(x + 10, y + 8, 13, 5);
-            }
-            else {
-                ctx.fillRect(x + 7, y + 11, 19, 16);
-                ctx.fillRect(x + 9, y + 6, 15, 10);
-            }
-            ctx.fillStyle = '#e8d7b0';
-            ctx.fillRect(x + 11, y + 12, 3, 3);
-            ctx.fillRect(x + 20, y + 12, 3, 3);
-            ctx.fillStyle = '#273033';
-            ctx.fillRect(x + 12, y + 13, 1, 2);
-            ctx.fillRect(x + 21, y + 13, 1, 2);
+            this.drawMonsterSprite(x, y, monster.kind, body);
         }
         if (monster.hp < monster.maxHp) {
             ctx.fillStyle = '#1a2021';

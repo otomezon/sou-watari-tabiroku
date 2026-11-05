@@ -1,7 +1,7 @@
 import { DEFAULT_AUDIO_SETTINGS } from "./storage.js";
 import { getModeConfig } from "./modes.js";
 const EVENT_CUE_URLS = {
-    level: './audio/level-up-fanfare.mp3',
+    level: './audio/level-up-fanfare-v2.wav',
     gameover: './audio/game-over.mp3',
 };
 const TRACK_URLS = {
@@ -184,12 +184,18 @@ export class SoundManager {
             return;
         const now = this.context.currentTime;
         let offset = 0;
+        let damageIndex = 0;
         for (const effect of effects) {
             if (effect === 'level' || effect === 'gameover') {
                 void this.playEventCue(effect, now + offset);
-                offset += effect === 'level' ? 2.65 : 3.8;
-            }
-            else {
+                offset += effect === 'level' ? 3.15 : 3.8;
+            } else if (effect === 'attack') {
+                this.playAttackEffect(now + offset);
+                offset += 0.18;
+            } else if (effect === 'damage') {
+                this.playDamageEffect(now + offset, damageIndex++);
+                offset += 0.27;
+            } else {
                 this.playEffect(effect, now + offset);
                 offset += 0.115;
             }
@@ -245,6 +251,31 @@ export class SoundManager {
                 this.playEffect(cue, this.context.currentTime + 0.015);
             }
         }
+    }
+    playTransientTone(fromHz,toHz,wave,startAt,duration,peak) {
+        if(!this.context||!this.sfxGain)return;
+        const oscillator=this.context.createOscillator();
+        const envelope=this.context.createGain();
+        oscillator.type=wave;
+        oscillator.frequency.setValueAtTime(fromHz,startAt);
+        if(toHz>0)oscillator.frequency.exponentialRampToValueAtTime(toHz,startAt+duration);
+        envelope.gain.setValueAtTime(0.0001,startAt);
+        envelope.gain.exponentialRampToValueAtTime(peak,startAt+0.006);
+        envelope.gain.exponentialRampToValueAtTime(0.0001,startAt+duration);
+        oscillator.connect(envelope).connect(this.sfxGain);
+        oscillator.start(startAt);
+        oscillator.stop(startAt+duration+0.012);
+        oscillator.onended=()=>{oscillator.disconnect();envelope.disconnect();};
+    }
+    playAttackEffect(startAt) {
+        this.playTransientTone(760,245,'sawtooth',startAt,0.135,0.18);
+        this.playTransientTone(1320,690,'triangle',startAt+0.012,0.105,0.14);
+        this.playTransientTone(310,185,'sine',startAt+0.018,0.095,0.08);
+    }
+    playDamageEffect(startAt,hitIndex=0) {
+        const variation=hitIndex%2===0?1:0.88;
+        this.playTransientTone(138*variation,62*variation,'triangle',startAt,0.17,0.27);
+        this.playTransientTone(286*variation,126*variation,'square',startAt+0.006,0.115,0.105);
     }
     playEffect(effect, startAt) {
         if (!this.context || !this.sfxGain)

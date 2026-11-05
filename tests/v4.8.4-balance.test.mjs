@@ -92,8 +92,8 @@ test('existing inventories get updated recovery and descriptions',async()=>{
 });
 test('release version, PWA cache and save schema remain consistent',async()=>{
  const [m,man,sw,e]=await Promise.all([readProjectFile('assets/main.js'),readProjectFile('manifest.webmanifest'),readProjectFile('sw.js'),readProjectFile('assets/engine.js')]);
- assert.match(m,/APP_VERSION = '4\.8\.4'/);
- assert.match(man,/"version": "4\.8\.4"/);
- assert.match(sw,/sou-watari-tabiroku-v4-8-4/);
+ assert.match(m,/APP_VERSION = '4\.9\.0'/);
+ assert.match(man,/"version": "4\.9\.0"/);
+ assert.match(sw,/sou-watari-tabiroku-v4-9-0/);
  assert.match(e,/schemaVersion: 11/);
 });
