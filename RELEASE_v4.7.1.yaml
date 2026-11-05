@@ -1,0 +1,21 @@
+release:
+  project: 層渡りの旅録
+  version: 4.7.1
+  previous_version: 4.7.0
+  type: patch
+  changes:
+    shop_selection:
+      selected_button_label: 解除
+      action: 再押下でselectedGoodIdをnullにする
+      preserve_inventory: true
+      preserve_unpaid_debt: true
+      allow_reselection: true
+    pwa:
+      service_worker_cache: sou-watari-tabiroku-v4-7-1
+      invalidate_previous_cache: true
+    save:
+      schema_version: 11
+      migration_required: false
+  validation:
+    release_specific_checks: 7
+    result: passed
