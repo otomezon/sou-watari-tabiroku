@@ -1,9 +1,0 @@
-層渡りの旅録 v4.8.0 — Minor release
-
-- sou-watari-tabiroku-project-v4.8.0.zip: full project and tests
-- sou-watari-tabiroku-hosting-v4.8.0.zip: flattened static hosting package
-- sou-watari-tabiroku-design-v4.8.0.yaml: current design specification
-
-Player and monsters support eight directions. Diagonal moves cost one action and cannot cut wall corners. Diagonal melee attacks are enabled for both sides. Save schema v11 is unchanged.
-
-Validation: Node 115/115; layout 11/11; dedicated diagonal 10/10; browser TypeScript compile PASS; standalone preview PASS. Physical device and human playtests remain outstanding.

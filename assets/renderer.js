@@ -1,7 +1,7 @@
 import { getModeConfig } from "./modes.js";
 import { getEnemyLevel } from "./enemy-level.mjs";
 const TILE = 36;
-const COLS = 15;
+const COLS = 16;
 const ROWS = 13;
 const WIDTH = COLS * TILE;
 const HEIGHT = ROWS * TILE;
