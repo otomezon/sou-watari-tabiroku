@@ -17,4 +17,4 @@ release:
   service_worker_cache: sou-watari-tabiroku-v4-9-0
   offline_assets:
     - audio/level-up-fanfare-v2.wav
-  regression_cases: 12
+  regression_cases: 13

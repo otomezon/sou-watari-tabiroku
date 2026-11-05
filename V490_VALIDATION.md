@@ -12,7 +12,7 @@
 - Save schema remains 11.
 
 ## Regression scope
-The v4.9.0 test suite adds 12 focused checks for sprite coverage, visual diversity, UI cleanup, attack and damage cue routing, fast-hit separation, fanfare format/offline precache, version consistency, and save compatibility.
+The v4.9.0 test suite adds 13 focused checks for sprite coverage, visual diversity, UI cleanup, attack and damage cue routing, fast-hit separation, fanfare format/offline precache, version consistency, and save compatibility.
 
 ## Not yet verified on physical devices
 - Actual audio perception and speaker/headphone mix on iOS and Android.
