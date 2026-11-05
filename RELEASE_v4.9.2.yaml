@@ -1,0 +1,31 @@
+release:
+  project: 層渡りの旅録
+  version: 4.9.2
+  previous_version: 4.9.1
+  type: patch
+  level_up_fanfare:
+    implementation: Web Audio API procedural synthesis
+    duration_seconds: 2.95
+    key: D major
+    progression: G-A-D (IV-V-I)
+    style: brass-like melody, soft triads, root accents, final bell
+    original_composition: true
+    copied_game_audio: false
+    external_asset_required: false
+    next_cue_delay_seconds: 3.05
+  enemy_defeat_feedback:
+    separate_defeat_cue: removed
+    experience_pickup_sound: removed
+    player_attack_sound_on_kill: true
+    level_up_fanfare_only_when_level_increases: true
+  cue_order:
+    - attack
+    - level_up_if_gained
+    - received_damage
+    - clear_or_gameover
+  app_version: 4.9.2
+  manifest_version: 4.9.2
+  cache: sou-watari-tabiroku-v4-9-2
+  save_schema: 11
+  migration_required: false
+  regression_tests: 8
