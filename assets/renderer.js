@@ -1,4 +1,5 @@
 import { getModeConfig } from "./modes.js";
+import { getEnemyLevel } from "./enemy-level.mjs";
 const TILE = 32;
 const COLS = 17;
 const ROWS = 10;
@@ -326,6 +327,23 @@ export class RenderManager {
             ctx.fillStyle = '#bd6c5d';
             ctx.fillRect(x + 4, y + 1, Math.max(1, 24 * monster.hp / monster.maxHp), 3);
         }
+        const levelText = `Lv${getEnemyLevel(monster)}`;
+        let levelFontSize = 6;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = `bold ${levelFontSize}px sans-serif`;
+        while (ctx.measureText(levelText).width > 14 && levelFontSize > 4) {
+            levelFontSize -= 0.5;
+            ctx.font = `bold ${levelFontSize}px sans-serif`;
+        }
+        const levelBadgeWidth = Math.min(18, Math.max(13, Math.ceil(ctx.measureText(levelText).width + 4)));
+        ctx.fillStyle = monster.boss ? 'rgba(76,36,44,.96)' : 'rgba(12,22,24,.92)';
+        ctx.fillRect(x + 1, y + 23, levelBadgeWidth, 9);
+        ctx.strokeStyle = monster.boss ? '#b77d70' : 'rgba(215,181,109,.72)';
+        ctx.lineWidth = 0.7;
+        ctx.strokeRect(x + 1, y + 23, levelBadgeWidth, 9);
+        ctx.fillStyle = '#fff1cf';
+        ctx.fillText(levelText, x + 1 + levelBadgeWidth / 2, y + 27.5);
         if (monster.rareVariant) {
             const speed = monster.actionSpeed ?? 'normal';
             const badge = speed === 'fast' ? 'Ⅱ' : speed === 'slow' ? '½' : '★';
