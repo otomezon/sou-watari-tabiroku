@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sou-watari-tabiroku-v4-8-1';
+const CACHE_NAME = 'sou-watari-tabiroku-v4-8-2';
 const APP_ROOT = new URL('./', self.location.href);
 const appUrl = (path) => new URL(path, APP_ROOT).href;
 const SHELL = [
