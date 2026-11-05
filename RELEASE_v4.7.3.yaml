@@ -1,0 +1,25 @@
+release:
+  project: 層渡りの旅録
+  version: 4.7.3
+  previous_version: 4.7.2
+  type: patch
+  shop_flow:
+    item_actions: [拾う, 戻す]
+    purchase_target: all_picked_up_unpaid_goods
+    purchase_action: まとめて購入
+    per_item_selection: removed
+    per_item_deselection: removed
+    per_item_return: available
+    return_effect: remove_from_inventory_or_equipment_restore_shelf_refund_item_price
+    insufficient_gold: no_state_change
+  compatibility:
+    legacy_selectedGoodId: read_only_compatibility; ignored_by_purchase_logic
+    save_schema: 11
+    migration_required: false
+  verification:
+    node_tests: 108/108
+    layout_tests: 10/10
+    shop_tests: 27/27
+    browser_typescript: pass
+    standalone_preview: pass
+    design_yaml_parse: pass
