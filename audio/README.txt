@@ -13,3 +13,7 @@ All six tracks are original compositions synthesized locally for this project. N
 
 v4.9.0:
 - level-up-fanfare-v2.wav is an original synthesized level-up cue: a rising bell-like arpeggio resolving into a warm major chord. No third-party samples or recordings are used; the cue is precached for offline play.
+
+
+v4.9.1:
+- level-up-fanfare-v3.wav is a new original 1.58-second fanfare with an ascending major-key phrase, warm brass-like lead, string support and a short bell accent. It takes broad inspiration from classic dungeon RPG celebration cues but does not reproduce any existing melody or recording. It is precached for offline play.

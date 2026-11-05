@@ -1,7 +1,7 @@
 import { DEFAULT_AUDIO_SETTINGS } from "./storage.js";
 import { getModeConfig } from "./modes.js";
 const EVENT_CUE_URLS = {
-    level: './audio/level-up-fanfare-v2.wav',
+    level: './audio/level-up-fanfare-v3.wav',
     gameover: './audio/game-over.mp3',
 };
 const TRACK_URLS = {
@@ -184,17 +184,16 @@ export class SoundManager {
             return;
         const now = this.context.currentTime;
         let offset = 0;
-        let damageIndex = 0;
         for (const effect of effects) {
             if (effect === 'level' || effect === 'gameover') {
                 void this.playEventCue(effect, now + offset);
-                offset += effect === 'level' ? 3.15 : 3.8;
+                offset += effect === 'level' ? 1.75 : 3.8;
             } else if (effect === 'attack') {
                 this.playAttackEffect(now + offset);
                 offset += 0.18;
             } else if (effect === 'damage') {
-                this.playDamageEffect(now + offset, damageIndex++);
-                offset += 0.27;
+                this.playDamageEffect(now + offset);
+                offset += 0.24;
             } else {
                 this.playEffect(effect, now + offset);
                 offset += 0.115;
@@ -272,10 +271,10 @@ export class SoundManager {
         this.playTransientTone(1320,690,'triangle',startAt+0.012,0.105,0.14);
         this.playTransientTone(310,185,'sine',startAt+0.018,0.095,0.08);
     }
-    playDamageEffect(startAt,hitIndex=0) {
-        const variation=hitIndex%2===0?1:0.88;
-        this.playTransientTone(138*variation,62*variation,'triangle',startAt,0.17,0.27);
-        this.playTransientTone(286*variation,126*variation,'square',startAt+0.006,0.115,0.105);
+    playDamageEffect(startAt) {
+        // Every hit uses exactly the same damage sound; repeated hits are distinguished by timing only.
+        this.playTransientTone(138, 62, 'triangle', startAt, 0.17, 0.27);
+        this.playTransientTone(286, 126, 'square', startAt + 0.006, 0.115, 0.105);
     }
     playEffect(effect, startAt) {
         if (!this.context || !this.sfxGain)

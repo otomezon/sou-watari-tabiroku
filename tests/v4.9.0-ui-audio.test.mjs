@@ -49,21 +49,21 @@ test('player attack has its own multi-layer synthesized cue', async () => {
 test('received damage has a low impact and midrange crack', async () => {
   const source = await read('assets/audio.js');
   assert.match(source, /playDamageEffect/);
-  assert.match(source, /138\*variation,62\*variation,'triangle'/);
-  assert.match(source, /286\*variation,126\*variation,'square'/);
+  assert.match(source, /playTransientTone\(138, 62, 'triangle'/);
+  assert.match(source, /playTransientTone\(286, 126, 'square'/);
 });
 test('sequential damage cues are spaced so two fast hits are distinct', async () => {
   const source = await read('assets/audio.js');
-  assert.match(source, /offset \+= 0\.27/);
-  assert.match(source, /damageIndex\+\+/);
+  assert.match(source, /offset \+= 0\.24/);
+  assert.match(source, /playDamageEffect\(now \+ offset\)/);
 });
 test('new fanfare is referenced and precached for offline play', async () => {
   const [audio,sw] = await Promise.all([read('assets/audio.js'),read('sw.js')]);
-  assert.match(audio, /level-up-fanfare-v2\.wav/);
-  assert.match(sw, /audio\/level-up-fanfare-v2\.wav/);
+  assert.match(audio, /level-up-fanfare-v3\.wav/);
+  assert.match(sw, /audio\/level-up-fanfare-v3\.wav/);
 });
 test('level-up WAV has a valid PCM header and mono 16-bit format', async () => {
-  const wav = await readFile(new URL('audio/level-up-fanfare-v2.wav', root));
+  const wav = await readFile(new URL('audio/level-up-fanfare-v3.wav', root));
   assert.equal(wav.toString('ascii', 0, 4), 'RIFF');
   assert.equal(wav.toString('ascii', 8, 12), 'WAVE');
   assert.equal(wav.readUInt16LE(20), 1);
@@ -76,8 +76,8 @@ test('level-up and damage cues can both play on the same turn', async () => {
 });
 test('release versions and save schema are consistent', async () => {
   const [main,manifest,sw,engine] = await Promise.all([read('assets/main.js'),read('manifest.webmanifest'),read('sw.js'),read('assets/engine.js')]);
-  assert.match(main, /APP_VERSION = '4\.9\.0'/);
-  assert.match(manifest, /"version": "4\.9\.0"/);
+  assert.match(main, /APP_VERSION = '4\.9\.1'/);
+  assert.match(manifest, /"version": "4\.9\.1"/);
   assert.match(sw, /sou-watari-tabiroku-v4-9-0/);
   assert.match(engine, /schemaVersion: 11/);
 });
