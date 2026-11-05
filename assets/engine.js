@@ -503,7 +503,7 @@ export class GameEngine {
         this.state.updatedAt = Date.now();
         return true;
     }
-    /** Pick up an item first; it enters the inventory as an unpaid shop item. */
+    /** Pick up an item first; unpaid shop goods keep a dedicated inventory entry. */
     pickUpShopGood(goodId) {
         const shop = this.state.shop;
         if (!this.canTalkToShopkeeper() || !shop)
@@ -514,8 +514,49 @@ export class GameEngine {
         good.stolen = true;
         shop.stolenDebt += good.price;
         shop.selectedGoodId = good.id;
-        this.addInventory(good.item);
+        // Keep the unpaid item's uid distinct so an exact return can be performed later.
+        this.state.inventory.push({ item: good.item, count: 1 });
         this.state.message = `${itemDisplayName(good.item)}を手に取った。購入するまでは未払い扱いになる。`;
+        this.state.updatedAt = Date.now();
+        return true;
+    }
+    /** Return one unpaid item to its shelf and cancel only that item's debt. */
+    returnUnpaidShopGood(goodId) {
+        const shop = this.state.shop;
+        if (!this.canTalkToShopkeeper() || !shop)
+            return false;
+        const good = shop.goods.find((entry) => entry.id === goodId && entry.stolen && !entry.sold);
+        if (!good)
+            return false;
+        const exactStack = this.state.inventory.find((entry) => entry.item.uid === good.item.uid);
+        if (exactStack) {
+            this.removeOneFromStack(exactStack);
+        }
+        else {
+            const equipmentSlot = ["weapon", "shield", "armor"].find((slot) => this.state.equipment[slot]?.uid === good.item.uid);
+            if (equipmentSlot) {
+                this.state.equipment[equipmentSlot] = null;
+            }
+            else if (good.item.kind === "potion" || good.item.kind === "food" || good.item.kind === "valuable") {
+                const legacyStack = this.state.inventory.find((entry) => entry.item.templateId === good.item.templateId);
+                if (!legacyStack) {
+                    this.state.message = `${itemDisplayName(good.item)}は所持品に見つからないため戻せない。`;
+                    this.state.updatedAt = Date.now();
+                    return false;
+                }
+                this.removeOneFromStack(legacyStack);
+            }
+            else {
+                this.state.message = `${itemDisplayName(good.item)}は所持品に見つからないため戻せない。`;
+                this.state.updatedAt = Date.now();
+                return false;
+            }
+        }
+        good.stolen = false;
+        shop.stolenDebt = Math.max(0, shop.stolenDebt - good.price);
+        if (shop.selectedGoodId === good.id)
+            shop.selectedGoodId = null;
+        this.state.message = `${itemDisplayName(good.item)}を店の商品棚へ戻した。未払い${good.price}Gを取り消した。`;
         this.state.updatedAt = Date.now();
         return true;
     }
@@ -583,6 +624,11 @@ export class GameEngine {
         const stack = this.state.inventory.find((entry) => entry.item.uid === uid);
         if (!stack)
             return false;
+        if (this.isUnpaidShopInventoryItem(stack.item)) {
+            this.state.message = "未払い商品は売却できない。購入するか、商品棚へ戻そう。";
+            this.state.updatedAt = Date.now();
+            return false;
+        }
         const price = getShopSellPrice(stack.item, this.state.floor);
         this.removeOneFromStack(stack);
         this.state.gold = Math.min(20_000_000, this.state.gold + price);
@@ -866,9 +912,21 @@ export class GameEngine {
         if (pickedMessage)
             this.state.message = pickedMessage;
     }
+    isUnpaidShopInventoryItem(item) {
+        const unpaidGoods = this.state.shop?.goods.filter((good) => good.stolen && !good.sold) ?? [];
+        if (unpaidGoods.some((good) => good.item.uid === item.uid))
+            return true;
+        const stackable = item.kind === 'potion' || item.kind === 'food' || item.kind === 'valuable';
+        return stackable && unpaidGoods.some((good) => good.item.templateId === item.templateId &&
+            !this.state.inventory.some((entry) => entry.item.uid === good.item.uid));
+    }
     addInventory(item) {
         const canStack = item.kind === 'potion' || item.kind === 'food' || item.kind === 'valuable';
-        const existing = canStack ? this.state.inventory.find((entry) => entry.item.templateId === item.templateId) : undefined;
+        const isUnpaidShopItem = this.state.shop?.goods.some((good) => good.stolen && !good.sold && good.item.uid === item.uid) ?? false;
+        const existing = canStack && !isUnpaidShopItem
+            ? this.state.inventory.find((entry) => entry.item.templateId === item.templateId &&
+                !(this.state.shop?.goods.some((good) => good.stolen && !good.sold && good.item.uid === entry.item.uid) ?? false))
+            : undefined;
         if (existing)
             existing.count += 1;
         else
