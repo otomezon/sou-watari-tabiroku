@@ -535,6 +535,25 @@ export class GameEngine {
         this.state.updatedAt = Date.now();
         return true;
     }
+    /** Toggle the purchase target; deselection never pays for or removes the unpaid item. */
+    toggleUnpaidShopGoodSelection(goodId) {
+        const shop = this.state.shop;
+        if (!this.canTalkToShopkeeper() || !shop)
+            return false;
+        const good = shop.goods.find((entry) => entry.id === goodId && entry.stolen && !entry.sold);
+        if (!good)
+            return false;
+        if (shop.selectedGoodId === good.id) {
+            shop.selectedGoodId = null;
+            this.state.message = `${itemDisplayName(good.item)}の購入対象を解除した。未払いのまま所持品に残っている。`;
+        }
+        else {
+            shop.selectedGoodId = good.id;
+            this.state.message = `${itemDisplayName(good.item)}を購入対象に選んだ。`;
+        }
+        this.state.updatedAt = Date.now();
+        return true;
+    }
     /** Pay only for the currently selected picked-up item. */
     buySelectedShopGood() {
         const shop = this.state.shop;
