@@ -393,7 +393,7 @@ main {
 .shop-heading { color: #e3c77e; font-size: 12px; margin: 8px 0 2px; }
 .shop-entry { gap: 7px; padding: 8px; }
 .shop-price { flex: 0 0 auto; color: #e8cb7b; font-size: 11px; white-space: nowrap; }
-.shop-buy, .shop-sell, .shop-select, .shop-pickup { min-width: 58px; }
+.shop-buy, .shop-sell, .shop-select, .shop-pickup, .shop-return { min-width: 52px; }
 .shop-debt { margin-top: 2px; }
 .shop-pending-note { color: #e8a18b; font-size: 10px; text-align: right; }
 .shop-selected { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px; border: 1px solid rgba(215,181,109,.4); border-radius: 9px; background: rgba(202,160,82,.10); }
@@ -404,6 +404,7 @@ main {
 .shop-purchase:disabled, .shop-select:disabled { opacity: .42; cursor: default; }
 .shop-entry-selected { border-color: rgba(215,181,109,.55); background: rgba(202,160,82,.10); }
 .shop-pickup { border-color: rgba(115,176,143,.45); background: rgba(48,105,76,.28); color: #b8e0c6; }
+.shop-return { border-color: rgba(215,181,109,.42); background: rgba(119,89,42,.24); color: #efd69b; }
 
 
 /* v4.2.1: Keep the game viewport width and its canvas stable as floor/turn/gold values gain digits. */
