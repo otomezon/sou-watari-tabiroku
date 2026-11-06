@@ -63,6 +63,40 @@ export function generateDungeon(seed) {
     }
     return { width: WIDTH, height: HEIGHT, tiles, start, stairs, rooms };
 }
+/** Dedicated final-floor arena: a broad hall with a short entrance approach. */
+export function generateBossDungeon(seed) {
+    const random = new Random(seed);
+    const tiles = Array.from({ length: HEIGHT }, () => Array(WIDTH).fill(0));
+    const hall = { x: 3, y: 3, width: 32, height: 31 };
+    for (let y = hall.y; y < hall.y + hall.height; y += 1) {
+        for (let x = hall.x; x < hall.x + hall.width; x += 1)
+            tiles[y][x] = 1;
+    }
+    // A four-tile-wide entrance opens into the hall from the southern wall.
+    for (let y = 32; y <= 36; y += 1) {
+        for (let x = 17; x <= 20; x += 1)
+            tiles[y][x] = 1;
+    }
+    // Stone pillars frame the arena without narrowing its central combat space.
+    const offset = random.int(0, 1);
+    const pillars = [
+        { x: 7 + offset, y: 8 }, { x: 29 - offset, y: 8 },
+        { x: 7 + offset, y: 27 }, { x: 29 - offset, y: 27 },
+    ];
+    for (const pillar of pillars) {
+        for (let y = pillar.y; y < pillar.y + 2; y += 1) {
+            for (let x = pillar.x; x < pillar.x + 2; x += 1)
+                tiles[y][x] = 0;
+        }
+    }
+    return {
+        width: WIDTH, height: HEIGHT, tiles,
+        start: { x: 19, y: 35 },
+        stairs: null,
+        rooms: [hall],
+        bossArena: true,
+    };
+}
 function roomCenter(room) {
     return { x: Math.floor(room.x + room.width / 2), y: Math.floor(room.y + room.height / 2) };
 }

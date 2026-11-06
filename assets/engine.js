@@ -1,4 +1,4 @@
-import { canStepBetween, DIRECTION_DELTA, generateDungeon, isWalkable, nextPathStep, pointKey } from "./dungeon.js";
+import { canStepBetween, DIRECTION_DELTA, generateBossDungeon, generateDungeon, isWalkable, nextPathStep, pointKey } from "./dungeon.js";
 import { createFloorLoot, createItem, itemDisplayName, itemDurability, itemEnhancement } from "./items.js";
 import { floorSeed, makeSeed, Random } from "./random.js";
 import { getModeConfig } from "./modes.js";
@@ -131,10 +131,11 @@ function findBossPoint(state, reserved) {
     for (const room of preferredRooms) {
         const center = { x: Math.floor(room.x + room.width / 2), y: Math.floor(room.y + room.height / 2) };
         const candidates = [];
-        for (let y = room.y; y < room.y + room.height; y += 1) {
-            for (let x = room.x; x < room.x + room.width; x += 1) {
+        for (let y = room.y; y < room.y + room.height - 1; y += 1) {
+            for (let x = room.x; x < room.x + room.width - 1; x += 1) {
                 const point = { x, y };
-                if (isWalkable(state.dungeon.tiles, point) && !reserved.has(pointKey(point)))
+                const footprint = [{ x, y }, { x: x + 1, y }, { x, y: y + 1 }, { x: x + 1, y: y + 1 }];
+                if (footprint.every((cell) => isWalkable(state.dungeon.tiles, cell) && !reserved.has(pointKey(cell))))
                     candidates.push(point);
             }
         }
@@ -181,6 +182,93 @@ function createShop(state, random) {
         keeper, goods, stolenDebt: 0, selectedGoodId: null, hostile: false,
     };
 }
+function monsterSize(monster) {
+    return monster.boss ? 2 : 1;
+}
+function monsterFootprintCells(monster) {
+    const size = monsterSize(monster);
+    const cells = [];
+    for (let y = 0; y < size; y += 1) {
+        for (let x = 0; x < size; x += 1)
+            cells.push({ x: monster.x + x, y: monster.y + y });
+    }
+    return cells;
+}
+function monsterCovers(monster, point) {
+    const size = monsterSize(monster);
+    return point.x >= monster.x && point.y >= monster.y && point.x < monster.x + size && point.y < monster.y + size;
+}
+function collectBlockedMonsterCells(monsters, excludeId) {
+    const blocked = new Set();
+    for (const monster of monsters) {
+        if (monster.id === excludeId || monster.hp <= 0)
+            continue;
+        for (const cell of monsterFootprintCells(monster))
+            blocked.add(pointKey(cell));
+    }
+    return blocked;
+}
+function canOccupyFootprint(tiles, position, size, blocked) {
+    for (let y = 0; y < size; y += 1) {
+        for (let x = 0; x < size; x += 1) {
+            const cell = { x: position.x + x, y: position.y + y };
+            if (!isWalkable(tiles, cell) || blocked.has(pointKey(cell)))
+                return false;
+        }
+    }
+    return true;
+}
+function canStepFootprint(tiles, from, to, size, blocked) {
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    if (Math.abs(dx) > 1 || Math.abs(dy) > 1 || (dx === 0 && dy === 0))
+        return false;
+    if (!canOccupyFootprint(tiles, to, size, blocked))
+        return false;
+    if (dx !== 0 && dy !== 0) {
+        if (!canOccupyFootprint(tiles, { x: from.x + dx, y: from.y }, size, blocked) ||
+            !canOccupyFootprint(tiles, { x: from.x, y: from.y + dy }, size, blocked))
+            return false;
+    }
+    return true;
+}
+function isFootprintAdjacentToPoint(tiles, position, point, size) {
+    for (let y = 0; y < size; y += 1) {
+        for (let x = 0; x < size; x += 1) {
+            const cell = { x: position.x + x, y: position.y + y };
+            if (Math.max(Math.abs(point.x - cell.x), Math.abs(point.y - cell.y)) === 1 && canStepBetween(tiles, cell, point))
+                return true;
+        }
+    }
+    return false;
+}
+function distanceToFootprint(position, point, size) {
+    const dx = point.x < position.x ? position.x - point.x : point.x >= position.x + size ? point.x - (position.x + size - 1) : 0;
+    const dy = point.y < position.y ? position.y - point.y : point.y >= position.y + size ? point.y - (position.y + size - 1) : 0;
+    return Math.max(dx, dy);
+}
+function nextFootprintPathStep(tiles, from, target, blocked, size = 2) {
+    const queue = [from];
+    const firstStep = new Map([[pointKey(from), null]]);
+    const seen = new Set([pointKey(from)]);
+    const directions = Object.values(DIRECTION_DELTA);
+    for (let head = 0; head < queue.length; head += 1) {
+        const current = queue[head];
+        if (isFootprintAdjacentToPoint(tiles, current, target, size))
+            return firstStep.get(pointKey(current));
+        for (const delta of directions) {
+            const next = { x: current.x + delta.x, y: current.y + delta.y };
+            const nextKey = pointKey(next);
+            if (seen.has(nextKey) || !canStepFootprint(tiles, current, next, size, blocked))
+                continue;
+            seen.add(nextKey);
+            firstStep.set(nextKey, firstStep.get(pointKey(current)) ?? next);
+            queue.push(next);
+        }
+    }
+    return null;
+}
+
 function insideBounds(point, bounds) {
     return point.x >= bounds.x && point.y >= bounds.y && point.x < bounds.x + bounds.width && point.y < bounds.y + bounds.height;
 }
@@ -192,7 +280,7 @@ export function findItemDropPoint(state, monster) {
         return origin;
     const blocked = new Set([
         pointKey(state.player),
-        ...state.monsters.filter((entry) => entry.id !== monster.id && entry.hp > 0).map(pointKey),
+        ...state.monsters.filter((entry) => entry.id !== monster.id && entry.hp > 0).flatMap(monsterFootprintCells).map(pointKey),
         ...(state.shop?.goods ?? []).filter((good) => !good.sold).map(pointKey),
     ]);
     if (state.dungeon.stairs)
@@ -307,15 +395,18 @@ function populateFloor(state, runRandom) {
         if (bossPoint) {
             const formRoll = random.next();
             const form = formRoll < 0.20 ? 'slow' : formRoll < 0.40 ? 'fast' : 'normal';
-            const hp = Math.round(mode.bossHp * (form === 'slow' ? 1.12 : form === 'fast' ? 0.93 : 1));
-            const attack = Math.ceil(mode.bossAttack * (form === 'slow' ? 1.8 : form === 'fast' ? 0.80 : 1));
+            const hp = Math.round(mode.bossHp * 1.15 * (form === 'slow' ? 1.12 : form === 'fast' ? 0.93 : 1));
+            const attack = Math.ceil(mode.bossAttack * 1.10 * (form === 'slow' ? 1.8 : form === 'fast' ? 0.80 : 1));
             const formName = form === 'slow' ? `${mode.bossName}・剛腕形態` : form === 'fast' ? `${mode.bossName}・疾風形態` : mode.bossName;
             state.monsters.push({
                 id: `boss-${state.modeId}-${state.seed}`, kind: 'boss', name: formName,
-                x: bossPoint.x, y: bossPoint.y, hp, maxHp: hp, attack, defense: mode.bossDefense,
+                x: bossPoint.x, y: bossPoint.y, hp, maxHp: hp, attack, defense: mode.bossDefense + 2,
                 exp: mode.bossExp, boss: true, actionSpeed: form, actionProgress: 0, rareVariant: true,
             });
-            occupied.add(pointKey(bossPoint));
+            for (let y = 0; y < 2; y += 1) {
+                for (let x = 0; x < 2; x += 1)
+                    occupied.add(pointKey({ x: bossPoint.x + x, y: bossPoint.y + y }));
+            }
             const progress = 1;
             const tier = MONSTER_TIERS[mode.maxMonsterTier - 1] ?? MONSTER_TIERS[0];
             for (let index = 0; index < mode.bossFloorMonsters + 1; index += 1) {
@@ -391,7 +482,71 @@ export class GameEngine {
     getHunterLevelUpCount() { return this.hunterLevelUpCount; }
     constructor(state) {
         this.state = state;
+        this.ensureBossArena();
         this.relocateStairOccupants();
+    }
+    /** Move in-progress legacy final-floor saves into the new arena without resetting boss HP. */
+    ensureBossArena() {
+        const mode = getModeConfig(this.state.modeId);
+        if (this.state.status !== 'playing' || this.state.floor !== mode.floors || this.state.dungeon.bossArena)
+            return;
+        const boss = this.state.monsters.find((monster) => monster.boss);
+        if (!boss)
+            return;
+        // Keep floor loot while moving the legacy encounter into the new arena.
+        const previousGroundItems = this.state.groundItems ?? [];
+        const previousGroundGold = this.state.groundGold ?? [];
+        // Apply the new large-boss balance to legacy runs while preserving the remaining HP ratio.
+        boss.hp = Math.ceil(boss.hp * 1.15);
+        boss.maxHp = Math.ceil(boss.maxHp * 1.15);
+        boss.attack = Math.ceil(boss.attack * 1.10);
+        boss.defense += 2;
+        this.state.dungeon = generateBossDungeon(floorSeed(this.state.seed, this.state.floor, MODE_SALT[this.state.modeId]));
+        this.state.player.x = this.state.dungeon.start.x;
+        this.state.player.y = this.state.dungeon.start.y;
+        this.state.shop = null;
+        const bossPoint = findBossPoint(this.state, new Set([pointKey(this.state.player)]));
+        if (bossPoint) {
+            boss.x = bossPoint.x;
+            boss.y = bossPoint.y;
+        }
+        const supportPoints = [{ x: 12, y: 12 }, { x: 26, y: 12 }, { x: 12, y: 25 }, { x: 26, y: 25 }];
+        let supportIndex = 0;
+        this.state.monsters = this.state.monsters.filter((monster) => {
+            if (monster.boss)
+                return true;
+            const point = supportPoints[supportIndex++];
+            if (!point)
+                return false;
+            monster.x = point.x;
+            monster.y = point.y;
+            return true;
+        });
+        const blocked = new Set([
+            pointKey(this.state.player),
+            ...this.state.monsters.flatMap(monsterFootprintCells).map(pointKey),
+        ]);
+        const lootSpots = [];
+        for (let y = 4; y < this.state.dungeon.height - 2; y += 1) {
+            for (let x = 4; x < this.state.dungeon.width - 2; x += 1) {
+                const point = { x, y };
+                const key = pointKey(point);
+                if (isWalkable(this.state.dungeon.tiles, point) && !blocked.has(key)) {
+                    blocked.add(key);
+                    lootSpots.push(point);
+                }
+            }
+        }
+        let lootIndex = 0;
+        this.state.groundItems = previousGroundItems.map((ground) => {
+            const point = lootSpots[lootIndex++];
+            return point ? { ...ground, x: point.x, y: point.y } : ground;
+        });
+        this.state.groundGold = previousGroundGold.map((gold) => {
+            const point = lootSpots[lootIndex++];
+            return point ? { ...gold, x: point.x, y: point.y } : gold;
+        });
+        this.state.message = `最深部の大広間に到達した。${boss.name}が立ちはだかる！`;
     }
     /** Safety net for legacy or malformed saves: monsters must never occupy stairs. */
     relocateStairOccupants() {
@@ -433,7 +588,7 @@ export class GameEngine {
             this.state.message = '壁がある。別の道を探そう。';
             return;
         }
-        const target = this.state.monsters.find((monster) => monster.x === next.x && monster.y === next.y);
+        const target = this.state.monsters.find((monster) => monsterCovers(monster, next));
         if (target) {
             const random = this.actionRandom();
             this.attackMonster(target, random);
@@ -690,7 +845,9 @@ export class GameEngine {
             return false;
         this.state.floor += 1;
         // The run-wide turn counter and hunger cycles persist across floors.
-        this.state.dungeon = generateDungeon(floorSeed(this.state.seed, this.state.floor, MODE_SALT[this.state.modeId]));
+        this.state.dungeon = this.state.floor === getModeConfig(this.state.modeId).floors
+            ? generateBossDungeon(floorSeed(this.state.seed, this.state.floor, MODE_SALT[this.state.modeId]))
+            : generateDungeon(floorSeed(this.state.seed, this.state.floor, MODE_SALT[this.state.modeId]));
         this.state.player.x = this.state.dungeon.start.x;
         this.state.player.y = this.state.dungeon.start.y;
         populateFloor(this.state);
@@ -860,6 +1017,21 @@ export class GameEngine {
             }
         }
     }
+    attackPlayer(monster, random) {
+        const damage = Math.max(1, monster.attack + random.int(-1, 1) - getDefense(this.state));
+        this.state.player.hp = Math.max(0, this.state.player.hp - damage);
+        this.combatDamageReceived = true;
+        this.combatHitCount += 1;
+        const broken = [];
+        const shieldBreak = this.wearEquipment('shield');
+        const armorBreak = this.wearEquipment('armor');
+        if (shieldBreak)
+            broken.push(shieldBreak);
+        if (armorBreak)
+            broken.push(armorBreak);
+        const speedLabel = monster.actionSpeed === 'fast' ? '（連続攻撃）' : '';
+        this.state.message = `${this.state.message} ${monster.name}の攻撃${speedLabel}！ ${damage} ダメージを受けた。${broken.length ? ` ${broken.join(' ')}` : ''}`.slice(0, 480);
+    }
     performMonsterAction(monster, random) {
         if (monster.hunterVariant) {
             const prey = this.state.monsters
@@ -898,7 +1070,7 @@ export class GameEngine {
                     }
                 }
                 else {
-                    const blocked = new Set(this.state.monsters.filter((other) => other.id !== monster.id).map(pointKey));
+                    const blocked = collectBlockedMonsterCells(this.state.monsters, monster.id);
                     blocked.add(pointKey(this.state.player));
                     if (this.state.dungeon.stairs)
                         blocked.add(pointKey(this.state.dungeon.stairs));
@@ -938,7 +1110,7 @@ export class GameEngine {
                     }
                 }
                 else {
-                    const blocked = new Set(this.state.monsters.filter((other) => other.id !== monster.id).map(pointKey));
+                    const blocked = collectBlockedMonsterCells(this.state.monsters, monster.id);
                     blocked.add(pointKey(this.state.player));
                     if (this.state.dungeon.stairs)
                         blocked.add(pointKey(this.state.dungeon.stairs));
@@ -951,30 +1123,36 @@ export class GameEngine {
                 return;
             }
         }
+        if (monster.boss) {
+            if (isFootprintAdjacentToPoint(this.state.dungeon.tiles, monster, this.state.player, 2)) {
+                this.attackPlayer(monster, random);
+                return;
+            }
+            if (distanceToFootprint(monster, this.state.player, 2) > 14)
+                return;
+            const blocked = collectBlockedMonsterCells(this.state.monsters, monster.id);
+            blocked.add(pointKey(this.state.player));
+            if (this.state.dungeon.stairs)
+                blocked.add(pointKey(this.state.dungeon.stairs));
+            const step = nextFootprintPathStep(this.state.dungeon.tiles, monster, this.state.player, blocked, 2);
+            if (step) {
+                monster.x = step.x;
+                monster.y = step.y;
+            }
+            return;
+        }
         const dx = this.state.player.x - monster.x;
         const dy = this.state.player.y - monster.y;
         const adjacent = Math.max(Math.abs(dx), Math.abs(dy)) === 1 &&
             canStepBetween(this.state.dungeon.tiles, monster, this.state.player);
         const distance = Math.max(Math.abs(dx), Math.abs(dy));
         if (adjacent) {
-            const damage = Math.max(1, monster.attack + random.int(-1, 1) - getDefense(this.state));
-            this.state.player.hp = Math.max(0, this.state.player.hp - damage);
-            this.combatDamageReceived = true;
-            this.combatHitCount += 1;
-            const broken = [];
-            const shieldBreak = this.wearEquipment('shield');
-            const armorBreak = this.wearEquipment('armor');
-            if (shieldBreak)
-                broken.push(shieldBreak);
-            if (armorBreak)
-                broken.push(armorBreak);
-            const speedLabel = monster.actionSpeed === 'fast' ? '（連続攻撃）' : '';
-            this.state.message = `${this.state.message} ${monster.name}の攻撃${speedLabel}！ ${damage} ダメージを受けた。${broken.length ? ` ${broken.join(' ')}` : ''}`.slice(0, 480);
+            this.attackPlayer(monster, random);
             return;
         }
         if (distance > 14)
             return;
-        const blocked = new Set(this.state.monsters.filter((other) => other.id !== monster.id).map(pointKey));
+        const blocked = collectBlockedMonsterCells(this.state.monsters, monster.id);
         const stairs = this.state.dungeon.stairs;
         // Stairs are reserved for the player. A chasing monster must never path onto them.
         // If the player is currently standing on the stairs, keep the target reachable so
