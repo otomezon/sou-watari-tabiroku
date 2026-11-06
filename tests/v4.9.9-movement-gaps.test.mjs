@@ -19,6 +19,7 @@ test('horizontal, vertical, and outer gaps consistently resolve to 7px', async (
   assert.match(release, /gap:\s*7px/);
   assert.match(css, /\.game-screen\s*\{[^}]*gap:\s*4px/);
   assert.match(css, /\.action-row\s*\{[^}]*margin-top:\s*3px;[^}]*margin-bottom:\s*3px/);
+  assert.match(css, /v4\.9\.9 rebuild: lift the upper status panel[\s\S]*?\.status-panel \{\s*position: relative;\s*top: -2px;/);
   assert.doesNotMatch(release, /28px|30px|36px|42px/);
 });
 
@@ -33,5 +34,5 @@ test('PWA assets use v4.9.9 with a refreshed cache', async () => {
   const [main, manifest, sw] = await Promise.all([read('assets/main.js'), read('manifest.webmanifest'), read('sw.js')]);
   assert.match(main, /APP_VERSION = '4\.9\.9'/);
   assert.match(manifest, /"version": "4\.9\.9"/);
-  assert.match(sw, /sou-watari-tabiroku-v4-9-9-r1/);
+  assert.match(sw, /sou-watari-tabiroku-v4-9-9-r2/);
 });

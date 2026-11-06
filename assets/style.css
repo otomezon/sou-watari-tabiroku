@@ -973,3 +973,9 @@ main {
   margin-top: 3px;
   margin-bottom: 3px;
 }
+
+/* v4.9.9 rebuild: lift the upper status panel slightly without changing layout flow. */
+.status-panel {
+  position: relative;
+  top: -2px;
+}
