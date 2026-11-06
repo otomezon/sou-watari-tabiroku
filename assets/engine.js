@@ -227,7 +227,7 @@ function createRegularMonster(state, point, random, index, progress, template) {
         exp: Math.max(1, Math.round((template.exp + state.floor) * (0.8 + mode.difficultyScale * 0.2))),
         boss: false, actionSpeed: 'normal', actionProgress: 0, rareVariant: false,
     };
-    const rarityRoll = random.next();
+    const rarityRoll = random.next() * 0.062 / Math.max(0.001, mode.rareMonsterChance);
     if (state.modeId !== 'tutorial' && state.modeId !== 'beginner' && rarityRoll < 0.012) {
         monster.rareVariant = true;
         monster.hunterVariant = true;
@@ -808,9 +808,9 @@ export class GameEngine {
             this.state.groundItems.push({ ...findItemDropPoint(this.state, monster), item: drop });
             this.state.message += ` ${drop.name}を落とした。`;
         }
-        if (random.chance(monster.rareVariant ? Math.min(0.70, drops.enemyDropGold * 2.5) : drops.enemyDropGold)) {
+        if (random.chance(monster.rareVariant ? Math.min(0.60, drops.enemyDropGold * 2.0) : drops.enemyDropGold)) {
             const goldBase = random.int(12 + this.state.floor * 3, 30 + this.state.floor * 7);
-            const amount = Math.round(goldBase * (monster.rareVariant ? 2 : 0.85));
+            const amount = Math.round(goldBase * (monster.rareVariant ? 1.5 : 0.75));
             const existing = this.state.groundGold.find((entry) => entry.x === monster.x && entry.y === monster.y);
             if (existing)
                 existing.amount += amount;

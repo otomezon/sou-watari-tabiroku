@@ -1,0 +1,25 @@
+release:
+  project: 層渡りの旅録
+  version: 5.0.5
+  previous_version: 5.0.4
+  type: patch
+  title: ゴールド報酬の抑制とレア個体出現率の段階調整
+  changes:
+    - reduce_normal_gold_drop_chance_by_difficulty
+    - reduce_gold_amount_multiplier_for_normal_and_rare_monsters
+    - increase_rare_monster_chance_by_difficulty
+    - preserve_no_rare_tutorial_and_no_man-eater_beginner
+    - preserve_non_gold_drops_and_rare_premium_loot
+  rare_monster_chance:
+    tutorial: 0.000
+    beginner: 0.062
+    intermediate: 0.068
+    advanced: 0.074
+    expert: 0.080
+  save:
+    schema: 12
+    migration_required: false
+  pwa:
+    app_version: 5.0.5
+    manifest_version: 5.0.5
+    service_worker_cache: sou-watari-tabiroku-v5-0-5
