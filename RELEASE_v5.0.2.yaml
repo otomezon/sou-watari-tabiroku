@@ -1,0 +1,18 @@
+release:
+  project: 層渡りの旅録
+  version: 5.0.2
+  previous_version: 5.0.1
+  type: patch
+  title: チュートリアル・初級の出現調整とボス階増援
+  changes:
+    - tutorial_disables_all_rare_monsters
+    - tutorial_disables_shop_generation
+    - beginner_disables_hunter_variant_only
+    - boss_floor_adds_one_regular_support_monster
+  save:
+    schema: 12
+    migration_required: false
+  pwa:
+    app_version: 5.0.2
+    manifest_version: 5.0.2
+    service_worker_cache: sou-watari-tabiroku-v5-0-2

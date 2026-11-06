@@ -146,7 +146,7 @@ function findBossPoint(state, reserved) {
 }
 function createShop(state, random) {
     const mode = getModeConfig(state.modeId);
-    if (state.floor === mode.floors || !random.chance(mode.shopChance))
+    if (state.modeId === 'tutorial' || state.floor === mode.floors || !random.chance(mode.shopChance))
         return null;
     const candidateRooms = state.dungeon.rooms.slice(1, -1);
     if (!candidateRooms.length)
@@ -228,7 +228,7 @@ function createRegularMonster(state, point, random, index, progress, template) {
         boss: false, actionSpeed: 'normal', actionProgress: 0, rareVariant: false,
     };
     const rarityRoll = random.next();
-    if (rarityRoll < 0.012) {
+    if (state.modeId !== 'tutorial' && state.modeId !== 'beginner' && rarityRoll < 0.012) {
         monster.rareVariant = true;
         monster.hunterVariant = true;
         monster.hunterLevel = 1;
@@ -239,7 +239,7 @@ function createRegularMonster(state, point, random, index, progress, template) {
         monster.defense += 2;
         monster.exp = Math.ceil(monster.exp * 2.8);
     }
-    else if (rarityRoll < 0.037) {
+    else if (state.modeId !== 'tutorial' && rarityRoll < 0.037) {
         monster.actionSpeed = 'slow';
         monster.rareVariant = true;
         monster.name = `剛腕の${template.name}`;
@@ -249,7 +249,7 @@ function createRegularMonster(state, point, random, index, progress, template) {
         monster.defense += 3;
         monster.exp = Math.ceil(monster.exp * 2.5);
     }
-    else if (rarityRoll < 0.062) {
+    else if (state.modeId !== 'tutorial' && rarityRoll < 0.062) {
         monster.actionSpeed = 'fast';
         monster.rareVariant = true;
         monster.name = `俊敏な${template.name}`;
@@ -317,7 +317,7 @@ function populateFloor(state, runRandom) {
             occupied.add(pointKey(bossPoint));
             const progress = 1;
             const tier = MONSTER_TIERS[mode.maxMonsterTier - 1] ?? MONSTER_TIERS[0];
-            for (let index = 0; index < mode.bossFloorMonsters; index += 1) {
+            for (let index = 0; index < mode.bossFloorMonsters + 1; index += 1) {
                 const point = takePoint();
                 if (!point)
                     break;
