@@ -2,7 +2,7 @@ import { getModeConfig } from "./modes.js";
 import { getEnemyLevel } from "./enemy-level.mjs";
 const TILE = 36;
 const COLS = 16;
-const ROWS = 13;
+const ROWS = 12;
 const WIDTH = COLS * TILE;
 const HEIGHT = ROWS * TILE;
 export const MONSTER_SHAPE_BY_KIND = {

@@ -77,7 +77,7 @@
           </section>
 
           <section class="dungeon-frame" aria-label="ダンジョンマップ">
-            <canvas id="dungeon-canvas" width="576" height="468" aria-label="ダンジョンマップ。プレイヤー、通路、魔物、アイテムが表示されます。"></canvas>
+            <canvas id="dungeon-canvas" width="576" height="432" aria-label="ダンジョンマップ。プレイヤー、通路、魔物、アイテムが表示されます。"></canvas>
           </section>
 
           <div class="message-panel" aria-live="polite">
@@ -95,20 +95,17 @@
             <button id="descend-button" class="action-button action-gold" disabled aria-label="階段の上にいるとき使用できます">階段</button>
           </div>
 
-          <section class="controls-panel" aria-label="移動操作">
-            <div class="controls-title"><span>移動</span><small>1操作 = 1ターン</small></div>
-            <div class="dpad" aria-label="8方向移動パッド">
-              <button class="dpad-button" data-direction="up-left" aria-label="左上へ移動">↖</button>
-              <button class="dpad-button" data-direction="up" aria-label="上へ移動">▲</button>
-              <button class="dpad-button" data-direction="up-right" aria-label="右上へ移動">↗</button>
-              <button class="dpad-button" data-direction="left" aria-label="左へ移動">◀</button>
-              <button id="wait-button" class="dpad-button dpad-wait" type="button" aria-label="その場で1ターン待機"><span>待機</span><small>1ターン</small></button>
-              <button class="dpad-button" data-direction="right" aria-label="右へ移動">▶</button>
-              <button class="dpad-button" data-direction="down-left" aria-label="左下へ移動">↙</button>
-              <button class="dpad-button" data-direction="down" aria-label="下へ移動">▼</button>
-              <button class="dpad-button" data-direction="down-right" aria-label="右下へ移動">↘</button>
-            </div>
-          </section>
+          <div class="dpad" aria-label="8方向移動パッド">
+            <button class="dpad-button" data-direction="up-left" aria-label="左上へ移動">↖</button>
+            <button class="dpad-button" data-direction="up" aria-label="上へ移動">↑</button>
+            <button class="dpad-button" data-direction="up-right" aria-label="右上へ移動">↗</button>
+            <button class="dpad-button" data-direction="left" aria-label="左へ移動">←</button>
+            <button id="wait-button" class="dpad-button dpad-wait" type="button" aria-label="その場で1ターン待機"><span>待機</span><small>1ターン</small></button>
+            <button class="dpad-button" data-direction="right" aria-label="右へ移動">→</button>
+            <button class="dpad-button" data-direction="down-left" aria-label="左下へ移動">↙</button>
+            <button class="dpad-button" data-direction="down" aria-label="下へ移動">↓</button>
+            <button class="dpad-button" data-direction="down-right" aria-label="右下へ移動">↘</button>
+          </div>
         </section>
 
         <section id="result-screen" class="screen result-screen hidden">
