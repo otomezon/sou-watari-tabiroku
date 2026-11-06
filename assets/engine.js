@@ -771,8 +771,24 @@ export class GameEngine {
         this.checkLevelUp();
         const lootRoll = random.next();
         const drops = getModeConfig(this.state.modeId);
-        if (monster.rareVariant) {
-            // Rare action-speed monsters are tougher encounters and have a premium loot table.
+        if (monster.hunterVariant) {
+            // 魔喰いは最も危険なレア個体。高確率で上位品質の装備・換金品を落とす。
+            let drop = null;
+            if (lootRoll < 0.45)
+                drop = createItem(this.state.floor, random, random.pick(['weapon', 'shield', 'armor']), this.state.modeId, 'premium');
+            else if (lootRoll < 0.65)
+                drop = createItem(this.state.floor, random, 'valuable', this.state.modeId, 'premium');
+            else if (lootRoll < 0.75)
+                drop = createItem(this.state.floor, random, 'potion', this.state.modeId, 'premium');
+            else if (lootRoll < 0.80)
+                drop = createItem(this.state.floor, random, 'food', this.state.modeId, 'premium');
+            if (drop) {
+                this.state.groundItems.push({ ...findItemDropPoint(this.state, monster), item: drop });
+                this.state.message += ` 魔喰いの豪華な戦利品 ${itemDisplayName(drop)}を落とした！`;
+            }
+        }
+        else if (monster.rareVariant) {
+            // 剛腕・俊敏も通常個体より豪華なプレミアム戦利品を持つ。
             let drop = null;
             if (lootRoll < 0.19)
                 drop = createItem(this.state.floor, random, random.pick(['weapon', 'shield', 'armor']), this.state.modeId, 'premium');
@@ -810,7 +826,7 @@ export class GameEngine {
         }
         if (random.chance(monster.rareVariant ? Math.min(0.60, drops.enemyDropGold * 2.0) : drops.enemyDropGold)) {
             const goldBase = random.int(12 + this.state.floor * 3, 30 + this.state.floor * 7);
-            const amount = Math.round(goldBase * (monster.rareVariant ? 1.5 : 0.75));
+            const amount = Math.round(goldBase * (monster.rareVariant ? 2.0 : 0.85));
             const existing = this.state.groundGold.find((entry) => entry.x === monster.x && entry.y === monster.y);
             if (existing)
                 existing.amount += amount;

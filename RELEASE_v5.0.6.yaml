@@ -1,0 +1,31 @@
+release:
+  project: 層渡りの旅録
+  version: 5.0.6
+  previous_version: 5.0.5
+  type: patch
+  title: レア個体出現率と魔喰い戦利品の強化
+  changes:
+    - increase_rare_monster_chance_by_difficulty
+    - restore_normal_and_rare_gold_amount_multipliers
+    - slightly_increase_normal_item_drop_rates
+    - add_hunter_variant_premium_loot_table
+    - preserve_reduced_gold_drop_chance
+    - preserve_no_rare_tutorial_and_no_man-eater_beginner
+  rare_monster_chance:
+    tutorial: 0.000
+    beginner: 0.085
+    intermediate: 0.095
+    advanced: 0.105
+    expert: 0.115
+  loot:
+    hunter_variant_item_drop_chance: 0.80
+    other_rare_variant_item_drop_chance: 0.35
+    normal_gold_amount_multiplier: 0.85
+    rare_gold_amount_multiplier: 2.0
+  save:
+    schema: 12
+    migration_required: false
+  pwa:
+    app_version: 5.0.6
+    manifest_version: 5.0.6
+    service_worker_cache: sou-watari-tabiroku-v5-0-6
