@@ -141,8 +141,11 @@ class GameApp {
                 this.showMessage('冒険の記録が見つかりません。');
                 return;
             }
+            const hadBossArena = loaded.dungeon.bossArena === true;
             this.state = loaded;
             this.engine = new GameEngine(loaded);
+            if (!hadBossArena && loaded.dungeon.bossArena === true)
+                await this.persist();
             if (loaded.status === 'gameover' || loaded.status === 'clear')
                 this.showResult();
             else {
