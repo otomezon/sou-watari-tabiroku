@@ -38,7 +38,7 @@ export const DUNGEON_MODES = {
     expert: {
         id: 'expert', name: '星喰らいの深淵', subtitle: '最上級 · 地下30階',
         description: '星の光すら届かない最深層。万全の装備と判断力が試される。',
-        floors: 30, difficultyScale: 1.42, maxMonsterTier: 6, minMonsters: 6, maxMonsters: 10, bossFloorMonsters: 3,
+        floors: 30, difficultyScale: 1.35, maxMonsterTier: 6, minMonsters: 6, maxMonsters: 10, bossFloorMonsters: 3,
         rareMonsterChance: 0.115, floorLootChance: 0.54, equipmentWeight: 0.20, foodWeight: 0.34, potionWeight: 0.46,
         enemyDropEquipment: 0.017, enemyDropPotion: 0.025, enemyDropFood: 0.017, enemyDropGold: 0.32, shopChance: 0.10, enemyDropValuable: 0.010,
         bossName: '星喰らいゼル＝ノヴァ', bossHp: 640, bossAttack: 38, bossDefense: 12, bossExp: 760,
