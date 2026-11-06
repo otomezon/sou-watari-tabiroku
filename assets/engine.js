@@ -440,7 +440,8 @@ function populateFloor(state, runRandom) {
         const tierBlend = getMonsterTierBlend(tierProgress, mode.maxMonsterTier);
         const lowerTier = MONSTER_TIERS[tierBlend.lowerTierIndex] ?? MONSTER_TIERS[0];
         const upperTier = MONSTER_TIERS[tierBlend.upperTierIndex] ?? lowerTier;
-        const spawnRange = getMonsterSpawnRange(mode, floor);\n        const count = random.int(spawnRange.min, spawnRange.max);
+        const spawnRange = getMonsterSpawnRange(mode, floor);
+        const count = random.int(spawnRange.min, spawnRange.max);
         for (let index = 0; index < count; index += 1) {
             const point = takePoint();
             if (!point)
