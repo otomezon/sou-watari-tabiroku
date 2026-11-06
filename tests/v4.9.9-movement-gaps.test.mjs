@@ -32,7 +32,7 @@ test('movement header remains removed and all eight directions plus wait remain'
 
 test('PWA assets use v4.9.9 with a refreshed cache', async () => {
   const [main, manifest, sw] = await Promise.all([read('assets/main.js'), read('manifest.webmanifest'), read('sw.js')]);
-  assert.match(main, /APP_VERSION = '5.0.0'/);
-  assert.match(manifest, /"version": "5.0.0"/);
-  assert.match(sw, /sou-watari-tabiroku-v5-0-0/);
+  assert.match(main, /APP_VERSION = '5.0.1'/);
+  assert.match(manifest, /"version": "5.0.1"/);
+  assert.match(sw, /sou-watari-tabiroku-v5-0-1/);
 });

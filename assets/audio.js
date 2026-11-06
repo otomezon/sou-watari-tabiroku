@@ -175,6 +175,10 @@ export class SoundManager {
             this.playLevelUpFanfare();
             return;
         }
+        if (effect === 'hunter-level') {
+            this.playHunterLevelUpFanfare();
+            return;
+        }
         if (effect === 'gameover') {
             void this.playEventCue(effect);
             return;
@@ -189,6 +193,9 @@ export class SoundManager {
         for (const effect of effects) {
             if (effect === 'level') {
                 this.playLevelUpFanfare(now + offset);
+                offset += 3.05;
+            } else if (effect === 'hunter-level') {
+                this.playHunterLevelUpFanfare(now + offset);
                 offset += 3.05;
             } else if (effect === 'gameover') {
                 void this.playEventCue(effect, now + offset);
@@ -304,10 +311,11 @@ export class SoundManager {
             envelope.disconnect();
         };
     }
-    playLevelUpFanfare(requestedStart) {
+    playLevelUpFanfare(requestedStart, transposeSemitones = 0) {
         if (!this.context || !this.sfxGain || this.settings.muteSfx || this.settings.sfxVolume <= 0)
             return;
         const start = Math.max(this.context.currentTime + 0.018, requestedStart ?? this.context.currentTime + 0.018);
+        const pitch = (frequency) => frequency * Math.pow(2, transposeSemitones / 12);
 
         // Original three-part phrase in D major: IV (G) -> V (A) -> I (D).
         // Broken-chord calls and responses replace the previous simple rising scale.
@@ -317,7 +325,7 @@ export class SoundManager {
             [1.98, 739.99, 0.15], [2.15, 880.00, 0.15], [2.33, 1174.66, 0.58],
         ];
         for (const [time, frequency, duration] of melody)
-            this.playFanfareTone(frequency, start + time, duration, 0.092, 'sawtooth', 2850, 0.012);
+            this.playFanfareTone(pitch(frequency), start + time, duration, 0.092, 'sawtooth', 2850, 0.012);
 
         // Soft string-like triads give each phrase a clear harmonic home.
         const chords = [
@@ -327,13 +335,17 @@ export class SoundManager {
         ];
         for (const [time, duration, notes] of chords) {
             for (const frequency of notes)
-                this.playFanfareTone(frequency, start + time, duration, 0.022, 'triangle', 1750, 0.12);
+                this.playFanfareTone(pitch(frequency), start + time, duration, 0.022, 'triangle', 1750, 0.12);
         }
 
         // Root pulses and a small bell at the final tonic make the resolution easy to hear.
         for (const [time, frequency] of [[0.00, 98.00], [0.94, 110.00], [1.85, 73.42]])
-            this.playFanfareTone(frequency, start + time, 0.29, 0.065, 'sine', 720, 0.008);
-        this.playFanfareTone(2349.32, start + 2.48, 0.42, 0.025, 'sine', 5200, 0.004);
+            this.playFanfareTone(pitch(frequency), start + time, 0.29, 0.065, 'sine', 720, 0.008);
+        this.playFanfareTone(pitch(2349.32), start + 2.48, 0.42, 0.025, 'sine', 5200, 0.004);
+    }
+    /** Same level-up phrase transposed down a whole tone into C major. */
+    playHunterLevelUpFanfare(requestedStart) {
+        this.playLevelUpFanfare(requestedStart, -2);
     }
     playEffect(effect, startAt) {
         if (!this.context || !this.sfxGain)

@@ -384,8 +384,10 @@ export class GameEngine {
     state;
     combatDamageReceived = false;
     combatHitCount = 0;
+    hunterLevelUpCount = 0;
     didReceiveCombatDamage() { return this.combatDamageReceived; }
     getCombatHitCount() { return this.combatHitCount; }
+    getHunterLevelUpCount() { return this.hunterLevelUpCount; }
     constructor(state) {
         this.state = state;
         this.relocateStairOccupants();
@@ -703,6 +705,7 @@ export class GameEngine {
             return;
         this.combatDamageReceived = false;
         this.combatHitCount = 0;
+        this.hunterLevelUpCount = 0;
         this.activateShopkeeperIfStolen();
         this.enemyPhase(random);
         this.state.turn += 1;
@@ -856,6 +859,7 @@ export class GameEngine {
                     canStepBetween(this.state.dungeon.tiles, monster, prey);
                 if (preyAdjacent) {
                     const damage = Math.max(1, monster.attack + random.int(-1, 1) - prey.defense);
+                    prey.retaliationTargetId = monster.id;
                     prey.hp -= damage;
                     if (prey.hp <= 0) {
                         this.state.monsters = this.state.monsters.filter((entry) => entry.id !== prey.id);
@@ -869,6 +873,7 @@ export class GameEngine {
                             monster.attack = Math.min(10000, monster.attack + 1);
                             if (nextLevel % 2 === 0)
                                 monster.defense = Math.min(10000, monster.defense + 1);
+                            this.hunterLevelUpCount += 1;
                         }
                         this.state.message = `${this.state.message} ${monster.name}が${prey.name}を倒した！ 魔喰いはLv.${monster.hunterLevel ?? currentLevel}に成長し、能力が強化された。`.slice(0, 480);
                     }
@@ -882,6 +887,46 @@ export class GameEngine {
                     if (this.state.dungeon.stairs)
                         blocked.add(pointKey(this.state.dungeon.stairs));
                     const step = nextPathStep(this.state.dungeon.tiles, monster, prey, blocked);
+                    if (step) {
+                        monster.x = step.x;
+                        monster.y = step.y;
+                    }
+                }
+                return;
+            }
+        }
+        if (monster.retaliationTargetId) {
+            const target = this.state.monsters.find((other) =>
+                other.id === monster.retaliationTargetId && other.hp > 0 && other.hunterVariant === true);
+            if (!target) {
+                delete monster.retaliationTargetId;
+            }
+            else {
+                const targetDx = target.x - monster.x;
+                const targetDy = target.y - monster.y;
+                const targetAdjacent = Math.max(Math.abs(targetDx), Math.abs(targetDy)) === 1 &&
+                    canStepBetween(this.state.dungeon.tiles, monster, target);
+                if (targetAdjacent) {
+                    const damage = Math.max(1, monster.attack + random.int(-1, 1) - target.defense);
+                    target.hp -= damage;
+                    if (target.hp <= 0) {
+                        this.state.monsters = this.state.monsters.filter((entry) => entry.id !== target.id);
+                        for (const survivor of this.state.monsters) {
+                            if (survivor.retaliationTargetId === target.id)
+                                delete survivor.retaliationTargetId;
+                        }
+                        this.state.message = `${this.state.message} ${monster.name}が魔喰いを撃退した！`.slice(0, 480);
+                    }
+                    else {
+                        this.state.message = `${this.state.message} ${monster.name}は魔喰いに反撃！ ${damage}ダメージ。`.slice(0, 480);
+                    }
+                }
+                else {
+                    const blocked = new Set(this.state.monsters.filter((other) => other.id !== monster.id).map(pointKey));
+                    blocked.add(pointKey(this.state.player));
+                    if (this.state.dungeon.stairs)
+                        blocked.add(pointKey(this.state.dungeon.stairs));
+                    const step = nextPathStep(this.state.dungeon.tiles, monster, target, blocked);
                     if (step) {
                         monster.x = step.x;
                         monster.y = step.y;

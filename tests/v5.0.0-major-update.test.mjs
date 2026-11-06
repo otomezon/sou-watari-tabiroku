@@ -102,9 +102,9 @@ test('schema 12 keeps hunter level and all release markers aligned', async () =>
     read('assets/main.js'), read('manifest.webmanifest'), read('sw.js'),
     read('assets/engine.js'), read('assets/storage.js'),
   ]);
-  assert.match(main, /APP_VERSION = '5\.0\.0'/);
-  assert.match(manifest, /"version": "5\.0\.0"/);
-  assert.match(sw, /sou-watari-tabiroku-v5-0-0/);
+  assert.match(main, /APP_VERSION = '5\.0\.1'/);
+  assert.match(manifest, /"version": "5\.0\.1"/);
+  assert.match(sw, /sou-watari-tabiroku-v5-0-1/);
   assert.match(engine, /schemaVersion: 12/);
   assert.match(storage, /version: 12, savedAt:/);
 });

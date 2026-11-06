@@ -1,0 +1,22 @@
+release:
+  project: 層渡りの旅録
+  version: 5.0.1
+  previous_version: 5.0.0
+  type: patch
+  title: 魔喰いへの反撃AIと専用レベルアップファンファーレ
+  changes:
+    - attacked_normal_monsters_retarget_and_attack_hunter
+    - normal_monsters_clear_revenge_target_when_hunter_dies
+    - hunter_level_up_fanfare_transposed_minus_two_semitones
+  audio:
+    source: player_level_up_fanfare
+    transpose_semitones: -2
+    resulting_key: C_major
+    trigger: hunter_kills_normal_monster_and_levels_up
+  save:
+    schema: 12
+    migration_required: false
+  pwa:
+    app_version: 5.0.1
+    manifest_version: 5.0.1
+    service_worker_cache: sou-watari-tabiroku-v5-0-1

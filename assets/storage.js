@@ -153,6 +153,9 @@ export function validateGameState(value) {
             return false;
         if (monster.hunterVariant !== true && monster.hunterLevel !== undefined)
             return false;
+        if (monster.retaliationTargetId !== undefined &&
+            (typeof monster.retaliationTargetId !== 'string' || monster.retaliationTargetId.length < 1 || monster.retaliationTargetId.length > 120))
+            return false;
         if (monster.shopkeeper !== undefined && typeof monster.shopkeeper !== 'boolean')
             return false;
         if (monster.x < 0 || monster.y < 0 || monster.x >= state.dungeon.width || monster.y >= state.dungeon.height || !isWalkable(state.dungeon.tiles, monster))
