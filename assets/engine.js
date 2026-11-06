@@ -88,6 +88,16 @@ const MODE_SALT = {
     tutorial: 0x1a2b3c4d, beginner: 0x2b3c4d5e, intermediate: 0x3c4d5e6f,
     advanced: 0x4d5e6f70, expert: 0x5e6f7081,
 };
+export function getMonsterSpawnRange(mode, floor) {
+    if (mode.id === 'expert' && floor >= 1 && floor <= 3) {
+        return [
+            { min: 3, max: 4 },
+            { min: 4, max: 6 },
+            { min: 5, max: 8 },
+        ][floor - 1];
+    }
+    return { min: mode.minMonsters, max: mode.maxMonsters };
+}
 export function experienceToNext(level) {
     return 18 + Math.max(0, level - 1) * 12;
 }
@@ -430,7 +440,7 @@ function populateFloor(state, runRandom) {
         const tierBlend = getMonsterTierBlend(tierProgress, mode.maxMonsterTier);
         const lowerTier = MONSTER_TIERS[tierBlend.lowerTierIndex] ?? MONSTER_TIERS[0];
         const upperTier = MONSTER_TIERS[tierBlend.upperTierIndex] ?? lowerTier;
-        const count = random.int(mode.minMonsters, mode.maxMonsters);
+        const spawnRange = getMonsterSpawnRange(mode, floor);\n        const count = random.int(spawnRange.min, spawnRange.max);
         for (let index = 0; index < count; index += 1) {
             const point = takePoint();
             if (!point)
