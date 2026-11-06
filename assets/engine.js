@@ -493,6 +493,11 @@ export class GameEngine {
         const boss = this.state.monsters.find((monster) => monster.boss);
         if (!boss)
             return;
+        // Apply the new large-boss balance to legacy runs while preserving the remaining HP ratio.
+        boss.hp = Math.ceil(boss.hp * 1.15);
+        boss.maxHp = Math.ceil(boss.maxHp * 1.15);
+        boss.attack = Math.ceil(boss.attack * 1.10);
+        boss.defense += 2;
         this.state.dungeon = generateBossDungeon(floorSeed(this.state.seed, this.state.floor, MODE_SALT[this.state.modeId]));
         this.state.player.x = this.state.dungeon.start.x;
         this.state.player.y = this.state.dungeon.start.y;
