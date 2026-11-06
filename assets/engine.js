@@ -780,7 +780,7 @@ export class GameEngine {
                 drop = createItem(this.state.floor, random, 'valuable', this.state.modeId, 'premium');
             else if (lootRoll < 0.75)
                 drop = createItem(this.state.floor, random, 'potion', this.state.modeId, 'premium');
-            else if (lootRoll < 0.80)
+            else if (lootRoll < 0.60)
                 drop = createItem(this.state.floor, random, 'food', this.state.modeId, 'premium');
             if (drop) {
                 this.state.groundItems.push({ ...findItemDropPoint(this.state, monster), item: drop });

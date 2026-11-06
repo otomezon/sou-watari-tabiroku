@@ -1,0 +1,20 @@
+release:
+  project: 層渡りの旅録
+  version: 5.0.7
+  previous_version: 5.0.6
+  type: patch
+  title: 魔喰いのアイテムドロップ率調整
+  changes:
+    - reduce_hunter_variant_item_drop_chance
+    - keep_hunter_premium_loot_table
+    - preserve_other_drop_rates_and_rare_spawn_rates
+  loot:
+    hunter_variant_item_drop_chance: 0.60
+    other_rare_variant_item_drop_chance: 0.35
+  save:
+    schema: 12
+    migration_required: false
+  pwa:
+    app_version: 5.0.7
+    manifest_version: 5.0.7
+    service_worker_cache: sou-watari-tabiroku-v5-0-7
