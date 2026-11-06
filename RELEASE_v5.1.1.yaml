@@ -3,7 +3,7 @@ release:
   version: 5.1.1
   previous_version: 5.1.0
   type: patch
-  title: 序盤モンスター出現数の難易度別調整
+  title: 序盤出現数・最上級強さ倍率の調整
   changes:
     - tutorial_spawn_range_unchanged
     - beginner_floors_1_to_3_gradual_easing
@@ -11,7 +11,9 @@ release:
     - advanced_floors_1_to_3_gradual_easing
     - expert_floors_1_to_3_gradual_easing
     - all_modes_restore_configured_ranges_after_early_floors
-    - monster_stats_drops_rare_rates_and_boss_spawns_unchanged
+    - expert_difficulty_scale_reduced_from_1_42_to_1_35
+    - expert_remains_harder_than_advanced_scale_1_28
+    - monster_tiers_rare_rates_drops_and_boss_spawns_unchanged
   save:
     schema_change: false
   pwa:
