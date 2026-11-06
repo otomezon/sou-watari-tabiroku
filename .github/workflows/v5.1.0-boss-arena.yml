@@ -1,0 +1,24 @@
+name: v5.1.0 boss arena checks
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  boss-arena:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check JavaScript syntax
+        run: |
+          for file in assets/*.js assets/*.mjs; do
+            node --check "$file"
+          done
+      - name: Run v5.1.0 boss arena regression tests
+        run: node --test tests/v5.1.0-boss-arena.test.mjs
