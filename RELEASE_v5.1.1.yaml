@@ -1,0 +1,18 @@
+release:
+  project: 層渡りの旅録
+  version: 5.1.1
+  previous_version: 5.1.0
+  type: patch
+  title: 最上級の序盤出現数・強さ倍率調整
+  changes:
+    - expert_floors_1_to_3_spawn_count_adjusted
+    - other_difficulty_spawn_counts_unchanged
+    - expert_difficulty_scale_reduced_from_1_42_to_1_35
+    - expert_remains_harder_than_advanced_scale_1_28
+    - monster_tiers_rare_rates_drops_and_boss_stats_unchanged
+  save:
+    schema_change: false
+  pwa:
+    app_version: 5.1.1
+    manifest_version: 5.1.1
+    service_worker_cache: sou-watari-tabiroku-v5-1-1
