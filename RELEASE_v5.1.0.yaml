@@ -1,0 +1,20 @@
+release:
+  project: 層渡りの旅録
+  version: 5.1.0
+  previous_version: 5.0.7
+  type: minor
+  title: 大広間ボスステージと4マス占有ボス
+  changes:
+    - dedicated_final_boss_grand_hall
+    - four_tile_boss_footprint
+    - footprint_aware_player_attacks_and_enemy_movement
+    - boss_stats_hp_15_percent_attack_10_percent_defense_plus_2
+    - migrate_legacy_final_floor_saves_to_boss_arena
+    - preserve_final_floor_loot_during_legacy_migration
+  save:
+    schema: 12
+    migration_required: false
+  pwa:
+    app_version: 5.1.0
+    manifest_version: 5.1.0
+    service_worker_cache: sou-watari-tabiroku-v5-1-0
