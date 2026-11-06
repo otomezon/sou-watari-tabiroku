@@ -1,0 +1,18 @@
+release:
+  project: 層渡りの旅録
+  version: 5.1.1
+  previous_version: 5.1.0
+  type: patch
+  title: 最上級序盤のモンスター出現数調整
+  changes:
+    - expert_floor_1_monsters_3_to_4
+    - expert_floor_2_monsters_4_to_6
+    - expert_floor_3_monsters_5_to_8
+    - expert_floor_4_plus_monsters_6_to_10_unchanged
+    - other_modes_and_boss_floor_spawns_unchanged
+  save:
+    schema_change: false
+  pwa:
+    app_version: 5.1.1
+    manifest_version: 5.1.1
+    service_worker_cache: sou-watari-tabiroku-v5-1-1
