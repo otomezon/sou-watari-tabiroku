@@ -493,6 +493,9 @@ export class GameEngine {
         const boss = this.state.monsters.find((monster) => monster.boss);
         if (!boss)
             return;
+        // Keep floor loot while moving the legacy encounter into the new arena.
+        const previousGroundItems = this.state.groundItems ?? [];
+        const previousGroundGold = this.state.groundGold ?? [];
         // Apply the new large-boss balance to legacy runs while preserving the remaining HP ratio.
         boss.hp = Math.ceil(boss.hp * 1.15);
         boss.maxHp = Math.ceil(boss.maxHp * 1.15);
@@ -502,8 +505,6 @@ export class GameEngine {
         this.state.player.x = this.state.dungeon.start.x;
         this.state.player.y = this.state.dungeon.start.y;
         this.state.shop = null;
-        this.state.groundItems = [];
-        this.state.groundGold = [];
         const bossPoint = findBossPoint(this.state, new Set([pointKey(this.state.player)]));
         if (bossPoint) {
             boss.x = bossPoint.x;
@@ -520,6 +521,30 @@ export class GameEngine {
             monster.x = point.x;
             monster.y = point.y;
             return true;
+        });
+        const blocked = new Set([
+            pointKey(this.state.player),
+            ...this.state.monsters.flatMap(monsterFootprintCells).map(pointKey),
+        ]);
+        const lootSpots = [];
+        for (let y = 4; y < this.state.dungeon.height - 2; y += 1) {
+            for (let x = 4; x < this.state.dungeon.width - 2; x += 1) {
+                const point = { x, y };
+                const key = pointKey(point);
+                if (isWalkable(this.state.dungeon.tiles, point) && !blocked.has(key)) {
+                    blocked.add(key);
+                    lootSpots.push(point);
+                }
+            }
+        }
+        let lootIndex = 0;
+        this.state.groundItems = previousGroundItems.map((ground) => {
+            const point = lootSpots[lootIndex++];
+            return point ? { ...ground, x: point.x, y: point.y } : ground;
+        });
+        this.state.groundGold = previousGroundGold.map((gold) => {
+            const point = lootSpots[lootIndex++];
+            return point ? { ...gold, x: point.x, y: point.y } : gold;
         });
         this.state.message = `最深部の大広間に到達した。${boss.name}が立ちはだかる！`;
     }
