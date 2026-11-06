@@ -80,7 +80,10 @@ export class RenderManager {
         }
         for (const monster of state.monsters) {
             const point = toScreen(monster);
-            if (!this.onScreen(point))
+            const visible = monster.boss
+                ? point.x < WIDTH && point.y < HEIGHT && point.x + TILE * 2 > 0 && point.y + TILE * 2 > 0
+                : this.onScreen(point);
+            if (!visible)
                 continue;
             this.drawMonster(point.x, point.y, monster);
         }
@@ -316,18 +319,8 @@ export class RenderManager {
             this.drawShopkeeper(x, y);
         }
         else if (monster.boss) {
-            ctx.fillStyle = '#633f4a';
-            ctx.fillRect(x + 5, y + 8, 22, 19);
-            ctx.fillStyle = '#a85e5a';
-            ctx.fillRect(x + 8, y + 3, 16, 12);
-            ctx.fillStyle = '#d5b477';
-            ctx.fillRect(x + 6, y + 1, 4, 9);
-            ctx.fillRect(x + 22, y + 1, 4, 9);
-            ctx.fillStyle = '#f4c57d';
-            ctx.fillRect(x + 10, y + 8, 4, 3);
-            ctx.fillRect(x + 19, y + 8, 4, 3);
-            ctx.fillStyle = '#281e25';
-            ctx.fillRect(x + 8, y + 21, 16, 5);
+            this.drawBoss(x, y, monster);
+            return;
         }
         else {
             const colors = {
@@ -378,6 +371,52 @@ export class RenderManager {
             ctx.textBaseline = 'middle';
             ctx.fillText(badge, x + 25.5, y + 27.5);
         }
+    }
+    drawBoss(x, y, monster) {
+        const ctx = this.context;
+        ctx.fillStyle = 'rgba(5,10,11,.58)';
+        ctx.fillRect(x + 8, y + 61, 56, 7);
+        // Broad armored body and shoulders span all four floor tiles.
+        ctx.fillStyle = '#563642';
+        ctx.fillRect(x + 12, y + 25, 48, 34);
+        ctx.fillRect(x + 6, y + 26, 15, 25);
+        ctx.fillRect(x + 51, y + 26, 15, 25);
+        ctx.fillStyle = '#8f4d56';
+        ctx.fillRect(x + 18, y + 21, 36, 33);
+        ctx.fillRect(x + 22, y + 12, 28, 20);
+        ctx.fillStyle = '#c49a65';
+        ctx.fillRect(x + 15, y + 7, 8, 12);
+        ctx.fillRect(x + 49, y + 7, 8, 12);
+        ctx.fillRect(x + 21, y + 15, 5, 9);
+        ctx.fillRect(x + 46, y + 15, 5, 9);
+        ctx.fillStyle = '#f6d18a';
+        ctx.fillRect(x + 27, y + 23, 5, 4);
+        ctx.fillRect(x + 42, y + 23, 5, 4);
+        ctx.fillStyle = '#281e27';
+        ctx.fillRect(x + 29, y + 34, 14, 5);
+        ctx.fillStyle = '#d4bd87';
+        ctx.fillRect(x + 23, y + 43, 26, 5);
+        ctx.fillStyle = '#3a2a32';
+        ctx.fillRect(x + 19, y + 54, 13, 8);
+        ctx.fillRect(x + 41, y + 54, 13, 8);
+        // A full-width health bar makes the large target easy to read.
+        ctx.fillStyle = '#1a2021';
+        ctx.fillRect(x + 8, y + 2, 56, 5);
+        ctx.fillStyle = '#d16d63';
+        ctx.fillRect(x + 8, y + 2, Math.max(1, 56 * monster.hp / monster.maxHp), 5);
+        ctx.strokeStyle = '#e3bd8d';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x + 8, y + 2, 56, 5);
+        ctx.fillStyle = 'rgba(42,25,31,.96)';
+        ctx.fillRect(x + 12, y + 63, 48, 8);
+        ctx.strokeStyle = '#b77d70';
+        ctx.lineWidth = 0.7;
+        ctx.strokeRect(x + 12, y + 63, 48, 8);
+        ctx.fillStyle = '#fff1cf';
+        ctx.font = 'bold 6px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`Lv${getEnemyLevel(monster)} BOSS`, x + 36, y + 67);
     }
     drawVignette() {
         const ctx = this.context;
