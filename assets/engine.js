@@ -89,15 +89,16 @@ const MODE_SALT = {
     advanced: 0x4d5e6f70, expert: 0x5e6f7081,
 };
 export function getMonsterSpawnRange(mode, floor) {
-    // Ease expert players into the run: return to the full 6–10 range from floor 4 onward.
-    if (mode.id === 'expert') {
-        if (floor <= 1)
-            return { min: 3, max: 4 };
-        if (floor === 2)
-            return { min: 4, max: 6 };
-        if (floor === 3)
-            return { min: 5, max: 8 };
-    }
+    // Keep each campaign's baseline difficulty while easing the first floors into its normal density.
+    const earlyFloorRanges = {
+        beginner: [{ min: 3, max: 5 }, { min: 4, max: 6 }, { min: 4, max: 7 }],
+        intermediate: [{ min: 4, max: 6 }, { min: 5, max: 7 }],
+        advanced: [{ min: 4, max: 6 }, { min: 5, max: 8 }, { min: 5, max: 9 }],
+        expert: [{ min: 3, max: 4 }, { min: 4, max: 6 }, { min: 5, max: 8 }],
+    };
+    const ranges = earlyFloorRanges[mode.id];
+    if (ranges && floor >= 1 && floor <= ranges.length)
+        return ranges[floor - 1];
     return { min: mode.minMonsters, max: mode.maxMonsters };
 }
 export function experienceToNext(level) {
