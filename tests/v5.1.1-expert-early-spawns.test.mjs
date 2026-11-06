@@ -43,3 +43,10 @@ test('v5.1.1 app, manifest, cache and release notes agree', async () => {
   assert.match(release, /type: patch/);
   assert.match(notes, /全難易度/);
 });
+
+
+test('expert difficulty scale stays above advanced without the previous large jump', () => {
+  assert.equal(getModeConfig('advanced').difficultyScale, 1.28);
+  assert.equal(getModeConfig('expert').difficultyScale, 1.35);
+  assert.ok(getModeConfig('expert').difficultyScale > getModeConfig('advanced').difficultyScale);
+});
