@@ -1,0 +1,20 @@
+release:
+  project: 層渡りの旅録
+  version: 5.0.3
+  previous_version: 5.0.2
+  type: patch
+  title: モンスターの通常アイテムドロップ率を微増
+  changes:
+    - slightly_increase_equipment_drop_rate_all_modes
+    - slightly_increase_valuable_drop_rate_all_modes
+    - slightly_increase_potion_drop_rate_all_modes
+    - slightly_increase_food_drop_rate_all_modes
+    - keep_gold_drop_rate_unchanged
+    - keep_rare_monster_premium_drop_unchanged
+  save:
+    schema: 12
+    migration_required: false
+  pwa:
+    app_version: 5.0.3
+    manifest_version: 5.0.3
+    service_worker_cache: sou-watari-tabiroku-v5-0-3
