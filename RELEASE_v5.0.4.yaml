@@ -1,0 +1,20 @@
+release:
+  project: 層渡りの旅録
+  version: 5.0.4
+  previous_version: 5.0.3
+  type: patch
+  title: 魔喰いの耐久力と戦闘能力を強化
+  changes:
+    - increase_hunter_initial_hp_multiplier_to_1_70
+    - increase_hunter_initial_attack_multiplier_to_1_25
+    - increase_hunter_initial_defense_bonus_to_6
+    - increase_hunter_level_up_hp_gain_to_18_percent
+    - increase_hunter_defense_by_one_each_level
+    - preserve_other_monsters_and_drop_rates
+  save:
+    schema: 12
+    migration_required: false
+  pwa:
+    app_version: 5.0.4
+    manifest_version: 5.0.4
+    service_worker_cache: sou-watari-tabiroku-v5-0-4

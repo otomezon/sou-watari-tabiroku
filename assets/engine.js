@@ -233,10 +233,11 @@ function createRegularMonster(state, point, random, index, progress, template) {
         monster.hunterVariant = true;
         monster.hunterLevel = 1;
         monster.name = `魔喰いの${template.name}`;
-        monster.hp = Math.ceil(monster.hp * 1.30);
+        // 魔喰いは同格の魔物との連戦に勝てるよう、耐久を軸に一段階上の能力へ。
+        monster.hp = Math.ceil(monster.hp * 1.70);
         monster.maxHp = monster.hp;
-        monster.attack = Math.ceil(monster.attack * 1.15);
-        monster.defense += 2;
+        monster.attack = Math.ceil(monster.attack * 1.25);
+        monster.defense += 6;
         monster.exp = Math.ceil(monster.exp * 2.8);
     }
     else if (state.modeId !== 'tutorial' && rarityRoll < 0.037) {
@@ -866,13 +867,12 @@ export class GameEngine {
                         const currentLevel = Math.max(1, Math.min(99, Number.isInteger(monster.hunterLevel) ? monster.hunterLevel : 1));
                         const nextLevel = Math.min(99, currentLevel + 1);
                         if (nextLevel > currentLevel) {
-                            const hpGain = Math.min(10000 - monster.maxHp, Math.max(4, Math.ceil(monster.maxHp * 0.12)));
+                            const hpGain = Math.min(10000 - monster.maxHp, Math.max(6, Math.ceil(monster.maxHp * 0.18)));
                             monster.hunterLevel = nextLevel;
                             monster.maxHp += hpGain;
                             monster.hp = Math.min(monster.maxHp, monster.hp + hpGain);
                             monster.attack = Math.min(10000, monster.attack + 1);
-                            if (nextLevel % 2 === 0)
-                                monster.defense = Math.min(10000, monster.defense + 1);
+                            monster.defense = Math.min(10000, monster.defense + 1);
                             this.hunterLevelUpCount += 1;
                         }
                         this.state.message = `${this.state.message} ${monster.name}が${prey.name}を倒した！ 魔喰いはLv.${monster.hunterLevel ?? currentLevel}に成長し、能力が強化された。`.slice(0, 480);
