@@ -6,7 +6,7 @@ import { getShopSellPrice, remainingShopGoods, unpaidShopGoods } from "./shop.js
 import { RenderManager } from "./renderer.js";
 import { DEFAULT_AUDIO_SETTINGS, SaveManager } from "./storage.js";
 import { DUNGEON_MODES, MODE_ORDER, getModeConfig } from "./modes.js";
-const APP_VERSION = '5.0.7';
+const APP_VERSION = '5.1.0';
 const byId = (id) => {
     const element = document.getElementById(id);
     if (!element)
@@ -162,7 +162,13 @@ class GameApp {
     handleDirection(direction) {
         const player = this.state?.player;
         const step = DIRECTION_DELTA[direction];
-        const attacks = Boolean(player && this.state?.monsters.some((monster) => monster.x === player.x + step.x && monster.y === player.y + step.y));
+        const targetX = (player?.x ?? 0) + step.x;
+        const targetY = (player?.y ?? 0) + step.y;
+        const attacks = Boolean(player && this.state?.monsters.some((monster) => {
+            const size = monster.boss ? 2 : 1;
+            return targetX >= monster.x && targetY >= monster.y &&
+                targetX < monster.x + size && targetY < monster.y + size;
+        }));
         void this.performAction(() => this.engine?.move(direction), attacks ? 'attack' : 'move');
     }
     async performAction(action, defaultEffect = 'move') {
@@ -240,7 +246,7 @@ class GameApp {
             return;
         const state = this.state;
         const mode = getModeConfig(state.modeId);
-        byId('dungeon-name').textContent = `${mode.name}${state.floor === mode.floors ? ' · 最深部' : ''}`;
+        byId('dungeon-name').textContent = `${mode.name}${state.floor === mode.floors ? ' · 大広間' : ''}`;
         byId('floor-label').textContent = `地下 ${state.floor} 階`;
         byId('turn-value').textContent = String(state.turn);
         byId('gold-value').textContent = `${state.gold.toLocaleString('ja-JP')}G`;
