@@ -966,3 +966,10 @@ main {
   row-gap: 7px;
   gap: 7px;
 }
+
+
+/* v4.9.9 rebuild: add 3px around the action row to make both adjacent 4px grid gutters 7px. */
+.action-row {
+  margin-top: 3px;
+  margin-bottom: 3px;
+}

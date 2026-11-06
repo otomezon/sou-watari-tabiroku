@@ -11,12 +11,14 @@ test('v4.9.9 keeps the v4.9.8 16 by 12 map layout', async () => {
   assert.match(html, /id="dungeon-canvas" width="576" height="432"/);
 });
 
-test('horizontal and vertical gaps exactly match the action-button reference spacing', async () => {
+test('horizontal, vertical, and outer gaps consistently resolve to 7px', async () => {
   const css = await read('assets/style.css');
   const release = css.slice(css.lastIndexOf('/* v4.9.9:'));
   assert.match(release, /column-gap:\s*7px/);
   assert.match(release, /row-gap:\s*7px/);
   assert.match(release, /gap:\s*7px/);
+  assert.match(css, /\.game-screen\s*\{[^}]*gap:\s*4px/);
+  assert.match(css, /\.action-row\s*\{[^}]*margin-top:\s*3px;[^}]*margin-bottom:\s*3px/);
   assert.doesNotMatch(release, /28px|30px|36px|42px/);
 });
 
@@ -27,9 +29,9 @@ test('movement header remains removed and all eight directions plus wait remain'
   assert.ok(html.includes('id="wait-button"'));
 });
 
-test('PWA assets use v4.9.9', async () => {
+test('PWA assets use v4.9.9 with a refreshed cache', async () => {
   const [main, manifest, sw] = await Promise.all([read('assets/main.js'), read('manifest.webmanifest'), read('sw.js')]);
   assert.match(main, /APP_VERSION = '4\.9\.9'/);
   assert.match(manifest, /"version": "4\.9\.9"/);
-  assert.match(sw, /sou-watari-tabiroku-v4-9-9/);
+  assert.match(sw, /sou-watari-tabiroku-v4-9-9-r1/);
 });
