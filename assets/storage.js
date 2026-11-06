@@ -75,7 +75,8 @@ export function validateGameState(value) {
         return false;
     if (state.status === 'gameover' && (state.inventory.length !== 0 || state.gold !== 0 || state.equipment?.weapon || state.equipment?.shield || state.equipment?.armor))
         return false;
-    if (!state.dungeon || !Array.isArray(state.dungeon.tiles))
+    if (!state.dungeon || !Array.isArray(state.dungeon.tiles) ||
+        (state.dungeon.bossArena !== undefined && typeof state.dungeon.bossArena !== 'boolean'))
         return false;
     if (!Number.isInteger(state.dungeon.width) || !Number.isInteger(state.dungeon.height) || state.dungeon.width < 10 || state.dungeon.height < 10)
         return false;
@@ -87,10 +88,17 @@ export function validateGameState(value) {
         return false;
     if (!isReachable(state.dungeon.tiles, state.dungeon.start, state.player))
         return false;
-    if (!state.dungeon.stairs || !Number.isInteger(state.dungeon.stairs.x) || !Number.isInteger(state.dungeon.stairs.y) || !isWalkable(state.dungeon.tiles, state.dungeon.stairs))
+    const stairs = state.dungeon.stairs;
+    if (!stairs && (state.floor !== mode.floors || state.dungeon.bossArena !== true))
         return false;
-    if (!isReachable(state.dungeon.tiles, state.dungeon.start, state.dungeon.stairs))
+    if (state.dungeon.bossArena === true && (state.floor !== mode.floors || stairs !== null))
         return false;
+    if (stairs) {
+        if (!Number.isInteger(stairs.x) || !Number.isInteger(stairs.y) || !isWalkable(state.dungeon.tiles, stairs))
+            return false;
+        if (!isReachable(state.dungeon.tiles, state.dungeon.start, stairs))
+            return false;
+    }
     if (!state.equipment || !('weapon' in state.equipment) || !('shield' in state.equipment) || !('armor' in state.equipment))
         return false;
     const validItem = (item, expectedKind) => {
@@ -158,18 +166,22 @@ export function validateGameState(value) {
             return false;
         if (monster.shopkeeper !== undefined && typeof monster.shopkeeper !== 'boolean')
             return false;
-        if (monster.x < 0 || monster.y < 0 || monster.x >= state.dungeon.width || monster.y >= state.dungeon.height || !isWalkable(state.dungeon.tiles, monster))
-            return false;
-        const key = `${monster.x},${monster.y}`;
-        if (occupied.has(key))
-            return false;
-        occupied.add(key);
+        const footprintSize = monster.boss ? 2 : 1;
+        for (let dy = 0; dy < footprintSize; dy += 1) {
+            for (let dx = 0; dx < footprintSize; dx += 1) {
+                const cell = { x: monster.x + dx, y: monster.y + dy };
+                if (cell.x < 0 || cell.y < 0 || cell.x >= state.dungeon.width || cell.y >= state.dungeon.height || !isWalkable(state.dungeon.tiles, cell))
+                    return false;
+                const key = `${cell.x},${cell.y}`;
+                if (occupied.has(key) || (stairs && cell.x === stairs.x && cell.y === stairs.y))
+                    return false;
+                occupied.add(key);
+            }
+        }
     }
     if (state.status === 'playing' && state.floor === mode.floors && state.monsters.filter((monster) => monster.boss).length !== 1)
         return false;
     if (state.status === 'playing' && state.floor < mode.floors && state.monsters.some((monster) => monster.boss))
-        return false;
-    if (state.dungeon.stairs && state.monsters.some((monster) => monster.x === state.dungeon.stairs.x && monster.y === state.dungeon.stairs.y))
         return false;
     for (const ground of state.groundItems) {
         if (!ground || !Number.isInteger(ground.x) || !Number.isInteger(ground.y) || !validItem(ground.item))
