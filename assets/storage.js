@@ -52,7 +52,7 @@ export function validateGameState(value) {
     if (!value || typeof value !== 'object')
         return false;
     const state = value;
-    if (state.schemaVersion !== 11 || !isDungeonModeId(state.modeId) || !['playing', 'gameover', 'clear'].includes(String(state.status)))
+    if (state.schemaVersion !== 12 || !isDungeonModeId(state.modeId) || !['playing', 'gameover', 'clear'].includes(String(state.status)))
         return false;
     const mode = getModeConfig(state.modeId);
     if (!Number.isInteger(state.seed) || !Number.isInteger(state.floor) || state.floor < 1 || state.floor > mode.floors)
@@ -147,6 +147,12 @@ export function validateGameState(value) {
             return false;
         if (monster.rareVariant !== undefined && typeof monster.rareVariant !== 'boolean')
             return false;
+        if (monster.hunterVariant !== undefined && typeof monster.hunterVariant !== 'boolean')
+            return false;
+        if (monster.hunterVariant === true && (!Number.isInteger(monster.hunterLevel) || monster.hunterLevel < 1 || monster.hunterLevel > 99))
+            return false;
+        if (monster.hunterVariant !== true && monster.hunterLevel !== undefined)
+            return false;
         if (monster.shopkeeper !== undefined && typeof monster.shopkeeper !== 'boolean')
             return false;
         if (monster.x < 0 || monster.y < 0 || monster.x >= state.dungeon.width || monster.y >= state.dungeon.height || !isWalkable(state.dungeon.tiles, monster))
@@ -219,7 +225,7 @@ export function migrateGameState(value) {
         return null;
     const state = value;
     const sourceSchema = Number(state.schemaVersion);
-    if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].includes(sourceSchema) || !state.player || typeof state.player !== 'object')
+    if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].includes(sourceSchema) || !state.player || typeof state.player !== 'object')
         return null;
     const player = state.player;
     const oldHunger = Number(player.hunger);
@@ -244,7 +250,24 @@ export function migrateGameState(value) {
             const migratedSlowAttack = sourceSchema === 4 && isCurrentRare && speed === 'slow'
                 ? Math.ceil((Number(monster.attack) || 0) * (1.8 / 1.3))
                 : monster.attack;
-            return { ...monster, attack: migratedSlowAttack, actionSpeed: speed, actionProgress: progress, rareVariant: isCurrentRare };
+            const isHunter = sourceSchema >= 12 && monster.hunterVariant === true;
+            const migratedMonster = {
+                ...monster,
+                attack: migratedSlowAttack,
+                actionSpeed: speed,
+                actionProgress: progress,
+                rareVariant: isCurrentRare,
+                hunterVariant: isHunter,
+            };
+            if (isHunter) {
+                migratedMonster.hunterLevel = Number.isInteger(monster.hunterLevel)
+                    ? Math.max(1, Math.min(99, monster.hunterLevel))
+                    : 1;
+            }
+            else {
+                delete migratedMonster.hunterLevel;
+            }
+            return migratedMonster;
         })
         : state.monsters;
     // Repair legacy saves in which a chasing monster was allowed onto the stair tile.
@@ -321,7 +344,7 @@ export function migrateGameState(value) {
         : null;
     return {
         ...state,
-        schemaVersion: 11,
+        schemaVersion: 12,
         modeId: isDungeonModeId(state.modeId) ? state.modeId : 'beginner',
         player: { ...player, hunger },
         // v3.0.0 and older used a different decay cadence; start the new 4-action phase cleanly.
@@ -345,7 +368,7 @@ export class SaveManager {
             throw new Error('不正なゲーム状態のため保存を中止しました。');
         const db = await openDatabase();
         const tx = db.transaction(SAVE_STORE, 'readwrite');
-        tx.objectStore(SAVE_STORE).put({ id: 'current', version: 11, savedAt: Date.now(), state });
+        tx.objectStore(SAVE_STORE).put({ id: 'current', version: 12, savedAt: Date.now(), state });
         await transactionDone(tx);
     }
     async load() {
@@ -355,12 +378,12 @@ export class SaveManager {
         await transactionDone(tx);
         if (!result)
             return null;
-        const migrated = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].includes(Number(result.version)) ? migrateGameState(result.state) : null;
+        const migrated = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].includes(Number(result.version)) ? migrateGameState(result.state) : null;
         if (!migrated || !validateGameState(migrated)) {
             await this.clear();
             throw new Error('セーブデータが破損しているか、未対応の形式です。新しい冒険を始めてください。');
         }
-        if (result.version !== 11)
+        if (result.version !== 12)
             await this.save(migrated);
         return migrated;
     }

@@ -350,7 +350,7 @@ export class RenderManager {
             ctx.fillStyle = '#bd6c5d';
             ctx.fillRect(x + 4, y + 1, Math.max(1, 24 * monster.hp / monster.maxHp), 3);
         }
-        const levelText = `Lv${getEnemyLevel(monster)}`;
+        const levelText = monster.hunterVariant ? `Lv${monster.hunterLevel ?? 1}` : `Lv${getEnemyLevel(monster)}`;
         let levelFontSize = 6;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -369,8 +369,8 @@ export class RenderManager {
         ctx.fillText(levelText, x + 1 + levelBadgeWidth / 2, y + 27.5);
         if (monster.rareVariant) {
             const speed = monster.actionSpeed ?? 'normal';
-            const badge = speed === 'fast' ? 'Ⅱ' : speed === 'slow' ? '½' : '★';
-            ctx.fillStyle = speed === 'fast' ? '#9c574f' : speed === 'slow' ? '#607c91' : '#9b8050';
+            const badge = monster.hunterVariant ? '狩' : speed === 'fast' ? 'Ⅱ' : speed === 'slow' ? '½' : '★';
+            ctx.fillStyle = monster.hunterVariant ? '#76528f' : speed === 'fast' ? '#9c574f' : speed === 'slow' ? '#607c91' : '#9b8050';
             ctx.fillRect(x + 20, y + 23, 11, 9);
             ctx.fillStyle = '#fff1cf';
             ctx.font = 'bold 8px sans-serif';

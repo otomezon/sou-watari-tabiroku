@@ -1,0 +1,31 @@
+release:
+  project: 層渡りの旅録
+  version: 5.0.0
+  previous_version: 4.9.9
+  type: major
+  title: 魔喰いレアモンスターと捕食成長AI
+  features:
+    - cardinal_item_drop_relocation_when_tile_occupied
+    - collect_all_items_on_shared_tile
+    - rare_monster_hunter_ai
+    - hunter_level_and_stat_growth_on_monster_kill
+    - message_panel_height_35px_offset_y_1px
+  hunter:
+    spawn_chance: 0.012
+    starting_level: 1
+    max_level: 99
+    hp_growth_per_kill: 0.12
+    attack_growth_per_kill: 1
+    defense_growth: 1
+    defense_growth_interval_levels: 2
+    prey: nearest_non_boss_non_shopkeeper_non_hunter_monster
+    fallback_target: player
+  save:
+    previous_schema: 11
+    schema: 12
+    migration_required: false
+    migration: automatic_preserve_current_run
+  pwa:
+    app_version: 5.0.0
+    manifest_version: 5.0.0
+    service_worker_cache: sou-watari-tabiroku-v5-0-0

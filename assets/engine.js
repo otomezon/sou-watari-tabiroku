@@ -97,7 +97,7 @@ export function createNewGame(seed = makeSeed(), modeId = 'beginner') {
     const player = { x: 0, y: 0, hp: 34, maxHp: 34, level: 1, exp: 0, baseAttack: 5, baseDefense: 2, hunger: MAX_HUNGER };
     const equipment = { weapon: null, shield: null, armor: null };
     const state = {
-        schemaVersion: 11,
+        schemaVersion: 12,
         modeId,
         status: 'playing',
         seed,
@@ -184,6 +184,36 @@ function createShop(state, random) {
 function insideBounds(point, bounds) {
     return point.x >= bounds.x && point.y >= bounds.y && point.x < bounds.x + bounds.width && point.y < bounds.y + bounds.height;
 }
+export function findItemDropPoint(state, monster) {
+    const origin = { x: monster.x, y: monster.y };
+    const originKey = pointKey(origin);
+    const groundItems = Array.isArray(state.groundItems) ? state.groundItems : [];
+    if (!groundItems.some((ground) => pointKey(ground) === originKey))
+        return origin;
+    const blocked = new Set([
+        pointKey(state.player),
+        ...state.monsters.filter((entry) => entry.id !== monster.id && entry.hp > 0).map(pointKey),
+        ...(state.shop?.goods ?? []).filter((good) => !good.sold).map(pointKey),
+    ]);
+    if (state.dungeon.stairs)
+        blocked.add(pointKey(state.dungeon.stairs));
+    const itemTiles = new Set(groundItems.map(pointKey));
+    const candidates = [
+        { x: origin.x + 1, y: origin.y },
+        { x: origin.x - 1, y: origin.y },
+        { x: origin.x, y: origin.y + 1 },
+        { x: origin.x, y: origin.y - 1 },
+    ];
+    for (const point of candidates) {
+        const key = pointKey(point);
+        if (!isWalkable(state.dungeon.tiles, point) || !canStepBetween(state.dungeon.tiles, origin, point))
+            continue;
+        if (blocked.has(key) || itemTiles.has(key))
+            continue;
+        return point;
+    }
+    return origin;
+}
 function createRegularMonster(state, point, random, index, progress, template) {
     const mode = getModeConfig(state.modeId);
     const statScale = mode.difficultyScale * (1.00 + progress * 0.40);
@@ -198,7 +228,18 @@ function createRegularMonster(state, point, random, index, progress, template) {
         boss: false, actionSpeed: 'normal', actionProgress: 0, rareVariant: false,
     };
     const rarityRoll = random.next();
-    if (rarityRoll < 0.025) {
+    if (rarityRoll < 0.012) {
+        monster.rareVariant = true;
+        monster.hunterVariant = true;
+        monster.hunterLevel = 1;
+        monster.name = `魔喰いの${template.name}`;
+        monster.hp = Math.ceil(monster.hp * 1.30);
+        monster.maxHp = monster.hp;
+        monster.attack = Math.ceil(monster.attack * 1.15);
+        monster.defense += 2;
+        monster.exp = Math.ceil(monster.exp * 2.8);
+    }
+    else if (rarityRoll < 0.037) {
         monster.actionSpeed = 'slow';
         monster.rareVariant = true;
         monster.name = `剛腕の${template.name}`;
@@ -208,7 +249,7 @@ function createRegularMonster(state, point, random, index, progress, template) {
         monster.defense += 3;
         monster.exp = Math.ceil(monster.exp * 2.5);
     }
-    else if (rarityRoll < 0.05) {
+    else if (rarityRoll < 0.062) {
         monster.actionSpeed = 'fast';
         monster.rareVariant = true;
         monster.name = `俊敏な${template.name}`;
@@ -738,29 +779,29 @@ export class GameEngine {
             else if (lootRoll < 0.35)
                 drop = createItem(this.state.floor, random, 'food', this.state.modeId, 'premium');
             if (drop) {
-                this.state.groundItems.push({ x: monster.x, y: monster.y, item: drop });
+                this.state.groundItems.push({ ...findItemDropPoint(this.state, monster), item: drop });
                 this.state.message += ` 希少な戦利品 ${itemDisplayName(drop)}を落とした。`;
             }
         }
         else if (lootRoll < drops.enemyDropEquipment) {
             const gearKind = random.pick(['weapon', 'shield', 'armor']);
             const drop = createItem(this.state.floor, random, gearKind, this.state.modeId);
-            this.state.groundItems.push({ x: monster.x, y: monster.y, item: drop });
+            this.state.groundItems.push({ ...findItemDropPoint(this.state, monster), item: drop });
             this.state.message += ` ${itemDisplayName(drop)}を落とした。`;
         }
         else if (lootRoll < drops.enemyDropEquipment + drops.enemyDropValuable) {
             const drop = createItem(this.state.floor, random, 'valuable', this.state.modeId);
-            this.state.groundItems.push({ x: monster.x, y: monster.y, item: drop });
+            this.state.groundItems.push({ ...findItemDropPoint(this.state, monster), item: drop });
             this.state.message += `換金品 ${drop.name}を落とした。`;
         }
         else if (lootRoll < drops.enemyDropEquipment + drops.enemyDropValuable + drops.enemyDropPotion) {
             const drop = createItem(this.state.floor, random, 'potion', this.state.modeId);
-            this.state.groundItems.push({ x: monster.x, y: monster.y, item: drop });
+            this.state.groundItems.push({ ...findItemDropPoint(this.state, monster), item: drop });
             this.state.message += ` ${drop.name}を落とした。`;
         }
         else if (lootRoll < drops.enemyDropEquipment + drops.enemyDropValuable + drops.enemyDropPotion + drops.enemyDropFood) {
             const drop = createItem(this.state.floor, random, 'food', this.state.modeId);
-            this.state.groundItems.push({ x: monster.x, y: monster.y, item: drop });
+            this.state.groundItems.push({ ...findItemDropPoint(this.state, monster), item: drop });
             this.state.message += ` ${drop.name}を落とした。`;
         }
         if (random.chance(monster.rareVariant ? Math.min(0.70, drops.enemyDropGold * 2.5) : drops.enemyDropGold)) {
@@ -800,6 +841,55 @@ export class GameEngine {
         }
     }
     performMonsterAction(monster, random) {
+        if (monster.hunterVariant) {
+            const prey = this.state.monsters
+                .filter((other) => other.id !== monster.id && other.hp > 0 && !other.boss && !other.shopkeeper && !other.hunterVariant)
+                .sort((a, b) => {
+                    const distanceA = Math.max(Math.abs(a.x - monster.x), Math.abs(a.y - monster.y));
+                    const distanceB = Math.max(Math.abs(b.x - monster.x), Math.abs(b.y - monster.y));
+                    return distanceA - distanceB || a.y - b.y || a.x - b.x;
+                })[0];
+            if (prey) {
+                const preyDx = prey.x - monster.x;
+                const preyDy = prey.y - monster.y;
+                const preyAdjacent = Math.max(Math.abs(preyDx), Math.abs(preyDy)) === 1 &&
+                    canStepBetween(this.state.dungeon.tiles, monster, prey);
+                if (preyAdjacent) {
+                    const damage = Math.max(1, monster.attack + random.int(-1, 1) - prey.defense);
+                    prey.hp -= damage;
+                    if (prey.hp <= 0) {
+                        this.state.monsters = this.state.monsters.filter((entry) => entry.id !== prey.id);
+                        const currentLevel = Math.max(1, Math.min(99, Number.isInteger(monster.hunterLevel) ? monster.hunterLevel : 1));
+                        const nextLevel = Math.min(99, currentLevel + 1);
+                        if (nextLevel > currentLevel) {
+                            const hpGain = Math.min(10000 - monster.maxHp, Math.max(4, Math.ceil(monster.maxHp * 0.12)));
+                            monster.hunterLevel = nextLevel;
+                            monster.maxHp += hpGain;
+                            monster.hp = Math.min(monster.maxHp, monster.hp + hpGain);
+                            monster.attack = Math.min(10000, monster.attack + 1);
+                            if (nextLevel % 2 === 0)
+                                monster.defense = Math.min(10000, monster.defense + 1);
+                        }
+                        this.state.message = `${this.state.message} ${monster.name}が${prey.name}を倒した！ 魔喰いはLv.${monster.hunterLevel ?? currentLevel}に成長し、能力が強化された。`.slice(0, 480);
+                    }
+                    else {
+                        this.state.message = `${this.state.message} ${monster.name}が${prey.name}を襲う！ ${damage}ダメージ。`.slice(0, 480);
+                    }
+                }
+                else {
+                    const blocked = new Set(this.state.monsters.filter((other) => other.id !== monster.id).map(pointKey));
+                    blocked.add(pointKey(this.state.player));
+                    if (this.state.dungeon.stairs)
+                        blocked.add(pointKey(this.state.dungeon.stairs));
+                    const step = nextPathStep(this.state.dungeon.tiles, monster, prey, blocked);
+                    if (step) {
+                        monster.x = step.x;
+                        monster.y = step.y;
+                    }
+                }
+                return;
+            }
+        }
         const dx = this.state.player.x - monster.x;
         const dy = this.state.player.y - monster.y;
         const adjacent = Math.max(Math.abs(dx), Math.abs(dy)) === 1 &&
@@ -862,11 +952,13 @@ export class GameEngine {
             this.state.gold = Math.min(20_000_000, this.state.gold + gold.amount);
             pickedMessage = `${gold.amount}Gを拾った。`;
         }
-        const index = this.state.groundItems.findIndex((entry) => entry.x === this.state.player.x && entry.y === this.state.player.y);
-        if (index >= 0) {
-            const [ground] = this.state.groundItems.splice(index, 1);
-            this.addInventory(ground.item);
-            pickedMessage = `${pickedMessage ? `${pickedMessage} ` : ''}${ground.item.name}を拾った。`;
+        const itemsHere = this.state.groundItems.filter((entry) => entry.x === this.state.player.x && entry.y === this.state.player.y);
+        if (itemsHere.length > 0) {
+            const pickedNames = itemsHere.map((ground) => ground.item.name);
+            this.state.groundItems = this.state.groundItems.filter((entry) => entry.x !== this.state.player.x || entry.y !== this.state.player.y);
+            for (const ground of itemsHere)
+                this.addInventory(ground.item);
+            pickedMessage = `${pickedMessage ? `${pickedMessage} ` : ''}${pickedNames.join('、')}を拾った。`;
         }
         if (pickedMessage)
             this.state.message = pickedMessage;
