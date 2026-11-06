@@ -958,3 +958,11 @@ main {
     gap: 5px;
   }
 }
+
+
+/* v4.9.9: match movement-button gaps to the inventory/equipment action-button gaps. */
+.dpad {
+  column-gap: 7px;
+  row-gap: 7px;
+  gap: 7px;
+}
