@@ -2,8 +2,8 @@ import { itemDurability, itemMaxDurability, itemEnhancement } from "./items.js";
 function roundPrice(value) {
     return Math.max(5, Math.round(value / 5) * 5);
 }
-/** Buy prices scale gently with depth and gear quality. */
-export function getShopBuyPrice(item, floor) {
+/** Base prices keep resale values stable even when premium gear costs more to buy. */
+function getBaseShopBuyPrice(item, floor) {
     const depth = Math.max(0, floor - 1) * 3;
     if (item.kind === 'valuable')
         return roundPrice((item.sellValue ?? 10) * 1.7 + depth);
@@ -15,6 +15,20 @@ export function getShopBuyPrice(item, floor) {
         return roundPrice(40 + item.heal * 1.7 + (item.hungerRestore ?? 0) * 1.2 + depth);
     return roundPrice(24 + (item.hungerRestore ?? 0) * 1.1 + depth);
 }
+function getEquipmentPriceMultiplier(item) {
+    const power = (item.kind === 'weapon' ? item.attack : item.defense) + itemEnhancement(item);
+    if (power >= 16) return 1.30;
+    if (power >= 12) return 1.20;
+    if (power >= 8) return 1.10;
+    return 1;
+}
+/** Stronger equipment costs more; basic gear and consumables keep their former prices. */
+export function getShopBuyPrice(item, floor) {
+    const basePrice = getBaseShopBuyPrice(item, floor);
+    if (item.kind !== 'weapon' && item.kind !== 'shield' && item.kind !== 'armor')
+        return basePrice;
+    return roundPrice(basePrice * getEquipmentPriceMultiplier(item));
+}
 /** Shopkeepers buy at a reduced value; broken equipment is worth very little. */
 export function getShopSellPrice(item, floor) {
     if (item.kind === 'valuable')
@@ -23,7 +37,7 @@ export function getShopSellPrice(item, floor) {
         ? 0.25 + 0.75 * (itemDurability(item) / Math.max(1, itemMaxDurability(item)))
         : 1;
     const rate = item.kind === 'food' || item.kind === 'potion' ? 0.38 : 0.46;
-    return Math.max(5, roundPrice(getShopBuyPrice(item, floor) * rate * condition));
+    return Math.max(5, roundPrice(getBaseShopBuyPrice(item, floor) * rate * condition));
 }
 export function remainingShopGoods(goods) {
     return goods.filter((good) => !good.sold && !good.stolen);
