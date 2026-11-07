@@ -95,17 +95,7 @@ export function createNewGame(seed = makeSeed(), modeId = 'beginner') {
     const random = new Random(seed);
     const mode = getModeConfig(modeId);
     const player = { x: 0, y: 0, hp: 34, maxHp: 34, level: 1, exp: 0, baseAttack: 5, baseDefense: 2, hunger: MAX_HUNGER };
-    // A separate RNG keeps starter gear from changing the dungeon's seeded layout or encounters.
-    const starterRandom = new Random((seed ^ (MODE_SALT[modeId] ?? MODE_SALT.beginner) ^ 0x51a7b12) >>> 0);
-    const equipment = {
-        weapon: createItem(1, starterRandom, 'weapon', modeId),
-        shield: createItem(1, starterRandom, 'shield', modeId),
-        armor: createItem(1, starterRandom, 'armor', modeId),
-    };
-    const inventory = [
-        { item: createItem(1, starterRandom, 'food', modeId), count: 1 },
-        { item: createItem(1, starterRandom, 'potion', modeId), count: 1 },
-    ];
+    const equipment = { weapon: null, shield: null, armor: null };
     const state = {
         schemaVersion: 12,
         modeId,
@@ -123,7 +113,7 @@ export function createNewGame(seed = makeSeed(), modeId = 'beginner') {
         groundGold: [],
         gold: 0,
         shop: null,
-        inventory,
+        inventory: [],
         equipment,
         message: modeId === 'tutorial' ? 'はじまりの坑道へようこそ。十字キーで移動し、階段を探そう。' : `${mode.name}の探索が始まった。階段を探そう。`,
         defeatedMonsters: 0,
