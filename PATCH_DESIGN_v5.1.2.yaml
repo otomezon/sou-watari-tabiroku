@@ -1,0 +1,44 @@
+patch:
+  project: 層渡りの旅録
+  version: 5.1.2
+  previous_version: 5.1.1
+  type: patch
+  objective: 全5ダンジョンでレベル1〜2の序盤詰まりを軽減
+  diagnosis:
+    - 新規開始時の装備・補給がなく、初回の戦闘負荷が高い
+    - 低レベルの開始直後から敵数が多く、敵が近距離に配置され得る
+    - 初級以上では序盤階層でも希少個体が出現し、通常敵を大きく上回る攻撃を行う
+  changes:
+    starter_loadout:
+      auto_equipped: [weapon, shield, armor]
+      inventory: [one_food, one_potion]
+      floor_limit: 1
+      independent_random_stream: true
+    opening_floors:
+      floors: [1, 2]
+      floor_1_monster_count_delta: -2
+      floor_2_monster_count_delta: -1
+      minimum_monsters: 2
+      stat_scale: 0.95
+      minimum_spawn_chebyshev_distance: 4
+      spawn_fallback: normal_placement_if_no_safe_tile
+      rare_variants: disabled
+      rare_variants_resume_at_floor: 3
+    tutorial:
+      equipment_hint: clarify_starter_equipment_is_already_equipped
+  compatibility:
+    save_schema: 12
+    existing_saves_migrated: false
+    existing_saves_rewritten: false
+    balance_changes_apply_to: new_runs_and_future_floor_spawns
+  acceptance:
+    - 全5モードの新規開始で武器・盾・防具が装備済み
+    - 全5モードの新規開始で食料1個・回復薬1個を所持
+    - 地下1〜2階の敵数と開始地点からの距離が規定範囲内
+    - 地下1〜2階に希少個体が出現しない
+    - 2体の序盤通常敵撃破でレベル2へ到達可能
+    - セーブスキーマ12とPWAバージョン表示が整合
+  pwa:
+    app_version: 5.1.2
+    manifest_version: 5.1.2
+    service_worker_cache: sou-watari-tabiroku-v5-1-2
