@@ -2,8 +2,9 @@ export const RARE_VALUABLE_DROP_CHANCES = Object.freeze({ hunter: 0.16, otherRar
 export const RARE_GOLD_DROP_CHANCE_MULTIPLIER = 1.75;
 export const RARE_GOLD_AMOUNT_MULTIPLIER = 1.75;
 
-export function getRegularMonsterDepthScale(modeId, floor) {
-    return modeId === 'expert' && floor >= 26 ? 0.88 : 1;
+export function getRegularMonsterDepthScale() {
+    // The blanket expert-floor 26+ reduction was removed in v5.1.7.
+    return 1;
 }
 
 export const FOOD_HUNGER_MULTIPLIER = 1.25;
