@@ -25,13 +25,11 @@ function assertSafeOpening(state, range) {
       Math.abs(monster.y - state.dungeon.start.y),
     );
     assert.ok(distance >= 4, `monster spawned too close to start: distance ${distance}`);
-    assert.equal(monster.rareVariant, false, 'rare variants are held until floor 3');
-    assert.equal(monster.actionSpeed, 'normal');
   }
 }
 
 for (const modeId of MODE_ORDER) {
-  test(`${modeId}: floor 1 has a smaller, safely spaced, normal encounter`, () => {
+  test(`${modeId}: floor 1 has a smaller, safely spaced encounter`, () => {
     for (const seed of [0x12345678, 0x5a17c0de, 0x6d2b79f5]) {
       assertSafeOpening(createNewGame(seed, modeId), OPENING_RANGES[modeId].floor1);
     }
@@ -75,21 +73,21 @@ for (const modeId of MODE_ORDER) {
   });
 }
 
-test('5.1.2 app, manifest, cache and release metadata stay aligned without changing save schema', async () => {
+test('5.1.3 app, manifest, cache and release metadata stay aligned without changing save schema', async () => {
   const [main, manifest, sw, engine, storage, release] = await Promise.all([
     read('assets/main.js'), read('manifest.webmanifest'), read('sw.js'),
     read('assets/engine.js'), read('assets/storage.js'), read('RELEASE_v5.1.2.yaml'),
   ]);
-  assert.match(main, /APP_VERSION = '5\.1\.2'/);
-  assert.match(manifest, /"version": "5\.1\.2"/);
-  assert.match(sw, /sou-watari-tabiroku-v5-1-2/);
+  assert.match(main, /APP_VERSION = '5.1.3'/);
+  assert.match(manifest, /"version": "5.1.3"/);
+  assert.match(sw, /sou-watari-tabiroku-v5-1-3/);
   assert.match(engine, /schemaVersion: 12/);
   assert.match(storage, /state\.schemaVersion !== 12/);
   assert.match(release, /type: patch/);
 });
 
-test('opening difficulty guard and rare encounter delay are explicit', async () => {
+test('opening difficulty guard and original rare encounter eligibility are explicit', async () => {
   const engine = await read('assets/engine.js');
   assert.match(engine, /state\.floor <= 2 \? 0\.95 : 1/);
-  assert.match(engine, /const canSpawnRare = state\.floor >= 3 && state\.modeId !== 'tutorial'/);
+  assert.match(engine, /const canSpawnRare = state\.modeId !== 'tutorial'/);
 });
