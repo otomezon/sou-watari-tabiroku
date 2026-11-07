@@ -31,20 +31,6 @@ function assertSafeOpening(state, range) {
 }
 
 for (const modeId of MODE_ORDER) {
-  test(`${modeId}: new runs start with equipped gear and emergency supplies`, () => {
-    for (const seed of [0x12345678, 0x5a17c0de, 0x6d2b79f5]) {
-      const state = createNewGame(seed, modeId);
-      assert.equal(state.equipment.weapon?.kind, 'weapon');
-      assert.equal(state.equipment.shield?.kind, 'shield');
-      assert.equal(state.equipment.armor?.kind, 'armor');
-      assert.ok(state.equipment.weapon.durability > 0);
-      assert.ok(state.equipment.shield.durability > 0);
-      assert.ok(state.equipment.armor.durability > 0);
-      assert.equal(state.inventory.filter((entry) => entry.item.kind === 'food').reduce((sum, entry) => sum + entry.count, 0), 1);
-      assert.equal(state.inventory.filter((entry) => entry.item.kind === 'potion').reduce((sum, entry) => sum + entry.count, 0), 1);
-    }
-  });
-
   test(`${modeId}: floor 1 has a smaller, safely spaced, normal encounter`, () => {
     for (const seed of [0x12345678, 0x5a17c0de, 0x6d2b79f5]) {
       assertSafeOpening(createNewGame(seed, modeId), OPENING_RANGES[modeId].floor1);
@@ -59,6 +45,14 @@ for (const modeId of MODE_ORDER) {
     assert.equal(engine.descend(), true);
     assert.equal(state.floor, 2);
     assertSafeOpening(state, OPENING_RANGES[modeId].floor2);
+  });
+
+  test(`${modeId}: opening support is not granted as free items`, () => {
+    const state = createNewGame(0x12345678, modeId);
+    assert.equal(state.equipment.weapon, null);
+    assert.equal(state.equipment.shield, null);
+    assert.equal(state.equipment.armor, null);
+    assert.deepEqual(state.inventory, []);
   });
 
   test(`${modeId}: two ordinary opening kills can reach level 2`, () => {
