@@ -1,0 +1,16 @@
+release:
+  project: 層渡りの旅録
+  version: 5.1.2
+  previous_version: 5.1.1
+  type: patch
+  title: 全5ダンジョンの序盤バランス調整（初期アイテムなしを維持）
+  invariants:
+    starter_equipment: none
+    starter_inventory: []
+    save_schema: 12
+  changes:
+    - reduce_floor_1_monsters_by_two
+    - reduce_floor_2_monsters_by_one
+    - reduce_floor_1_2_monster_stats_by_five_percent
+    - safe_enemy_spawn_distance_on_opening_floors
+    - disable_rare_monsters_until_floor_3

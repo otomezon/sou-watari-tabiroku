@@ -1,0 +1,30 @@
+patch:
+  project: 層渡りの旅録
+  version: 5.1.2
+  previous_version: 5.1.1
+  type: patch
+  objective: 全5ダンジョンでレベル1〜2の序盤詰まりを軽減し、初期アイテムなしの設計を維持
+  invariants:
+    - 初期装備なし
+    - 初期所持品なし
+    - セーブスキーマ12
+  changes:
+    opening_floors:
+      floors: [1, 2]
+      floor_1_monster_count_delta: -2
+      floor_2_monster_count_delta: -1
+      minimum_monsters: 2
+      stat_scale: 0.95
+      minimum_spawn_chebyshev_distance: 4
+      spawn_fallback: normal_placement_if_no_safe_tile
+      rare_variants: disabled
+      rare_variants_resume_at_floor: 3
+  acceptance:
+    - 全5モードで装備がnull、所持品が空のまま開始
+    - 全5モードで地下1〜2階の敵数・スポーン距離・希少個体抑止を確認
+    - 全5モードで序盤敵2体撃破によりレベル2へ到達可能
+    - セーブスキーマ12とPWAバージョン表示が整合
+  pwa:
+    app_version: 5.1.2
+    manifest_version: 5.1.2
+    service_worker_cache: sou-watari-tabiroku-v5-1-2

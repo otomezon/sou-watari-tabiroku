@@ -304,7 +304,8 @@ export function findItemDropPoint(state, monster) {
 }
 function createRegularMonster(state, point, random, index, progress, template) {
     const mode = getModeConfig(state.modeId);
-    const statScale = mode.difficultyScale * (1.00 + progress * 0.40);
+    const openingDifficultyScale = state.floor <= 2 ? 0.95 : 1;
+    const statScale = mode.difficultyScale * (1.00 + progress * 0.40) * openingDifficultyScale;
     const hp = Math.max(1, Math.round((template.hp + Math.floor(state.floor * 0.35) + random.int(0, 2)) * statScale));
     const monster = {
         id: `f${state.floor}-m${index}-${random.int(1000, 9999)}`,
@@ -316,7 +317,8 @@ function createRegularMonster(state, point, random, index, progress, template) {
         boss: false, actionSpeed: 'normal', actionProgress: 0, rareVariant: false,
     };
     const rarityRoll = random.next() * 0.062 / Math.max(0.001, mode.rareMonsterChance);
-    if (state.modeId !== 'tutorial' && state.modeId !== 'beginner' && rarityRoll < 0.012) {
+    const canSpawnRare = state.floor >= 3 && state.modeId !== 'tutorial';
+    if (canSpawnRare && state.modeId !== 'beginner' && rarityRoll < 0.012) {
         monster.rareVariant = true;
         monster.hunterVariant = true;
         monster.hunterLevel = 1;
@@ -328,7 +330,7 @@ function createRegularMonster(state, point, random, index, progress, template) {
         monster.defense += 6;
         monster.exp = Math.ceil(monster.exp * 2.8);
     }
-    else if (state.modeId !== 'tutorial' && rarityRoll < 0.037) {
+    else if (canSpawnRare && rarityRoll < 0.037) {
         monster.actionSpeed = 'slow';
         monster.rareVariant = true;
         monster.name = `剛腕の${template.name}`;
@@ -338,7 +340,7 @@ function createRegularMonster(state, point, random, index, progress, template) {
         monster.defense += 3;
         monster.exp = Math.ceil(monster.exp * 2.5);
     }
-    else if (state.modeId !== 'tutorial' && rarityRoll < 0.062) {
+    else if (canSpawnRare && rarityRoll < 0.062) {
         monster.actionSpeed = 'fast';
         monster.rareVariant = true;
         monster.name = `俊敏な${template.name}`;
@@ -378,9 +380,10 @@ function populateFloor(state, runRandom) {
                 available.push(point);
         }
     }
-    const takePoint = (avoid = []) => {
+    const takePoint = (avoid = [], minimumDistanceFromStart = 0) => {
         const avoidKeys = new Set(avoid.map(pointKey));
-        const indices = available.filter((point) => !occupied.has(pointKey(point)) && !avoidKeys.has(pointKey(point)));
+        const indices = available.filter((point) => !occupied.has(pointKey(point)) && !avoidKeys.has(pointKey(point)) &&
+            Math.max(Math.abs(point.x - generated.start.x), Math.abs(point.y - generated.start.y)) >= minimumDistanceFromStart);
         if (!indices.length)
             return null;
         const point = indices[random.int(0, indices.length - 1)];
@@ -430,9 +433,13 @@ function populateFloor(state, runRandom) {
         const tierBlend = getMonsterTierBlend(tierProgress, mode.maxMonsterTier);
         const lowerTier = MONSTER_TIERS[tierBlend.lowerTierIndex] ?? MONSTER_TIERS[0];
         const upperTier = MONSTER_TIERS[tierBlend.upperTierIndex] ?? lowerTier;
-        const count = random.int(mode.minMonsters, mode.maxMonsters);
+        const openingWaveReduction = floor === 1 ? 2 : floor === 2 ? 1 : 0;
+        const minimumMonsterCount = Math.max(2, mode.minMonsters - openingWaveReduction);
+        const maximumMonsterCount = Math.max(minimumMonsterCount, mode.maxMonsters - openingWaveReduction);
+        const count = random.int(minimumMonsterCount, maximumMonsterCount);
+        const minimumSpawnDistance = floor <= 2 ? 4 : 2;
         for (let index = 0; index < count; index += 1) {
-            const point = takePoint();
+            const point = takePoint([], minimumSpawnDistance) ?? takePoint();
             if (!point)
                 break;
             const useUpperTier = tierBlend.upperTierIndex !== tierBlend.lowerTierIndex &&
@@ -449,7 +456,7 @@ function populateFloor(state, runRandom) {
         const tutorialHints = {
             1: '十字キーで移動。敵のいる方向へ進むと攻撃します。',
             2: 'アイテムに乗ると自動で拾います。持ち物から使用できます。',
-            3: '武器・盾・防具は装備画面から交換できます。装備には耐久値があります。',
+            3: '武器・盾・防具は装備画面から交換できます。初期装備は装備済みです。装備には耐久値があります。',
             4: '満腹度は行動で減少します。食料で回復し、0になる前に補給しましょう。',
             5: '階段の上で「降りる」を押すと次の階へ進みます。最深部にはボスがいます。',
         };
