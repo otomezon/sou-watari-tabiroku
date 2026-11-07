@@ -94,6 +94,9 @@ export function experienceToNext(level) {
 export function getHunterInitialLevel(progress) {
     return Math.max(1, Math.min(10, Math.floor(Math.max(0, Math.min(1, progress)) * 9) + 1));
 }
+export function getFastVariantAttack(attack) {
+    return Math.ceil(attack * 1.05);
+}
 export function createNewGame(seed = makeSeed(), modeId = 'beginner') {
     const random = new Random(seed);
     const mode = getModeConfig(modeId);
@@ -349,7 +352,7 @@ function createRegularMonster(state, point, random, index, progress, template) {
         monster.name = `俊敏な${template.name}`;
         monster.hp = Math.ceil(monster.hp * 1.25);
         monster.maxHp = monster.hp;
-        monster.attack = Math.ceil(monster.attack * 1.05);
+        monster.attack = getFastVariantAttack(monster.attack);
         monster.defense += 1;
         monster.exp = Math.ceil(monster.exp * 2.3);
     }
