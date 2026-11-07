@@ -1,16 +1,42 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getRegularMonsterDepthScale, RARE_VALUABLE_DROP_CHANCES, RARE_GOLD_DROP_CHANCE_MULTIPLIER, RARE_GOLD_AMOUNT_MULTIPLIER } from '../assets/balance.mjs';
+import { MONSTER_TIERS } from '../assets/engine.js';
+import { getEnemyLevel } from '../assets/enemy-level.mjs';
 import { DUNGEON_MODES } from '../assets/modes.js';
 import { getShopBuyPrice, getShopSellPrice } from '../assets/shop.js';
 
-test('expert regular monsters receive a modest stat reduction from floor 26 onward only', () => {
-  assert.equal(getRegularMonsterDepthScale('expert', 25), 1);
-  for (const floor of [26, 27, 28, 29, 30]) {
-    assert.equal(getRegularMonsterDepthScale('expert', floor), 0.88);
+test('expert regular monsters keep their standard campaign scaling on floors 26–30', () => {
+  for (const floor of [25, 26, 27, 28, 29, 30]) {
+    assert.equal(getRegularMonsterDepthScale('expert', floor), 1);
   }
   assert.equal(getRegularMonsterDepthScale('advanced', 25), 1);
   assert.equal(getRegularMonsterDepthScale('intermediate', 15), 1);
+});
+
+test('only Primal Guardian is slightly softened to match the level-18 endgame band', () => {
+  const finalTier = MONSTER_TIERS[5];
+  const guardian = finalTier.find((monster) => monster.kind === 'primal-guardian');
+  const nightEmperor = finalTier.find((monster) => monster.kind === 'night-emperor');
+  assert.deepEqual(
+    { hp: guardian.hp, attack: guardian.attack, defense: guardian.defense },
+    { hp: 108, attack: 23, defense: 12 },
+  );
+
+  const floor30Stats = (template) => {
+    const scale = 1.35 * 1.40;
+    return {
+      maxHp: Math.round((template.hp + 10) * scale),
+      attack: Math.round((template.attack + 5) * scale),
+      defense: Math.round((template.defense + 4) * scale),
+    };
+  };
+  const guardianStats = floor30Stats(guardian);
+  const nightEmperorStats = floor30Stats(nightEmperor);
+  assert.deepEqual(guardianStats, { maxHp: 223, attack: 53, defense: 30 });
+  assert.deepEqual(nightEmperorStats, { maxHp: 227, attack: 53, defense: 30 });
+  assert.equal(getEnemyLevel(guardianStats), 18);
+  assert.equal(getEnemyLevel(nightEmperorStats), 18);
 });
 
 test('valuable and gold drop rates are trimmed in the late campaigns without changing rare spawn eligibility', () => {
