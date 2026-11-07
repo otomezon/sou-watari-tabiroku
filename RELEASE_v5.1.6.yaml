@@ -1,0 +1,15 @@
+release:
+  project: 層渡りの旅録
+  version: 5.1.6
+  previous_version: 5.1.5
+  type: patch
+  title: 魔喰い撃退後のモンスター成長
+  invariants:
+    starter_equipment: none
+    starter_inventory: []
+    save_schema: 12
+  changes:
+    - monsters_that_defeat_magic_eaters_gain_one_level
+    - winner_max_hp_current_hp_attack_and_defense_are_improved
+    - monster_level_cap_99
+    - existing_magic_eater_growth_on_prey_kill_unchanged
