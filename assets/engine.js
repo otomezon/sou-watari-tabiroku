@@ -2,7 +2,7 @@ import { canStepBetween, DIRECTION_DELTA, generateBossDungeon, generateDungeon, 
 import { createFloorLoot, createItem, itemDisplayName, itemDurability, itemEnhancement } from "./items.js";
 import { floorSeed, makeSeed, Random } from "./random.js";
 import { getModeConfig } from "./modes.js";
-import { getItemRecovery, getMonsterTierBlend } from "./balance.mjs";
+import { getItemRecovery, getMonsterTierBlend, getRegularMonsterDepthScale, RARE_VALUABLE_DROP_CHANCES, RARE_GOLD_DROP_CHANCE_MULTIPLIER, RARE_GOLD_AMOUNT_MULTIPLIER } from "./balance.mjs";
 import { getShopBuyPrice, getShopSellPrice } from "./shop.js";
 export const MAX_HUNGER = 120;
 export const HUNGER_DECAY_EVERY_ACTIONS = 4;
@@ -311,7 +311,7 @@ export function findItemDropPoint(state, monster) {
 function createRegularMonster(state, point, random, index, progress, template) {
     const mode = getModeConfig(state.modeId);
     const openingDifficultyScale = state.floor <= 2 ? 0.95 : 1;
-    const statScale = mode.difficultyScale * (1.00 + progress * 0.40) * openingDifficultyScale;
+    const statScale = mode.difficultyScale * (1.00 + progress * 0.40) * openingDifficultyScale * getRegularMonsterDepthScale(state.modeId, state.floor);
     const hp = Math.max(1, Math.round((template.hp + Math.floor(state.floor * 0.35) + random.int(0, 2)) * statScale));
     const monster = {
         id: `f${state.floor}-m${index}-${random.int(1000, 9999)}`,
@@ -946,9 +946,9 @@ export class GameEngine {
             let drop = null;
             if (lootRoll < 0.45)
                 drop = createItem(this.state.floor, random, random.pick(['weapon', 'shield', 'armor']), this.state.modeId, 'premium');
-            else if (lootRoll < 0.65)
+            else if (lootRoll < 0.45 + RARE_VALUABLE_DROP_CHANCES.hunter)
                 drop = createItem(this.state.floor, random, 'valuable', this.state.modeId, 'premium');
-            else if (lootRoll < 0.75)
+            else if (lootRoll < 0.45 + RARE_VALUABLE_DROP_CHANCES.hunter + 0.10)
                 drop = createItem(this.state.floor, random, 'potion', this.state.modeId, 'premium');
             else if (lootRoll < 0.60)
                 drop = createItem(this.state.floor, random, 'food', this.state.modeId, 'premium');
@@ -962,11 +962,11 @@ export class GameEngine {
             let drop = null;
             if (lootRoll < 0.19)
                 drop = createItem(this.state.floor, random, random.pick(['weapon', 'shield', 'armor']), this.state.modeId, 'premium');
-            else if (lootRoll < 0.26)
+            else if (lootRoll < 0.19 + RARE_VALUABLE_DROP_CHANCES.otherRare)
                 drop = createItem(this.state.floor, random, 'valuable', this.state.modeId, 'premium');
-            else if (lootRoll < 0.30)
+            else if (lootRoll < 0.19 + RARE_VALUABLE_DROP_CHANCES.otherRare + 0.04)
                 drop = createItem(this.state.floor, random, 'potion', this.state.modeId, 'premium');
-            else if (lootRoll < 0.35)
+            else if (lootRoll < 0.19 + RARE_VALUABLE_DROP_CHANCES.otherRare + 0.04 + 0.05)
                 drop = createItem(this.state.floor, random, 'food', this.state.modeId, 'premium');
             if (drop) {
                 this.state.groundItems.push({ ...findItemDropPoint(this.state, monster), item: drop });
@@ -994,9 +994,9 @@ export class GameEngine {
             this.state.groundItems.push({ ...findItemDropPoint(this.state, monster), item: drop });
             this.state.message += ` ${drop.name}を落とした。`;
         }
-        if (random.chance(monster.rareVariant ? Math.min(0.60, drops.enemyDropGold * 2.0) : drops.enemyDropGold)) {
+        if (random.chance(monster.rareVariant ? Math.min(0.60, drops.enemyDropGold * RARE_GOLD_DROP_CHANCE_MULTIPLIER) : drops.enemyDropGold)) {
             const goldBase = random.int(12 + this.state.floor * 3, 30 + this.state.floor * 7);
-            const amount = Math.round(goldBase * (monster.rareVariant ? 2.0 : 0.85));
+            const amount = Math.round(goldBase * (monster.rareVariant ? RARE_GOLD_AMOUNT_MULTIPLIER : 0.85));
             const existing = this.state.groundGold.find((entry) => entry.x === monster.x && entry.y === monster.y);
             if (existing)
                 existing.amount += amount;
