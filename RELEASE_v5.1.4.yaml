@@ -1,0 +1,15 @@
+release:
+  project: 層渡りの旅録
+  version: 5.1.4
+  previous_version: 5.1.3
+  type: patch
+  title: 魔喰いAI修正と希少個体バランス調整
+  invariants:
+    starter_equipment: none
+    starter_inventory: []
+    save_schema: 12
+  changes:
+    - hunter_fallback_to_player_when_prey_path_is_blocked
+    - hunter_initial_level_scales_with_dungeon_progress
+    - fast_variant_attack_bonus_reduced_from_20_to_5_percent
+    - preserve_fast_variant_double_action
