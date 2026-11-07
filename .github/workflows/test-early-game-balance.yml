@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - 'assets/**'
-      - 'tests/v5.1.2-early-game-balance.test.mjs'
+      - 'tests/**.test.mjs'
       - '.github/workflows/test-early-game-balance.yml'
       - 'manifest.webmanifest'
       - 'sw.js'
@@ -24,5 +24,5 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Test opening balance in all five dungeons
-        run: node --experimental-default-type=module --test tests/v5.1.2-early-game-balance.test.mjs
+      - name: Test game balance and monster AI
+        run: node --experimental-default-type=module --test tests/*.test.mjs
