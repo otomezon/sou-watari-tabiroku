@@ -73,14 +73,14 @@ for (const modeId of MODE_ORDER) {
   });
 }
 
-test('5.1.6 app, manifest, cache and release metadata stay aligned without changing save schema', async () => {
+test('5.1.7 app, manifest, cache and release metadata stay aligned without changing save schema', async () => {
   const [main, manifest, sw, engine, storage, release] = await Promise.all([
     read('assets/main.js'), read('manifest.webmanifest'), read('sw.js'),
-    read('assets/engine.js'), read('assets/storage.js'), read('RELEASE_v5.1.6.yaml'),
+    read('assets/engine.js'), read('assets/storage.js'), read('RELEASE_v5.1.7.yaml'),
   ]);
-  assert.match(main, /APP_VERSION = '5.1.6'/);
-  assert.match(manifest, /"version": "5.1.6"/);
-  assert.match(sw, /sou-watari-tabiroku-v5-1-6/);
+  assert.match(main, /APP_VERSION = '5.1.7'/);
+  assert.match(manifest, /"version": "5.1.7"/);
+  assert.match(sw, /sou-watari-tabiroku-v5-1-7/);
   assert.match(engine, /schemaVersion: 12/);
   assert.match(storage, /state\.schemaVersion !== 12/);
   assert.match(release, /type: patch/);

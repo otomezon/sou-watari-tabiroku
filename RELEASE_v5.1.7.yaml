@@ -1,0 +1,16 @@
+release:
+  project: 層渡りの旅録
+  version: 5.1.7
+  previous_version: 5.1.6
+  type: patch
+  title: 最上級深層モンスターの個別調整
+  invariants:
+    starter_equipment: none
+    starter_inventory: []
+    save_schema: 12
+  changes:
+    - expert_floor_26_to_30_global_regular_monster_stat_reduction_removed
+    - primal_guardian_base_hp_attack_defense_slightly_reduced
+    - primal_guardian_floor_30_display_level_reduced_to_18
+    - v5_1_5_drop_rates_gold_rates_and_equipment_purchase_prices_preserved
+    - rare_monster_spawn_rules_and_boss_stats_unchanged
