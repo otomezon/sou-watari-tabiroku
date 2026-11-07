@@ -1,3 +1,11 @@
+export const RARE_VALUABLE_DROP_CHANCES = Object.freeze({ hunter: 0.16, otherRare: 0.055 });
+export const RARE_GOLD_DROP_CHANCE_MULTIPLIER = 1.75;
+export const RARE_GOLD_AMOUNT_MULTIPLIER = 1.75;
+
+export function getRegularMonsterDepthScale(modeId, floor) {
+    return modeId === 'expert' && floor >= 26 ? 0.88 : 1;
+}
+
 export const FOOD_HUNGER_MULTIPLIER = 1.25;
 export const POTION_HP_MULTIPLIER = 1.75;
 
