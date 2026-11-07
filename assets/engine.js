@@ -91,6 +91,9 @@ const MODE_SALT = {
 export function experienceToNext(level) {
     return 18 + Math.max(0, level - 1) * 12;
 }
+export function getHunterInitialLevel(progress) {
+    return Math.max(1, Math.min(10, Math.floor(Math.max(0, Math.min(1, progress)) * 9) + 1));
+}
 export function createNewGame(seed = makeSeed(), modeId = 'beginner') {
     const random = new Random(seed);
     const mode = getModeConfig(modeId);
@@ -321,7 +324,7 @@ function createRegularMonster(state, point, random, index, progress, template) {
     if (canSpawnRare && state.modeId !== 'beginner' && rarityRoll < 0.012) {
         monster.rareVariant = true;
         monster.hunterVariant = true;
-        monster.hunterLevel = 1;
+        monster.hunterLevel = getHunterInitialLevel(progress);
         monster.name = `魔喰いの${template.name}`;
         // 魔喰いは同格の魔物との連戦に勝てるよう、耐久を軸に一段階上の能力へ。
         monster.hp = Math.ceil(monster.hp * 1.70);
@@ -346,7 +349,7 @@ function createRegularMonster(state, point, random, index, progress, template) {
         monster.name = `俊敏な${template.name}`;
         monster.hp = Math.ceil(monster.hp * 1.25);
         monster.maxHp = monster.hp;
-        monster.attack = Math.ceil(monster.attack * 1.20);
+        monster.attack = Math.ceil(monster.attack * 1.05);
         monster.defense += 1;
         monster.exp = Math.ceil(monster.exp * 2.3);
     }
@@ -1085,9 +1088,11 @@ export class GameEngine {
                     if (step) {
                         monster.x = step.x;
                         monster.y = step.y;
+                        return;
                     }
+                    // The player may block the only route to prey. Do not idle:
+                    // fall through to retaliation or the normal player-chase AI.
                 }
-                return;
             }
         }
         if (monster.retaliationTargetId) {
