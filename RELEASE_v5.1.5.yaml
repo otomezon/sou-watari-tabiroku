@@ -1,0 +1,17 @@
+release:
+  project: 層渡りの旅録
+  version: 5.1.5
+  previous_version: 5.1.4
+  type: patch
+  title: 終盤モンスターと経済バランス調整
+  invariants:
+    starter_equipment: none
+    starter_inventory: []
+    save_schema: 12
+  changes:
+    - expert_regular_monster_stats_scaled_to_88_percent_on_floors_26_to_30
+    - advanced_and_expert_valuable_drop_rates_reduced
+    - rare_monster_valuable_drop_rates_reduced_without_changing_spawn_rates
+    - late_campaign_gold_drop_rates_and_rare_gold_rewards_reduced
+    - high_power_equipment_purchase_prices_increased_10_to_30_percent
+    - equipment_resale_prices_preserved
