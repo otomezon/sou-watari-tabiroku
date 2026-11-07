@@ -317,7 +317,7 @@ function createRegularMonster(state, point, random, index, progress, template) {
         boss: false, actionSpeed: 'normal', actionProgress: 0, rareVariant: false,
     };
     const rarityRoll = random.next() * 0.062 / Math.max(0.001, mode.rareMonsterChance);
-    const canSpawnRare = state.floor >= 3 && state.modeId !== 'tutorial';
+    const canSpawnRare = state.modeId !== 'tutorial';
     if (canSpawnRare && state.modeId !== 'beginner' && rarityRoll < 0.012) {
         monster.rareVariant = true;
         monster.hunterVariant = true;
