@@ -1,0 +1,28 @@
+name: Early-game balance regression
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'assets/**'
+      - 'tests/v5.1.2-early-game-balance.test.mjs'
+      - '.github/workflows/test-early-game-balance.yml'
+      - 'manifest.webmanifest'
+      - 'sw.js'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  early-game-balance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test opening balance in all five dungeons
+        run: node --experimental-default-type=module --test tests/v5.1.2-early-game-balance.test.mjs
