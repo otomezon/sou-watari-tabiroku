@@ -8,6 +8,7 @@ on:
       - 'tests/v5.1.2-early-game-balance.test.mjs'
       - 'tests/v5.1.4-monster-ai-balance.test.mjs'
       - 'tests/v5.1.5-endgame-economy.test.mjs'
+      - 'tests/v5.1.4-monster-ai-balance.test.mjs'
       - '.github/workflows/test-early-game-balance.yml'
       - 'manifest.webmanifest'
       - 'sw.js'
