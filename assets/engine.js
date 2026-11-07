@@ -97,6 +97,19 @@ export function getHunterInitialLevel(progress) {
 export function getFastVariantAttack(attack) {
     return Math.ceil(attack * 1.05);
 }
+export function levelUpMonsterAfterHunterVictory(monster) {
+    const currentLevel = Math.max(1, Math.min(99, Number.isInteger(monster.level) ? monster.level : 1));
+    const nextLevel = Math.min(99, currentLevel + 1);
+    if (nextLevel === currentLevel)
+        return currentLevel;
+    const hpGain = Math.min(10000 - monster.maxHp, Math.max(6, Math.ceil(monster.maxHp * 0.18)));
+    monster.level = nextLevel;
+    monster.maxHp += hpGain;
+    monster.hp = Math.min(monster.maxHp, monster.hp + hpGain);
+    monster.attack = Math.min(10000, monster.attack + 1);
+    monster.defense = Math.min(10000, monster.defense + 1);
+    return nextLevel;
+}
 export function createNewGame(seed = makeSeed(), modeId = 'beginner') {
     const random = new Random(seed);
     const mode = getModeConfig(modeId);
@@ -1118,7 +1131,8 @@ export class GameEngine {
                             if (survivor.retaliationTargetId === target.id)
                                 delete survivor.retaliationTargetId;
                         }
-                        this.state.message = `${this.state.message} ${monster.name}が魔喰いを撃退した！`.slice(0, 480);
+                        const nextLevel = levelUpMonsterAfterHunterVictory(monster);
+                        this.state.message = `${this.state.message} ${monster.name}が魔喰いを撃退した！ Lv.${nextLevel}に成長し、能力が強化された。`.slice(0, 480);
                     }
                     else {
                         this.state.message = `${this.state.message} ${monster.name}は魔喰いに反撃！ ${damage}ダメージ。`.slice(0, 480);
