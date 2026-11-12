@@ -516,7 +516,7 @@ class GameApp {
             info.append(node('strong', '', `${itemDisplayName(stack.item)}${stack.count > 1 ? ` ×${stack.count}` : ''}`));
             info.append(node('small', '', itemKindLabel(stack.item.kind)));
             row.append(info);
-            row.append(node('strong', 'shop-price', `${getShopSellPrice(stack.item, this.state.floor)}G`));
+            row.append(node('strong', 'shop-price', `${getShopSellPrice(stack.item, this.state.floor, this.state.modeId)}G`));
             const sell = node('button', 'small-button shop-sell', '売却');
             sell.addEventListener('click', () => void this.runShopTransaction(() => this.engine?.sellInventoryItem(stack.item.uid) ?? false));
             row.append(sell);
