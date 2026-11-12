@@ -18,6 +18,9 @@ function scriptedLootRandom(lootRoll) {
 function defeatRareMonster({ hunterVariant, lootRoll }) {
   const state = createNewGame(0x51a9e8, 'expert');
   state.floor = 30;
+  // Remove the random starting floor loot so assertions observe only this kill's drop.
+  state.groundItems = [];
+  state.groundGold = [];
   const monster = {
     id: 'rare-drop-regression',
     kind: 'test-monster',
