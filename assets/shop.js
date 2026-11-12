@@ -30,7 +30,7 @@ function getEquipmentPriceMultiplier(item) {
     if (power >= 8) return 1.12;
     return 1;
 }
-/** Stronger equipment costs more; basic gear and consumables keep their former prices. */
+/** Equipment and consumables are priced by combat/recovery value; entry-level gear stays unchanged. */
 export function getShopBuyPrice(item, floor) {
     const basePrice = getBaseShopBuyPrice(item, floor);
     if (item.kind !== 'weapon' && item.kind !== 'shield' && item.kind !== 'armor')
