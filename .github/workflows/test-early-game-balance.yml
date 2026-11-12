@@ -10,6 +10,7 @@ on:
       - 'tests/v5.1.5-endgame-economy.test.mjs'
       - 'tests/v5.1.8-late-game-economy.test.mjs'
       - 'tests/v5.1.9-rare-kill-regression.test.mjs'
+      - 'tests/v5.1.10-hunter-defeat-growth.test.mjs'
       - '.github/workflows/test-early-game-balance.yml'
       - 'manifest.webmanifest'
       - 'sw.js'
@@ -29,4 +30,4 @@ jobs:
         with:
           node-version: '22'
       - name: Test game balance and monster AI
-        run: node --experimental-default-type=module --test tests/v5.1.2-early-game-balance.test.mjs tests/v5.1.4-monster-ai-balance.test.mjs tests/v5.1.5-endgame-economy.test.mjs tests/v5.1.8-late-game-economy.test.mjs tests/v5.1.9-rare-kill-regression.test.mjs
+        run: node --experimental-default-type=module --test tests/v5.1.2-early-game-balance.test.mjs tests/v5.1.4-monster-ai-balance.test.mjs tests/v5.1.5-endgame-economy.test.mjs tests/v5.1.8-late-game-economy.test.mjs tests/v5.1.9-rare-kill-regression.test.mjs tests/v5.1.10-hunter-defeat-growth.test.mjs

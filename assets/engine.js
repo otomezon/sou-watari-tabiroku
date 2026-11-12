@@ -504,9 +504,11 @@ export class GameEngine {
     combatDamageReceived = false;
     combatHitCount = 0;
     hunterLevelUpCount = 0;
+    monsterLevelUpCount = 0;
     didReceiveCombatDamage() { return this.combatDamageReceived; }
     getCombatHitCount() { return this.combatHitCount; }
     getHunterLevelUpCount() { return this.hunterLevelUpCount; }
+    getMonsterLevelUpCount() { return this.monsterLevelUpCount; }
     constructor(state) {
         this.state = state;
         this.ensureBossArena();
@@ -891,6 +893,7 @@ export class GameEngine {
         this.combatDamageReceived = false;
         this.combatHitCount = 0;
         this.hunterLevelUpCount = 0;
+        this.monsterLevelUpCount = 0;
         this.activateShopkeeperIfStolen();
         this.enemyPhase(random);
         this.state.turn += 1;
@@ -1133,8 +1136,15 @@ export class GameEngine {
                             if (survivor.retaliationTargetId === target.id)
                                 delete survivor.retaliationTargetId;
                         }
+                        const currentLevel = Math.max(1, Math.min(99, Number.isInteger(monster.level) ? monster.level : 1));
                         const nextLevel = levelUpMonsterAfterHunterVictory(monster);
-                        this.state.message = `${this.state.message} ${monster.name}が魔喰いを撃退した！ Lv.${nextLevel}に成長し、能力が強化された。`.slice(0, 480);
+                        const grew = nextLevel > currentLevel;
+                        if (grew)
+                            this.monsterLevelUpCount += 1;
+                        const growthMessage = grew
+                            ? ` Lv.${nextLevel}に成長し、能力が強化された。`
+                            : ' これ以上は成長できない。';
+                        this.state.message = `${this.state.message} ${monster.name}が魔喰いを撃退した！${growthMessage}`.slice(0, 480);
                     }
                     else {
                         this.state.message = `${this.state.message} ${monster.name}は魔喰いに反撃！ ${damage}ダメージ。`.slice(0, 480);
