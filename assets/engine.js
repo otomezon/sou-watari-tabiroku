@@ -963,9 +963,9 @@ export class GameEngine {
                 drop = createItem(this.state.floor, random, random.pick(['weapon', 'shield', 'armor']), this.state.modeId, 'premium');
             else if (lootRoll < 0.45 + rareValuableDropChances.hunter)
                 drop = createItem(this.state.floor, random, 'valuable', this.state.modeId, 'premium');
-            else if (lootRoll < 0.45 + RARE_VALUABLE_DROP_CHANCES.hunter + 0.10)
+            else if (lootRoll < 0.45 + rareValuableDropChances.hunter + 0.10)
                 drop = createItem(this.state.floor, random, 'potion', this.state.modeId, 'premium');
-            else if (lootRoll < 0.60)
+            else if (lootRoll < 0.45 + rareValuableDropChances.hunter + 0.10 + 0.05)
                 drop = createItem(this.state.floor, random, 'food', this.state.modeId, 'premium');
             if (drop) {
                 this.state.groundItems.push({ ...findItemDropPoint(this.state, monster), item: drop });
@@ -979,9 +979,9 @@ export class GameEngine {
                 drop = createItem(this.state.floor, random, random.pick(['weapon', 'shield', 'armor']), this.state.modeId, 'premium');
             else if (lootRoll < 0.19 + rareValuableDropChances.otherRare)
                 drop = createItem(this.state.floor, random, 'valuable', this.state.modeId, 'premium');
-            else if (lootRoll < 0.19 + RARE_VALUABLE_DROP_CHANCES.otherRare + 0.04)
+            else if (lootRoll < 0.19 + rareValuableDropChances.otherRare + 0.04)
                 drop = createItem(this.state.floor, random, 'potion', this.state.modeId, 'premium');
-            else if (lootRoll < 0.19 + RARE_VALUABLE_DROP_CHANCES.otherRare + 0.04 + 0.05)
+            else if (lootRoll < 0.19 + rareValuableDropChances.otherRare + 0.04 + 0.05)
                 drop = createItem(this.state.floor, random, 'food', this.state.modeId, 'premium');
             if (drop) {
                 this.state.groundItems.push({ ...findItemDropPoint(this.state, monster), item: drop });
