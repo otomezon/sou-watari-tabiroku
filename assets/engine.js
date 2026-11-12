@@ -2,7 +2,7 @@ import { canStepBetween, DIRECTION_DELTA, generateBossDungeon, generateDungeon, 
 import { createFloorLoot, createItem, itemDisplayName, itemDurability, itemEnhancement } from "./items.js";
 import { floorSeed, makeSeed, Random } from "./random.js";
 import { getModeConfig } from "./modes.js";
-import { getItemRecovery, getMonsterTierBlend, getRegularMonsterDepthScale, getRareHunterStatScale, getSlowVariantAttackMultiplier, getGoldDropChance, getGoldDropAmount, RARE_VALUABLE_DROP_CHANCES } from "./balance.mjs";
+import { getItemRecovery, getMonsterTierBlend, getRegularMonsterDepthScale, getRareHunterStatScale, getSlowVariantAttackMultiplier, getGoldDropChance, getGoldDropAmount, getRareValuableDropChances } from "./balance.mjs";
 import { getShopBuyPrice, getShopSellPrice } from "./shop.js";
 export const MAX_HUNGER = 120;
 export const HUNGER_DECAY_EVERY_ACTIONS = 4;
@@ -955,12 +955,13 @@ export class GameEngine {
         this.checkLevelUp();
         const lootRoll = random.next();
         const drops = getModeConfig(this.state.modeId);
+        const rareValuableDropChances = getRareValuableDropChances(this.state.modeId);
         if (monster.hunterVariant) {
             // 魔喰いは最も危険なレア個体。高確率で上位品質の装備・換金品を落とす。
             let drop = null;
             if (lootRoll < 0.45)
                 drop = createItem(this.state.floor, random, random.pick(['weapon', 'shield', 'armor']), this.state.modeId, 'premium');
-            else if (lootRoll < 0.45 + RARE_VALUABLE_DROP_CHANCES.hunter)
+            else if (lootRoll < 0.45 + rareValuableDropChances.hunter)
                 drop = createItem(this.state.floor, random, 'valuable', this.state.modeId, 'premium');
             else if (lootRoll < 0.45 + RARE_VALUABLE_DROP_CHANCES.hunter + 0.10)
                 drop = createItem(this.state.floor, random, 'potion', this.state.modeId, 'premium');
@@ -976,7 +977,7 @@ export class GameEngine {
             let drop = null;
             if (lootRoll < 0.19)
                 drop = createItem(this.state.floor, random, random.pick(['weapon', 'shield', 'armor']), this.state.modeId, 'premium');
-            else if (lootRoll < 0.19 + RARE_VALUABLE_DROP_CHANCES.otherRare)
+            else if (lootRoll < 0.19 + rareValuableDropChances.otherRare)
                 drop = createItem(this.state.floor, random, 'valuable', this.state.modeId, 'premium');
             else if (lootRoll < 0.19 + RARE_VALUABLE_DROP_CHANCES.otherRare + 0.04)
                 drop = createItem(this.state.floor, random, 'potion', this.state.modeId, 'premium');
@@ -1008,9 +1009,9 @@ export class GameEngine {
             this.state.groundItems.push({ ...findItemDropPoint(this.state, monster), item: drop });
             this.state.message += ` ${drop.name}を落とした。`;
         }
-        if (random.chance(getGoldDropChance(drops.enemyDropGold, monster.rareVariant))) {
+        if (random.chance(getGoldDropChance(drops.enemyDropGold, monster.rareVariant, this.state.modeId))) {
             const goldBase = random.int(12 + this.state.floor * 3, 30 + this.state.floor * 7);
-            const amount = getGoldDropAmount(goldBase, monster.rareVariant);
+            const amount = getGoldDropAmount(goldBase, monster.rareVariant, this.state.modeId);
             const existing = this.state.groundGold.find((entry) => entry.x === monster.x && entry.y === monster.y);
             if (existing)
                 existing.amount += amount;
