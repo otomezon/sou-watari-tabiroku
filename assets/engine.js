@@ -2,7 +2,7 @@ import { canStepBetween, DIRECTION_DELTA, generateBossDungeon, generateDungeon, 
 import { createFloorLoot, createItem, itemDisplayName, itemDurability, itemEnhancement } from "./items.js";
 import { floorSeed, makeSeed, Random } from "./random.js";
 import { getModeConfig } from "./modes.js";
-import { getItemRecovery, getMonsterTierBlend, getRegularMonsterDepthScale, RARE_VALUABLE_DROP_CHANCES, RARE_GOLD_DROP_CHANCE_MULTIPLIER, RARE_GOLD_AMOUNT_MULTIPLIER } from "./balance.mjs";
+import { getItemRecovery, getMonsterTierBlend, getRegularMonsterDepthScale, getRareHunterStatScale, getSlowVariantAttackMultiplier, getGoldDropChance, getGoldDropAmount, RARE_VALUABLE_DROP_CHANCES } from "./balance.mjs";
 import { getShopBuyPrice, getShopSellPrice } from "./shop.js";
 export const MAX_HUNGER = 120;
 export const HUNGER_DECAY_EVERY_ACTIONS = 4;
@@ -343,10 +343,11 @@ function createRegularMonster(state, point, random, index, progress, template) {
         monster.hunterLevel = getHunterInitialLevel(progress);
         monster.name = `魔喰いの${template.name}`;
         // 魔喰いは同格の魔物との連戦に勝てるよう、耐久を軸に一段階上の能力へ。
-        monster.hp = Math.ceil(monster.hp * 1.70);
+        const hunterScale = getRareHunterStatScale(state.modeId, state.floor);
+        monster.hp = Math.ceil(monster.hp * hunterScale.hp);
         monster.maxHp = monster.hp;
-        monster.attack = Math.ceil(monster.attack * 1.25);
-        monster.defense += 6;
+        monster.attack = Math.ceil(monster.attack * hunterScale.attack);
+        monster.defense += hunterScale.defense;
         monster.exp = Math.ceil(monster.exp * 2.8);
     }
     else if (canSpawnRare && rarityRoll < 0.037) {
@@ -355,7 +356,7 @@ function createRegularMonster(state, point, random, index, progress, template) {
         monster.name = `剛腕の${template.name}`;
         monster.hp = Math.ceil(monster.hp * 1.38);
         monster.maxHp = monster.hp;
-        monster.attack = Math.ceil(monster.attack * 2.3);
+        monster.attack = Math.ceil(monster.attack * getSlowVariantAttackMultiplier(state.modeId, state.floor));
         monster.defense += 3;
         monster.exp = Math.ceil(monster.exp * 2.5);
     }
@@ -1007,9 +1008,9 @@ export class GameEngine {
             this.state.groundItems.push({ ...findItemDropPoint(this.state, monster), item: drop });
             this.state.message += ` ${drop.name}を落とした。`;
         }
-        if (random.chance(monster.rareVariant ? Math.min(0.60, drops.enemyDropGold * RARE_GOLD_DROP_CHANCE_MULTIPLIER) : drops.enemyDropGold)) {
+        if (random.chance(getGoldDropChance(drops.enemyDropGold, monster.rareVariant))) {
             const goldBase = random.int(12 + this.state.floor * 3, 30 + this.state.floor * 7);
-            const amount = Math.round(goldBase * (monster.rareVariant ? RARE_GOLD_AMOUNT_MULTIPLIER : 0.85));
+            const amount = getGoldDropAmount(goldBase, monster.rareVariant);
             const existing = this.state.groundGold.find((entry) => entry.x === monster.x && entry.y === monster.y);
             if (existing)
                 existing.amount += amount;
