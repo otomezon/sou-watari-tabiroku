@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   getRegularMonsterDepthScale, getRareHunterStatScale, getSlowVariantAttackMultiplier,
-  getGoldDropChance, getGoldDropAmount, RARE_VALUABLE_DROP_CHANCES,
+  getGoldDropChance, getGoldDropAmount, getRareValuableDropChances, RARE_VALUABLE_DROP_CHANCES,
   RARE_GOLD_DROP_CHANCE_MULTIPLIER, RARE_GOLD_AMOUNT_MULTIPLIER,
 } from '../assets/balance.mjs';
 import { DUNGEON_MODES } from '../assets/modes.js';
@@ -40,6 +40,11 @@ test('monster gold yield is reduced while rare encounters remain more rewarding'
   assert.equal(RARE_GOLD_DROP_CHANCE_MULTIPLIER, 1.5);
   assert.equal(RARE_GOLD_AMOUNT_MULTIPLIER, 1.5);
   assert.deepEqual(RARE_VALUABLE_DROP_CHANCES, { hunter: 0.12, otherRare: 0.04 });
+  assert.deepEqual(getRareValuableDropChances('beginner'), { hunter: 0.16, otherRare: 0.055 });
+  assert.deepEqual(getRareValuableDropChances('expert'), { hunter: 0.12, otherRare: 0.04 });
+  assert.equal(getGoldDropChance(0.23, true, 'beginner'), 0.4025);
+  assert.equal(getGoldDropAmount(171, false, 'beginner'), 145);
+  assert.equal(getGoldDropAmount(171, true, 'beginner'), 299);
 });
 
 test('basic consumables stay affordable while top-end recovery costs materially more', () => {
@@ -58,5 +63,7 @@ test('basic consumables stay affordable while top-end recovery costs materially 
 test('late high-value loot has a lower resale rate without changing early-game sale value', () => {
   const relic = { kind: 'valuable', sellValue: 3200 };
   assert.equal(getShopSellPrice(relic, 1), 2880);
-  assert.equal(getShopSellPrice(relic, 30), 2555);
+  assert.equal(getShopSellPrice(relic, 10, 'beginner'), 2900);
+  assert.equal(getShopSellPrice(relic, 10, 'intermediate'), 2705);
+  assert.equal(getShopSellPrice(relic, 30, 'expert'), 2555);
 });
