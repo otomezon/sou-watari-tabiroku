@@ -22,14 +22,25 @@ export function getSlowVariantAttackMultiplier(modeId, floor) {
     return modeId === 'expert' && Number.isFinite(floor) && floor >= 26 ? 1.9 : 2.3;
 }
 
-export function getGoldDropChance(baseChance, rareVariant = false) {
-    return rareVariant
-        ? Math.min(0.60, baseChance * RARE_GOLD_DROP_CHANCE_MULTIPLIER)
-        : baseChance;
+export function getRareValuableDropChances(modeId) {
+    // Preserve the original early-campaign reward loop; economy tuning starts at intermediate.
+    return modeId === 'tutorial' || modeId === 'beginner'
+        ? { hunter: 0.16, otherRare: 0.055 }
+        : RARE_VALUABLE_DROP_CHANCES;
 }
 
-export function getGoldDropAmount(randomBase, rareVariant = false) {
-    const multiplier = rareVariant ? RARE_GOLD_AMOUNT_MULTIPLIER : NORMAL_GOLD_AMOUNT_MULTIPLIER;
+export function getGoldDropChance(baseChance, rareVariant = false, modeId = 'expert') {
+    const rareMultiplier = modeId === 'tutorial' || modeId === 'beginner'
+        ? 1.75
+        : RARE_GOLD_DROP_CHANCE_MULTIPLIER;
+    return rareVariant ? Math.min(0.60, baseChance * rareMultiplier) : baseChance;
+}
+
+export function getGoldDropAmount(randomBase, rareVariant = false, modeId = 'expert') {
+    const earlyCampaign = modeId === 'tutorial' || modeId === 'beginner';
+    const multiplier = earlyCampaign
+        ? (rareVariant ? 1.75 : 0.85)
+        : (rareVariant ? RARE_GOLD_AMOUNT_MULTIPLIER : NORMAL_GOLD_AMOUNT_MULTIPLIER);
     return Math.round(randomBase * multiplier);
 }
 
