@@ -1,0 +1,16 @@
+release:
+  project: 層渡りの旅録
+  version: 5.1.10
+  previous_version: 5.1.9
+  type: patch
+  title: 魔喰い撃退時の成長ファンファーレ
+  invariants:
+    starter_equipment: none
+    starter_inventory: []
+    save_schema: 12
+  changes:
+    - track_regular_monster_level_up_after_hunter_defeat
+    - play_level_up_fanfare_for_winning_monster
+    - avoid_false_level_up_notification_at_level_cap
+    - add_hunter_defeat_growth_and_audio_regression_tests
+    - preserve_previous_balance_and_save_schema_12
