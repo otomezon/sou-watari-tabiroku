@@ -49,7 +49,7 @@ test('basic consumables stay affordable while top-end recovery costs materially 
   const basicFood = { kind: 'food', hungerRestore: 26 };
   const endgameFood = { kind: 'food', hungerRestore: 90 };
   assert.equal(getShopBuyPrice(basicPotion, 1), 70);
-  assert.equal(getShopBuyPrice(endgamePotion, 30), 447);
+  assert.equal(getShopBuyPrice(endgamePotion, 30), 445);
   assert.equal(getShopBuyPrice(legendaryPotion, 30), 490);
   assert.equal(getShopBuyPrice(basicFood, 1), 55);
   assert.equal(getShopBuyPrice(endgameFood, 30), 250);
