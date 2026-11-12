@@ -6,7 +6,7 @@ import { getShopSellPrice, remainingShopGoods, unpaidShopGoods } from "./shop.js
 import { RenderManager } from "./renderer.js";
 import { DEFAULT_AUDIO_SETTINGS, SaveManager } from "./storage.js";
 import { DUNGEON_MODES, MODE_ORDER, getModeConfig } from "./modes.js";
-const APP_VERSION = '5.1.9';
+const APP_VERSION = '5.1.10';
 const byId = (id) => {
     const element = document.getElementById(id);
     if (!element)
@@ -191,6 +191,8 @@ class GameApp {
                 const damageCues = Array.from({ length: hitCount }, () => 'damage');
                 const hunterLevelUps = this.engine.getHunterLevelUpCount();
                 const hunterLevelCues = Array.from({ length: hunterLevelUps }, () => 'hunter-level');
+                const monsterLevelUps = this.engine.getMonsterLevelUpCount();
+                const monsterLevelCues = Array.from({ length: monsterLevelUps }, () => 'level');
                 const leveledUp = this.state.player.level > oldLevel;
                 const actionCues = defaultEffect === 'attack' ? ['attack'] : [];
                 const resultCues = postActionStatus === 'gameover'
@@ -200,6 +202,7 @@ class GameApp {
                     ...actionCues,
                     ...(leveledUp ? ['level'] : []),
                     ...hunterLevelCues,
+                    ...monsterLevelCues,
                     ...damageCues,
                     ...resultCues,
                 ];
