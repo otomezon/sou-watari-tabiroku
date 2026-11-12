@@ -6,7 +6,7 @@ import { getEnemyLevel } from '../assets/enemy-level.mjs';
 import { DUNGEON_MODES } from '../assets/modes.js';
 import { getShopBuyPrice, getShopSellPrice } from '../assets/shop.js';
 
-test('expert regular monsters keep their standard campaign scaling on floors 26–30', () => {
+test('expert regular monsters ease gradually toward the final floor', () => {
   assert.equal(getRegularMonsterDepthScale('expert', 20), 1);
   assert.equal(getRegularMonsterDepthScale('expert', 25), 0.97);
   assert.equal(getRegularMonsterDepthScale('expert', 30), 0.94);
