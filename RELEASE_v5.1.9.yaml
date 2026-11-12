@@ -1,0 +1,15 @@
+release:
+  project: 層渡りの旅録
+  version: 5.1.9
+  previous_version: 5.1.8
+  type: patch
+  title: 希少モンスター撃破時の戦利品エラー修正
+  invariants:
+    starter_equipment: none
+    starter_inventory: []
+    save_schema: 12
+  changes:
+    - fix_unimported_rare_valuable_chance_references_in_kill_loot
+    - fix_hunter_loot_cumulative_food_drop_threshold
+    - add_rare_enemy_kill_regression_coverage
+    - preserve_v5_1_8_balance_and_save_schema_12
