@@ -38,9 +38,10 @@ export function getShopBuyPrice(item, floor) {
     return roundPrice(basePrice * getEquipmentPriceMultiplier(item));
 }
 /** Shopkeepers buy at a reduced value; broken equipment is worth very little. */
-export function getShopSellPrice(item, floor) {
+export function getShopSellPrice(item, floor, modeId = null) {
     if (item.kind === 'valuable') {
-        const valueRate = floor >= 20 ? 0.78 : floor >= 10 ? 0.84 : 0.9;
+        const earlyCampaign = modeId === 'tutorial' || modeId === 'beginner';
+        const valueRate = earlyCampaign ? 0.9 : floor >= 20 ? 0.78 : floor >= 10 ? 0.84 : 0.9;
         return roundPrice((item.sellValue ?? 10) * valueRate + Math.max(0, floor - 1) * 2);
     }
     const condition = item.kind === 'weapon' || item.kind === 'shield' || item.kind === 'armor'
