@@ -11,18 +11,26 @@ function getBaseShopBuyPrice(item, floor) {
         return roundPrice(65 + item.attack * 38 + itemEnhancement(item) * 42 + depth);
     if (item.kind === 'shield' || item.kind === 'armor')
         return roundPrice(60 + item.defense * 42 + itemEnhancement(item) * 38 + depth);
-    if (item.kind === 'potion')
-        return roundPrice(40 + item.heal * 1.7 + (item.hungerRestore ?? 0) * 1.2 + depth);
+    if (item.kind === 'potion') {
+        const heal = Math.max(0, item.heal ?? 0);
+        const healRate = heal >= 100 ? 2.8 : heal >= 80 ? 2.6 : heal >= 50 ? 2.3 : heal >= 25 ? 2.0 : 1.7;
+        return roundPrice(40 + heal * healRate + (item.hungerRestore ?? 0) * 1.5 + depth);
+    }
+    if (item.kind === 'food') {
+        const hunger = Math.max(0, item.hungerRestore ?? 0);
+        const hungerRate = hunger >= 85 ? 1.55 : hunger >= 65 ? 1.40 : hunger >= 45 ? 1.25 : 1.1;
+        return roundPrice(24 + hunger * hungerRate + depth);
+    }
     return roundPrice(24 + (item.hungerRestore ?? 0) * 1.1 + depth);
 }
 function getEquipmentPriceMultiplier(item) {
     const power = (item.kind === 'weapon' ? item.attack : item.defense) + itemEnhancement(item);
-    if (power >= 16) return 1.30;
-    if (power >= 12) return 1.20;
-    if (power >= 8) return 1.10;
+    if (power >= 16) return 1.40;
+    if (power >= 12) return 1.25;
+    if (power >= 8) return 1.12;
     return 1;
 }
-/** Stronger equipment costs more; basic gear and consumables keep their former prices. */
+/** Equipment and consumables are priced by combat/recovery value; entry-level gear stays unchanged. */
 export function getShopBuyPrice(item, floor) {
     const basePrice = getBaseShopBuyPrice(item, floor);
     if (item.kind !== 'weapon' && item.kind !== 'shield' && item.kind !== 'armor')
@@ -30,9 +38,12 @@ export function getShopBuyPrice(item, floor) {
     return roundPrice(basePrice * getEquipmentPriceMultiplier(item));
 }
 /** Shopkeepers buy at a reduced value; broken equipment is worth very little. */
-export function getShopSellPrice(item, floor) {
-    if (item.kind === 'valuable')
-        return roundPrice((item.sellValue ?? 10) * 0.9 + Math.max(0, floor - 1) * 2);
+export function getShopSellPrice(item, floor, modeId = null) {
+    if (item.kind === 'valuable') {
+        const earlyCampaign = modeId === 'tutorial' || modeId === 'beginner';
+        const valueRate = earlyCampaign ? 0.9 : floor >= 20 ? 0.78 : floor >= 10 ? 0.84 : 0.9;
+        return roundPrice((item.sellValue ?? 10) * valueRate + Math.max(0, floor - 1) * 2);
+    }
     const condition = item.kind === 'weapon' || item.kind === 'shield' || item.kind === 'armor'
         ? 0.25 + 0.75 * (itemDurability(item) / Math.max(1, itemMaxDurability(item)))
         : 1;

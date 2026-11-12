@@ -1,10 +1,47 @@
-export const RARE_VALUABLE_DROP_CHANCES = Object.freeze({ hunter: 0.16, otherRare: 0.055 });
-export const RARE_GOLD_DROP_CHANCE_MULTIPLIER = 1.75;
-export const RARE_GOLD_AMOUNT_MULTIPLIER = 1.75;
+export const RARE_VALUABLE_DROP_CHANCES = Object.freeze({ hunter: 0.12, otherRare: 0.04 });
+export const RARE_GOLD_DROP_CHANCE_MULTIPLIER = 1.5;
+export const RARE_GOLD_AMOUNT_MULTIPLIER = 1.5;
+export const NORMAL_GOLD_AMOUNT_MULTIPLIER = 0.72;
 
-export function getRegularMonsterDepthScale() {
-    // The blanket expert-floor 26+ reduction was removed in v5.1.7.
-    return 1;
+/** Smoothly ease only the final expert floors; all other campaigns keep their authored curve. */
+export function getRegularMonsterDepthScale(modeId, floor) {
+    if (modeId !== 'expert' || !Number.isFinite(floor) || floor <= 20) return 1;
+    const progress = Math.min(1, Math.max(0, (floor - 20) / 10));
+    return 1 - progress * 0.06;
+}
+
+/** Preserve rare-form identity while taking the sharpest late-game spikes down slightly. */
+export function getRareHunterStatScale(modeId, floor) {
+    if (modeId === 'expert' && Number.isFinite(floor) && floor >= 26) {
+        return { hp: 1.55, attack: 1.15, defense: 4 };
+    }
+    return { hp: 1.70, attack: 1.25, defense: 6 };
+}
+
+export function getSlowVariantAttackMultiplier(modeId, floor) {
+    return modeId === 'expert' && Number.isFinite(floor) && floor >= 26 ? 1.9 : 2.3;
+}
+
+export function getRareValuableDropChances(modeId) {
+    // Preserve the original early-campaign reward loop; economy tuning starts at intermediate.
+    return modeId === 'tutorial' || modeId === 'beginner'
+        ? { hunter: 0.16, otherRare: 0.055 }
+        : RARE_VALUABLE_DROP_CHANCES;
+}
+
+export function getGoldDropChance(baseChance, rareVariant = false, modeId = 'expert') {
+    const rareMultiplier = modeId === 'tutorial' || modeId === 'beginner'
+        ? 1.75
+        : RARE_GOLD_DROP_CHANCE_MULTIPLIER;
+    return rareVariant ? Math.min(0.60, baseChance * rareMultiplier) : baseChance;
+}
+
+export function getGoldDropAmount(randomBase, rareVariant = false, modeId = 'expert') {
+    const earlyCampaign = modeId === 'tutorial' || modeId === 'beginner';
+    const multiplier = earlyCampaign
+        ? (rareVariant ? 1.75 : 0.85)
+        : (rareVariant ? RARE_GOLD_AMOUNT_MULTIPLIER : NORMAL_GOLD_AMOUNT_MULTIPLIER);
+    return Math.round(randomBase * multiplier);
 }
 
 export const FOOD_HUNGER_MULTIPLIER = 1.25;

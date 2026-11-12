@@ -6,10 +6,10 @@ import { getEnemyLevel } from '../assets/enemy-level.mjs';
 import { DUNGEON_MODES } from '../assets/modes.js';
 import { getShopBuyPrice, getShopSellPrice } from '../assets/shop.js';
 
-test('expert regular monsters keep their standard campaign scaling on floors 26–30', () => {
-  for (const floor of [25, 26, 27, 28, 29, 30]) {
-    assert.equal(getRegularMonsterDepthScale('expert', floor), 1);
-  }
+test('expert regular monsters ease gradually toward the final floor', () => {
+  assert.equal(getRegularMonsterDepthScale('expert', 20), 1);
+  assert.equal(getRegularMonsterDepthScale('expert', 25), 0.97);
+  assert.equal(getRegularMonsterDepthScale('expert', 30), 0.94);
   assert.equal(getRegularMonsterDepthScale('advanced', 25), 1);
   assert.equal(getRegularMonsterDepthScale('intermediate', 15), 1);
 });
@@ -24,7 +24,7 @@ test('only Primal Guardian is slightly softened to match the level-18 endgame ba
   );
 
   const floor30Stats = (template) => {
-    const scale = 1.35 * 1.40;
+    const scale = 1.35 * 1.40 * 0.94;
     return {
       maxHp: Math.round((template.hp + 10) * scale),
       attack: Math.round((template.attack + 5) * scale),
@@ -33,21 +33,23 @@ test('only Primal Guardian is slightly softened to match the level-18 endgame ba
   };
   const guardianStats = floor30Stats(guardian);
   const nightEmperorStats = floor30Stats(nightEmperor);
-  assert.deepEqual(guardianStats, { maxHp: 223, attack: 53, defense: 30 });
-  assert.deepEqual(nightEmperorStats, { maxHp: 227, attack: 53, defense: 30 });
-  assert.equal(getEnemyLevel(guardianStats), 18);
-  assert.equal(getEnemyLevel(nightEmperorStats), 18);
+  assert.deepEqual(guardianStats, { maxHp: 210, attack: 50, defense: 28 });
+  assert.deepEqual(nightEmperorStats, { maxHp: 213, attack: 50, defense: 28 });
+  assert.equal(getEnemyLevel(guardianStats), 17);
+  assert.equal(getEnemyLevel(nightEmperorStats), 17);
 });
 
 test('valuable and gold drop rates are trimmed in the late campaigns without changing rare spawn eligibility', () => {
-  assert.equal(DUNGEON_MODES.advanced.enemyDropValuable, 0.0065);
-  assert.equal(DUNGEON_MODES.expert.enemyDropValuable, 0.008);
-  assert.equal(DUNGEON_MODES.advanced.enemyDropGold, 0.27);
-  assert.equal(DUNGEON_MODES.expert.enemyDropGold, 0.29);
-  assert.equal(RARE_VALUABLE_DROP_CHANCES.hunter, 0.16);
-  assert.equal(RARE_VALUABLE_DROP_CHANCES.otherRare, 0.055);
-  assert.equal(RARE_GOLD_DROP_CHANCE_MULTIPLIER, 1.75);
-  assert.equal(RARE_GOLD_AMOUNT_MULTIPLIER, 1.75);
+  assert.equal(DUNGEON_MODES.intermediate.enemyDropValuable, 0.0055);
+  assert.equal(DUNGEON_MODES.advanced.enemyDropValuable, 0.006);
+  assert.equal(DUNGEON_MODES.expert.enemyDropValuable, 0.0065);
+  assert.equal(DUNGEON_MODES.intermediate.enemyDropGold, 0.24);
+  assert.equal(DUNGEON_MODES.advanced.enemyDropGold, 0.25);
+  assert.equal(DUNGEON_MODES.expert.enemyDropGold, 0.26);
+  assert.equal(RARE_VALUABLE_DROP_CHANCES.hunter, 0.12);
+  assert.equal(RARE_VALUABLE_DROP_CHANCES.otherRare, 0.04);
+  assert.equal(RARE_GOLD_DROP_CHANCE_MULTIPLIER, 1.5);
+  assert.equal(RARE_GOLD_AMOUNT_MULTIPLIER, 1.5);
 });
 
 test('strong equipment receives a higher purchase price while basic gear stays unchanged', () => {
@@ -57,9 +59,9 @@ test('strong equipment receives a higher purchase price while basic gear stays u
   const endgame = { kind: 'weapon', attack: 16, enhancement: 0 };
 
   assert.equal(getShopBuyPrice(basic, 20), 390);
-  assert.equal(getShopBuyPrice(improved, 20), 600);
-  assert.equal(getShopBuyPrice(advanced, 20), 740);
-  assert.equal(getShopBuyPrice(endgame, 30), 990);
+  assert.equal(getShopBuyPrice(improved, 20), 610);
+  assert.equal(getShopBuyPrice(advanced, 20), 770);
+  assert.equal(getShopBuyPrice(endgame, 30), 1065);
 });
 
 test('higher end buy-price markup does not inflate equipment resale income', () => {

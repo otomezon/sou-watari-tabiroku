@@ -6,7 +6,7 @@ import { getShopSellPrice, remainingShopGoods, unpaidShopGoods } from "./shop.js
 import { RenderManager } from "./renderer.js";
 import { DEFAULT_AUDIO_SETTINGS, SaveManager } from "./storage.js";
 import { DUNGEON_MODES, MODE_ORDER, getModeConfig } from "./modes.js";
-const APP_VERSION = '5.1.7';
+const APP_VERSION = '5.1.8';
 const byId = (id) => {
     const element = document.getElementById(id);
     if (!element)
@@ -516,7 +516,7 @@ class GameApp {
             info.append(node('strong', '', `${itemDisplayName(stack.item)}${stack.count > 1 ? ` ×${stack.count}` : ''}`));
             info.append(node('small', '', itemKindLabel(stack.item.kind)));
             row.append(info);
-            row.append(node('strong', 'shop-price', `${getShopSellPrice(stack.item, this.state.floor)}G`));
+            row.append(node('strong', 'shop-price', `${getShopSellPrice(stack.item, this.state.floor, this.state.modeId)}G`));
             const sell = node('button', 'small-button shop-sell', '売却');
             sell.addEventListener('click', () => void this.runShopTransaction(() => this.engine?.sellInventoryItem(stack.item.uid) ?? false));
             row.append(sell);

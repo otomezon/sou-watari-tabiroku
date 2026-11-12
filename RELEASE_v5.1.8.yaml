@@ -1,0 +1,18 @@
+release:
+  project: 層渡りの旅録
+  version: 5.1.8
+  previous_version: 5.1.7
+  type: patch
+  title: 終盤戦闘・中盤以降の経済調整
+  invariants:
+    starter_equipment: none
+    starter_inventory: []
+    save_schema: 12
+  changes:
+    - expert_floor_21_to_30_regular_monster_scaling_eased_gradually_to_0_94
+    - expert_floor_26_plus_hunter_and_slow_rare_burst_stats_moderated
+    - intermediate_advanced_expert_gold_and_valuable_drop_rates_reduced
+    - rare_monster_gold_chance_and_amount_multipliers_reduced_to_1_5
+    - premium_equipment_and_high_recovery_consumable_prices_increased_by_tier
+    - late_game_valuable_resale_rate_reduced
+    - starter_state_boss_stats_and_rare_spawn_eligibility_preserved
