@@ -80,7 +80,7 @@ test('5.1.8 app, manifest, cache and release metadata stay aligned without chang
   ]);
   assert.match(main, /APP_VERSION = '5.1.8'/);
   assert.match(manifest, /"version": "5.1.8"/);
-  assert.match(sw, /sou-watari-tabiroku-v5-1-7/);
+  assert.match(sw, /sou-watari-tabiroku-v5-1-8/);
   assert.match(engine, /schemaVersion: 12/);
   assert.match(storage, /state\.schemaVersion !== 12/);
   assert.match(release, /type: patch/);
