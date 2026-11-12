@@ -810,7 +810,7 @@ export class GameEngine {
             this.state.updatedAt = Date.now();
             return false;
         }
-        const price = getShopSellPrice(stack.item, this.state.floor);
+        const price = getShopSellPrice(stack.item, this.state.floor, this.state.modeId);
         this.removeOneFromStack(stack);
         this.state.gold = Math.min(20_000_000, this.state.gold + price);
         this.state.message = `${itemDisplayName(stack.item)}を${price}Gで売却した。`;
