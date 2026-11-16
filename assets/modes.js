@@ -11,7 +11,7 @@ export const DUNGEON_MODES = {
     beginner: {
         id: 'beginner', name: '苔むす古坑', subtitle: '初級 · 地下10階',
         description: '基本を身につけた冒険者向け。装備を整えて魔物の王に挑もう。',
-        floors: 10, difficultyScale: 1.00, maxMonsterTier: 3, minMonsters: 4, maxMonsters: 7, bossFloorMonsters: 7, bossSize: 4, bossVisualScale: 2.00, bossSupportRareChance: 0.04, bossFormChance: 0.60, bossSize: 2, bossVisualScale: 0.78, bossSupportRareChance: 0.025, bossFormChance: 0,
+        floors: 10, difficultyScale: 1.00, maxMonsterTier: 3, minMonsters: 4, maxMonsters: 7, bossFloorMonsters: 3, bossSize: 2, bossVisualScale: 0.78, bossSupportRareChance: 0.025, bossFormChance: 0,
         rareMonsterChance: 0.085, floorLootChance: 0.60, equipmentWeight: 0.18, foodWeight: 0.39, potionWeight: 0.43,
         enemyDropEquipment: 0.014, enemyDropPotion: 0.029, enemyDropFood: 0.023, enemyDropGold: 0.23, shopChance: 0.07, enemyDropValuable: 0.005,
         bossName: '古坑の守護王', bossHp: 160, bossAttack: 14, bossDefense: 4, bossExp: 180, bossAreaAttackChance: 0.12, bossNovaAttackChance: 0, bossEnrageThreshold: 0, bossEnrageAttackMultiplier: 1,
@@ -38,7 +38,7 @@ export const DUNGEON_MODES = {
     expert: {
         id: 'expert', name: '星喰らいの深淵', subtitle: '最上級 · 地下30階',
         description: '星の光すら届かない最深層。万全の装備と判断力が試される。',
-        floors: 30, difficultyScale: 1.35, maxMonsterTier: 6, minMonsters: 6, maxMonsters: 10, bossFloorMonsters: 3,
+        floors: 30, difficultyScale: 1.35, maxMonsterTier: 6, minMonsters: 6, maxMonsters: 10, bossFloorMonsters: 7, bossSize: 4, bossVisualScale: 2.00, bossSupportRareChance: 0.04, bossFormChance: 0.60,
         rareMonsterChance: 0.115, floorLootChance: 0.54, equipmentWeight: 0.20, foodWeight: 0.34, potionWeight: 0.46,
         enemyDropEquipment: 0.017, enemyDropPotion: 0.025, enemyDropFood: 0.017, enemyDropGold: 0.26, shopChance: 0.10, enemyDropValuable: 0.0065,
         bossName: '星喰らいゼル＝ノヴァ', bossHp: 560, bossAttack: 42, bossDefense: 12, bossExp: 760, bossAreaAttackChance: 0.45, bossNovaAttackChance: 0.20, bossEnrageThreshold: 0.45, bossEnrageAttackMultiplier: 1.22,
@@ -52,7 +52,7 @@ export function getModeConfig(modeId) {
 
 export function getBossStats(modeId, form = 'normal') {
     const mode = getModeConfig(modeId);
-    const effectiveForm = modeId === 'tutorial' ? 'normal' : form;
+    const effectiveForm = mode.bossFormChance > 0 ? form : 'normal';
     const hpMultiplier = effectiveForm === 'slow' ? 1.08 : effectiveForm === 'fast' ? 0.94 : 1;
     const attackMultiplier = effectiveForm === 'slow' ? 1.25 : effectiveForm === 'fast' ? 0.65 : 1;
     return {
