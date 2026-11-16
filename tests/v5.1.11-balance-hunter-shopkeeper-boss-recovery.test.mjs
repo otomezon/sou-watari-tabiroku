@@ -131,15 +131,17 @@ test('the shopkeeper attacks blockers and then continues along the pursuit route
 });
 
 test('a boss can use a telegraphed area attack from several tiles away', () => {
-  const state = createNewGame(0x51114, 'expert');
+  const state = createNewGame(0x51114, 'intermediate');
   state.dungeon.tiles = Array.from({ length: 40 }, () => Array(40).fill(1));
   state.dungeon.stairs = null;
   state.player.x = 10;
   state.player.y = 6;
   const boss = {
     id: 'area-boss', kind: 'boss', name: '範囲攻撃ボス',
-    x: 5, y: 5, hp: 500, maxHp: 500, attack: 40, defense: 5,
-    exp: 10, boss: true, actionSpeed: 'normal', actionProgress: 0,
+    x: 5, y: 5, hp: 316, maxHp: 316, attack: 40, defense: 5,
+    exp: 10, boss: true, bossBalanceVersion: 3, bossSize: 2,
+    bossAreaAttackChance: 0.38, bossNovaAttackChance: 0, bossEnrageThreshold: 0,
+    bossEnrageAttackMultiplier: 1, actionSpeed: 'normal', actionProgress: 0,
   };
   state.monsters = [boss];
   const engine = new GameEngine(state);
@@ -150,19 +152,30 @@ test('a boss can use a telegraphed area attack from several tiles away', () => {
   assert.deepEqual(state.bossAreaEffect, { x: 10, y: 6, radius: 1, turn: state.turn + 1 });
 });
 
-test('boss profiles are calibrated separately for every campaign and form', () => {
+test('boss profiles scale in size, toughness and attack patterns across campaigns', () => {
   const expected = [
-    ['tutorial', { hp: 48, attack: 6, defense: 1 }],
-    ['beginner', { hp: 135, attack: 12, defense: 3 }],
-    ['intermediate', { hp: 220, attack: 17, defense: 5 }],
-    ['advanced', { hp: 350, attack: 23, defense: 7 }],
-    ['expert', { hp: 500, attack: 30, defense: 9 }],
+    ['tutorial', { hp: 42, attack: 6, defense: 1, bossSize: 1, bossVisualScale: 0.5, bossAreaAttackChance: 0, bossNovaAttackChance: 0 }],
+    ['beginner', { hp: 160, attack: 14, defense: 4, bossSize: 2, bossVisualScale: 0.78, bossAreaAttackChance: 0.12, bossNovaAttackChance: 0 }],
+    ['intermediate', { hp: 316, attack: 25, defense: 8, bossSize: 2, bossVisualScale: 1, bossAreaAttackChance: 0.38, bossNovaAttackChance: 0 }],
+    ['advanced', { hp: 430, attack: 33, defense: 10, bossSize: 3, bossVisualScale: 1.5, bossAreaAttackChance: 0.42, bossNovaAttackChance: 0.12 }],
+    ['expert', { hp: 560, attack: 42, defense: 12, bossSize: 4, bossVisualScale: 2, bossAreaAttackChance: 0.45, bossNovaAttackChance: 0.20 }],
   ];
-  for (const [modeId, stats] of expected)
-    assert.deepEqual(getBossStats(modeId, 'normal'), stats);
-  assert.deepEqual(getBossStats('tutorial', 'slow'), expected[0][1]);
-  assert.deepEqual(getBossStats('beginner', 'slow'), { hp: 146, attack: 15, defense: 3 });
-  assert.deepEqual(getBossStats('beginner', 'fast'), { hp: 127, attack: 8, defense: 3 });
+  for (const [modeId, expectedStats] of expected) {
+    const profile = getBossStats(modeId, 'normal');
+    const actual = Object.fromEntries(Object.keys(expectedStats).map((key) => [key, profile[key]]));
+    assert.deepEqual(actual, expectedStats, modeId);
+  }
+  assert.equal(getBossStats('tutorial', 'slow').attack, 6);
+  assert.equal(getBossStats('beginner', 'fast').attack, 14);
+  assert.equal(getBossStats('intermediate', 'slow').attack, 32);
+  assert.equal(getBossModeConfig('beginner').bossFloorMonsters, 3);
+  assert.equal(getBossModeConfig('intermediate').bossFloorMonsters, 5);
+  assert.equal(getBossModeConfig('advanced').bossFloorMonsters, 6);
+  assert.equal(getBossModeConfig('expert').bossFloorMonsters, 7);
+  for (const modeId of ['beginner', 'intermediate', 'advanced', 'expert']) {
+    const rareRate = getBossModeConfig(modeId).bossSupportRareChance;
+    assert.ok(rareRate > 0 && rareRate <= 0.04, `${modeId} rare support rate should stay low`);
+  }
 });
 
 test('tutorial boss has no ranged area attack or speed variant', () => {
@@ -173,8 +186,10 @@ test('tutorial boss has no ranged area attack or speed variant', () => {
   state.player.y = 6;
   const boss = {
     id: 'tutorial-boss', kind: 'boss', name: '坑道の守り手',
-    x: 5, y: 5, hp: 48, maxHp: 48, attack: 6, defense: 1,
-    exp: 78, boss: true, bossBalanceVersion: 2, actionSpeed: 'normal', actionProgress: 0,
+    x: 5, y: 5, hp: 42, maxHp: 42, attack: 6, defense: 1,
+    exp: 78, boss: true, bossBalanceVersion: 3, bossSize: 1,
+    bossAreaAttackChance: 0, bossNovaAttackChance: 0, bossEnrageThreshold: 0,
+    bossEnrageAttackMultiplier: 1, actionSpeed: 'normal', actionProgress: 0,
   };
   state.monsters = [boss];
   const engine = new GameEngine(state);
@@ -195,14 +210,43 @@ test('legacy boss saves are rebalanced once while preserving the remaining HP ra
     exp: 180, boss: true, actionSpeed: 'normal', actionProgress: 0,
   }];
   new GameEngine(state);
-  assert.equal(state.monsters[0].maxHp, 135);
-  assert.equal(state.monsters[0].hp, 68);
-  assert.equal(state.monsters[0].attack, 12);
-  assert.equal(state.monsters[0].defense, 3);
-  assert.equal(state.monsters[0].bossBalanceVersion, 2);
+  assert.equal(state.monsters[0].maxHp, 160);
+  assert.equal(state.monsters[0].hp, 80);
+  assert.equal(state.monsters[0].attack, 14);
+  assert.equal(state.monsters[0].defense, 4);
+  assert.equal(state.monsters[0].bossBalanceVersion, 3);
+  assert.equal(state.monsters[0].bossSize, 2);
+  assert.equal(state.monsters.length, 4);
   new GameEngine(state);
-  assert.equal(state.monsters[0].hp, 68);
-  assert.equal(state.monsters[0].maxHp, 135);
+  assert.equal(state.monsters[0].hp, 80);
+  assert.equal(state.monsters[0].maxHp, 160);
+  assert.equal(state.monsters.length, 4);
+});
+
+test('advanced bosses unlock the five-tile nova and a stronger low-HP phase', () => {
+  const state = createNewGame(0x515152, 'expert');
+  state.floor = getBossModeConfig('expert').floors;
+  state.dungeon.bossArena = true;
+  state.dungeon.tiles = Array.from({ length: 40 }, () => Array(40).fill(1));
+  state.dungeon.rooms = [{ x: 2, y: 2, width: 35, height: 35 }];
+  state.dungeon.stairs = null;
+  state.player.x = 14;
+  state.player.y = 6;
+  const boss = {
+    id: 'expert-boss', kind: 'boss', name: '星喰らい',
+    x: 5, y: 5, hp: 200, maxHp: 560, attack: 42, defense: 12,
+    exp: 760, boss: true, bossBalanceVersion: 3, bossSize: 4,
+    bossAreaAttackChance: 0.45, bossNovaAttackChance: 0.20,
+    bossEnrageThreshold: 0.45, bossEnrageAttackMultiplier: 1.22,
+    actionSpeed: 'normal', actionProgress: 0,
+  };
+  state.monsters = [boss];
+  const engine = new GameEngine(state);
+  engine.performMonsterAction(boss, { int: (min) => min, chance: () => true });
+  assert.equal(boss.bossEnraged, true);
+  assert.deepEqual(state.bossAreaEffect, { x: 14, y: 6, radius: 2, turn: state.turn + 1 });
+  assert.match(state.message, /大爆発/);
+  assert.match(state.message, /怒りに震え/);
 });
 
 test('top-tier gear receives a higher shop price', () => {
@@ -215,4 +259,6 @@ test('the boss warning visual is rendered as an area overlay', async () => {
   const renderer = await readFile(new URL('../assets/renderer.js', import.meta.url), 'utf8');
   assert.match(renderer, /drawBossAreaEffect/);
   assert.match(renderer, /bossAreaEffect\.turn === state\.turn/);
+  assert.match(renderer, /bossVisualScale/);
+  assert.match(renderer, /bossVisualStyle/);
 });
