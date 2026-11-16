@@ -87,9 +87,9 @@ export const MONSTER_TIERS = [
         { kind: 'ancient-warden', name: '古代の番人', hp: 96, attack: 21, defense: 10, exp: 80 },
         { kind: 'void-dragon', name: '虚空竜', hp: 104, attack: 25, defense: 10, exp: 86 },
         { kind: 'star-phoenix', name: '星炎フェニックス', hp: 78, attack: 24, defense: 8, exp: 84 },
-        { kind: 'night-emperor', name: '夜天皇', hp: 110, attack: 23, defense: 12, exp: 88 },
+        { kind: 'night-emperor', name: '夜天皇', hp: 98, attack: 23, defense: 9, exp: 88 },
         { kind: 'dimensional-fiend', name: '次元魔', hp: 92, attack: 27, defense: 9, exp: 90 },
-        { kind: 'primal-guardian', name: '原初の守り手', hp: 108, attack: 23, defense: 12, exp: 92 },
+        { kind: 'primal-guardian', name: '原初の守り手', hp: 96, attack: 23, defense: 9, exp: 92 },
     ],
 ];
 export const MONSTER_CATALOG = MONSTER_TIERS.flat();
