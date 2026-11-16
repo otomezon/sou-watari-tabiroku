@@ -145,7 +145,7 @@ class GameApp {
             const previousBossBalanceVersion = loaded.monsters?.find((monster) => monster.boss)?.bossBalanceVersion ?? 0;
             const needsFloorMonsterBalanceMigration = loaded.status === 'playing' &&
                 loaded.monsters?.some((monster) => !monster.boss && !monster.shopkeeper &&
-                    (monster.floorBalanceVersion ?? 0) < 1);
+                    (monster.floorBalanceVersion ?? 0) < 2);
             this.state = loaded;
             this.engine = new GameEngine(loaded);
             const currentBossBalanceVersion = loaded.monsters?.find((monster) => monster.boss)?.bossBalanceVersion ?? 0;
