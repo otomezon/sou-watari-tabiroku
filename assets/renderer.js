@@ -242,7 +242,7 @@ export class RenderManager {
     }
     drawElementalAreaEffect(effect, originX, originY) {
         const ctx = this.context;
-        const width = Math.max(1, Math.min(5, effect.width ?? 1));
+        const width = 1;
         const height = Math.max(1, Math.min(7, effect.height ?? 1));
         const halfWidth = Math.floor(width / 2);
         const halfHeight = Math.floor(height / 2);
