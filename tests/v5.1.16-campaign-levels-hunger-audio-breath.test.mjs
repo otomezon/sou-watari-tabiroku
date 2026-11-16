@@ -5,6 +5,7 @@ import {
   createNewGame,
   GameEngine,
   getExpectedPlayerLevel,
+  getExpectedMonsterDefenseCap,
   getFloorMonsterCalibration,
   getLegacyFloorMonsterCalibration,
   getLegacyV3FloorMonsterCalibration,
@@ -99,6 +100,11 @@ test('ordinary enemies stay challenging but a typical no-gear duel remains survi
         if (ordinary.length > 0) {
           const playerLevel = getExpectedPlayerLevel(modeId, floor);
           const playerPower = expectedUnequippedPlayerPower(playerLevel);
+          const expectedDefenseCap = getExpectedMonsterDefenseCap(modeId, floor);
+          for (const monster of ordinary) {
+            assert.ok(monster.defense <= expectedDefenseCap,
+              `${modeId} F${floor}: ${monster.name} defense ${monster.defense} exceeds no-gear cap ${expectedDefenseCap}`);
+          }
           const averageMonsterPower = ordinary.reduce((sum, monster) => sum + monsterCombatPower(monster), 0) / ordinary.length;
           const ratio = averageMonsterPower / playerPower;
           const target = FLOOR_POWER_TARGETS[modeId];
@@ -153,7 +159,7 @@ test('new regular monsters carry balance version 4 and legacy unscaled monsters 
   assert.equal(migrated.maxHp, Math.round(60 * expectedAdjustment * FLOOR_MONSTER_HP_MULTIPLIER));
   assert.ok(Math.abs(migrated.hp / migrated.maxHp - 0.5) < 0.02);
   assert.equal(migrated.attack, Math.round(10 * expectedAdjustment * FLOOR_MONSTER_ATTACK_MULTIPLIER));
-  assert.equal(migrated.defense, Math.round(4 * expectedAdjustment * FLOOR_MONSTER_DEFENSE_MULTIPLIER));
+  assert.equal(migrated.defense, Math.min(getExpectedMonsterDefenseCap('beginner', 1), Math.round(4 * expectedAdjustment * FLOOR_MONSTER_DEFENSE_MULTIPLIER)));
 });
 
 test('version-1, version-2, and version-3 floor monsters migrate proportionally to v4', () => {
@@ -186,7 +192,7 @@ test('version-1, version-2, and version-3 floor monsters migrate proportionally 
     assert.equal(migrated.maxHp, Math.round(80 * ratio * FLOOR_MONSTER_HP_MULTIPLIER));
     assert.ok(Math.abs(migrated.hp / migrated.maxHp - 0.5) < 0.02);
     assert.equal(migrated.attack, Math.round(20 * ratio * FLOOR_MONSTER_ATTACK_MULTIPLIER));
-    assert.equal(migrated.defense, Math.round(8 * ratio * FLOOR_MONSTER_DEFENSE_MULTIPLIER));
+    assert.equal(migrated.defense, Math.min(getExpectedMonsterDefenseCap('advanced', state.floor), Math.round(8 * ratio * FLOOR_MONSTER_DEFENSE_MULTIPLIER)) + (legacy.version === 1 || legacy.version === 2 ? 0 : 0));
   }
 });
 
