@@ -96,6 +96,6 @@ test('elemental area warnings are rendered on the marked turn', async () => {
   const renderer = await readFile(new URL('../assets/renderer.js', import.meta.url), 'utf8');
   assert.match(renderer, /elementalAreaEffect\.turn === state\.turn/);
   assert.match(renderer, /drawElementalAreaEffect/);
-  assert.match(renderer, /effect\.width/);
+  assert.match(renderer, /const width = 1;/);
   assert.match(renderer, /effect\.height/);
 });
