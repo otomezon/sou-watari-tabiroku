@@ -1,0 +1,18 @@
+release:
+  project: 層渡りの旅録
+  version: 5.1.13
+  previous_version: 5.1.12
+  type: patch
+  title: 固定回復とドラゴンの範囲ブレス
+  invariants:
+    starter_equipment: none
+    starter_inventory: []
+    save_schema: 12
+  changes:
+    - restore_fixed_hp_recovery_for_potions
+    - add_ranged_fire_breath_to_dragon_families
+    - add_blizzard_breath_to_frost_drake
+    - damage_nearby_monsters_with_weaker_area_attacks
+    - level_up_dragons_for_monsters_defeated_by_breath
+    - render_elemental_attack_area_warnings
+    - add_fixed_healing_and_dragon_breath_regression_tests
