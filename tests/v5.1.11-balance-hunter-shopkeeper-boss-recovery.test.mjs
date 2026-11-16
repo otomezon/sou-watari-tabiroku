@@ -2,15 +2,53 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createNewGame, GameEngine } from '../assets/engine.js';
-import { getItemRecovery, itemDescription, getMonsterTierProgress } from '../assets/balance.mjs';
+import { getItemRecovery, itemDescription, getMonsterTierProgress, getFloorStatAdjustment, getMonsterTierEntryMultiplier, canSpawnRareMonster, canSpawnMagicEater } from '../assets/balance.mjs';
 import { getShopBuyPrice } from '../assets/shop.js';
 
-test('expert final enemy tier is introduced progressively from floor 26', () => {
-  assert.equal(getMonsterTierProgress('expert', 20, 30), Math.pow(19 / 28, 1.6));
-  assert.ok(getMonsterTierProgress('expert', 25, 30) < 0.80);
-  assert.ok(getMonsterTierProgress('expert', 26, 30) < getMonsterTierProgress('expert', 27, 30));
-  assert.equal(getMonsterTierProgress('expert', 29, 30), 1);
+test('expert final tier enters at floor 25 and ramps across floors 25–29', () => {
+  assert.equal(getMonsterTierProgress('expert', 20, 30), Math.pow(19 / 28, 1.15));
+  assert.equal(getMonsterTierProgress('expert', 25, 30), Math.pow(24 / 28, 1.15));
+  assert.ok(getMonsterTierProgress('expert', 25, 30) > Math.pow(24 / 28, 1.6));
+  const ramp = [25, 26, 27, 28, 29].map((floor) => getMonsterTierProgress('expert', floor, 30));
+  assert.ok(ramp.every((value, index) => index === 0 || value > ramp[index - 1]));
+  assert.equal(ramp.at(-1), 1);
   assert.equal(getMonsterTierProgress('advanced', 20, 25), 19 / 23);
+});
+
+test('all campaigns receive a small monotonic stat ramp on every ordinary floor', () => {
+  const campaigns = [
+    ['tutorial', 5, 0.02], ['beginner', 10, 0.025], ['intermediate', 15, 0.035],
+    ['advanced', 25, 0.045], ['expert', 30, 0.05],
+  ];
+  for (const [mode, floors, maxBonus] of campaigns) {
+    let previous = 0;
+    for (let floor = 1; floor < floors; floor += 1) {
+      const adjustment = getFloorStatAdjustment(mode, floor, floors);
+      assert.ok(adjustment >= 1 && adjustment <= 1 + maxBonus);
+      assert.ok(adjustment >= previous, `${mode} floor ${floor} regressed`);
+      previous = adjustment;
+    }
+    assert.equal(getFloorStatAdjustment(mode, 1, floors), 1);
+    assert.equal(getFloorStatAdjustment(mode, floors - 1, floors), 1 + maxBonus);
+  }
+});
+
+test('new upper-tier monsters gradually reach their authored stats', () => {
+  const base = { lowerTierIndex: 2, upperTierIndex: 3, upperChance: 0 };
+  assert.equal(getMonsterTierEntryMultiplier(base), 0.94);
+  assert.equal(getMonsterTierEntryMultiplier({ ...base, upperChance: 0.5 }), 0.97);
+  assert.equal(getMonsterTierEntryMultiplier({ ...base, upperChance: 1 }), 1);
+  assert.equal(getMonsterTierEntryMultiplier({ lowerTierIndex: 3, upperTierIndex: 3, upperChance: 0 }), 1);
+});
+
+test('rare monsters can spawn on the first floor outside tutorial; beginner still excludes magic-eaters', () => {
+  assert.equal(canSpawnRareMonster('tutorial'), false);
+  for (const mode of ['beginner', 'intermediate', 'advanced', 'expert'])
+    assert.equal(canSpawnRareMonster(mode), true);
+  assert.equal(canSpawnMagicEater('tutorial'), false);
+  assert.equal(canSpawnMagicEater('beginner'), false);
+  assert.equal(canSpawnMagicEater('intermediate'), true);
+  assert.equal(canSpawnMagicEater('expert'), true);
 });
 
 test('HP recovery items use a percentage of the actual maximum HP', () => {

@@ -10,11 +10,46 @@ export function getRegularMonsterDepthScale(modeId, floor) {
     return 1 - progress * 0.06;
 }
 
-/** Introduce the sixth enemy tier later and more smoothly in the expert campaign. */
+/** Spread the expert sixth-tier introduction across floors 25–29. */
 export function getMonsterTierProgress(modeId, floor, totalFloors) {
     const denominator = Math.max(1, totalFloors - 2);
     const progress = Math.min(1, Math.max(0, (floor - 1) / denominator));
-    return modeId === 'expert' ? Math.pow(progress, 1.6) : progress;
+    return modeId === 'expert' ? Math.pow(progress, 1.15) : progress;
+}
+
+/** Small, campaign-wide pressure ramp applied to every ordinary floor. */
+const FLOOR_STAT_BONUS = Object.freeze({
+    tutorial: 0.02,
+    beginner: 0.025,
+    intermediate: 0.035,
+    advanced: 0.045,
+    expert: 0.05,
+});
+
+export function getFloorStatAdjustment(modeId, floor, totalFloors) {
+    const maxBonus = FLOOR_STAT_BONUS[modeId] ?? FLOOR_STAT_BONUS.beginner;
+    const denominator = Math.max(1, totalFloors - 2);
+    const progress = Number.isFinite(floor)
+        ? Math.min(1, Math.max(0, (floor - 1) / denominator))
+        : 0;
+    return 1 + maxBonus * progress;
+}
+
+/** Upper-tier monsters enter at 94% strength and reach full stats during the hand-off. */
+export function getMonsterTierEntryMultiplier(tierBlend) {
+    if (!tierBlend || tierBlend.upperTierIndex === tierBlend.lowerTierIndex) return 1;
+    const chance = Number.isFinite(tierBlend.upperChance)
+        ? Math.min(1, Math.max(0, tierBlend.upperChance))
+        : 0;
+    return 0.94 + chance * 0.06;
+}
+
+export function canSpawnRareMonster(modeId) {
+    return modeId !== 'tutorial';
+}
+
+export function canSpawnMagicEater(modeId) {
+    return modeId !== 'tutorial' && modeId !== 'beginner';
 }
 
 /** Preserve rare-form identity while taking the sharpest late-game spikes down slightly. */

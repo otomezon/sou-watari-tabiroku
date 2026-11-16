@@ -2,7 +2,7 @@ import { canStepBetween, DIRECTION_DELTA, generateBossDungeon, generateDungeon, 
 import { createFloorLoot, createItem, itemDisplayName, itemDurability, itemEnhancement } from "./items.js";
 import { floorSeed, makeSeed, Random } from "./random.js";
 import { getModeConfig } from "./modes.js";
-import { getItemRecovery, getMonsterTierBlend, getMonsterTierProgress, getRegularMonsterDepthScale, getRareHunterStatScale, getSlowVariantAttackMultiplier, getGoldDropChance, getGoldDropAmount, getRareValuableDropChances } from "./balance.mjs";
+import { getItemRecovery, getMonsterTierBlend, getMonsterTierProgress, getFloorStatAdjustment, getMonsterTierEntryMultiplier, canSpawnRareMonster, canSpawnMagicEater, getRegularMonsterDepthScale, getRareHunterStatScale, getSlowVariantAttackMultiplier, getGoldDropChance, getGoldDropAmount, getRareValuableDropChances } from "./balance.mjs";
 import { getShopBuyPrice, getShopSellPrice } from "./shop.js";
 export const MAX_HUNGER = 120;
 export const HUNGER_DECAY_EVERY_ACTIONS = 4;
@@ -321,11 +321,11 @@ export function findItemDropPoint(state, monster) {
     }
     return origin;
 }
-function createRegularMonster(state, point, random, index, progress, template) {
+function createRegularMonster(state, point, random, index, progress, template, tierEntryScale = 1) {
     const mode = getModeConfig(state.modeId);
-    const openingDifficultyScale = state.floor <= 2 ? 0.95 : 1;
-    const floorOneSoften = state.floor === 1 ? 0.80 : 1;
-    const statScale = mode.difficultyScale * (1.00 + progress * 0.40) * openingDifficultyScale * floorOneSoften * getRegularMonsterDepthScale(state.modeId, state.floor);
+    const statScale = mode.difficultyScale * (1.00 + progress * 0.40) *
+        getFloorStatAdjustment(state.modeId, state.floor, mode.floors) *
+        getRegularMonsterDepthScale(state.modeId, state.floor) * tierEntryScale;
     const hp = Math.max(1, Math.round((template.hp + Math.floor(state.floor * 0.35) + random.int(0, 2)) * statScale));
     const monster = {
         id: `f${state.floor}-m${index}-${random.int(1000, 9999)}`,
@@ -337,8 +337,8 @@ function createRegularMonster(state, point, random, index, progress, template) {
         boss: false, actionSpeed: 'normal', actionProgress: 0, rareVariant: false,
     };
     const rarityRoll = random.next() * 0.062 / Math.max(0.001, mode.rareMonsterChance);
-    const canSpawnRare = state.modeId !== 'tutorial';
-    if (canSpawnRare && state.floor > 1 && state.modeId !== 'beginner' && rarityRoll < 0.012) {
+    const canSpawnRare = canSpawnRareMonster(state.modeId);
+    if (canSpawnRare && canSpawnMagicEater(state.modeId) && rarityRoll < 0.012) {
         monster.rareVariant = true;
         monster.hunterVariant = true;
         monster.hunterLevel = getHunterInitialLevel(progress);
@@ -351,7 +351,7 @@ function createRegularMonster(state, point, random, index, progress, template) {
         monster.defense += hunterScale.defense;
         monster.exp = Math.ceil(monster.exp * 2.8);
     }
-    else if (canSpawnRare && state.floor > 1 && rarityRoll < 0.037) {
+    else if (canSpawnRare && rarityRoll < 0.037) {
         monster.actionSpeed = 'slow';
         monster.rareVariant = true;
         monster.name = `剛腕の${template.name}`;
@@ -361,7 +361,7 @@ function createRegularMonster(state, point, random, index, progress, template) {
         monster.defense += 3;
         monster.exp = Math.ceil(monster.exp * 2.5);
     }
-    else if (canSpawnRare && state.floor > 1 && rarityRoll < 0.062) {
+    else if (canSpawnRare && rarityRoll < 0.062) {
         monster.actionSpeed = 'fast';
         monster.rareVariant = true;
         monster.name = `俊敏な${template.name}`;
@@ -454,7 +454,11 @@ function populateFloor(state, runRandom) {
         const tierBlend = getMonsterTierBlend(tierProgress, mode.maxMonsterTier);
         const lowerTier = MONSTER_TIERS[tierBlend.lowerTierIndex] ?? MONSTER_TIERS[0];
         const upperTier = MONSTER_TIERS[tierBlend.upperTierIndex] ?? lowerTier;
-        const openingWaveReduction = floor === 1 ? 2 : floor === 2 ? 1 : 0;
+        // Keep floors 1–2 one enemy below normal density, then taper the
+        // opening protection by half a chance on floor 3.
+        let openingWaveReduction = floor <= 2 || state.modeId === 'tutorial' ? 1 : 0;
+        if (floor === 3 && state.modeId !== 'tutorial' && random.chance(0.5))
+            openingWaveReduction = 1;
         const minimumMonsterCount = Math.max(2, mode.minMonsters - openingWaveReduction);
         const maximumMonsterCount = Math.max(minimumMonsterCount, mode.maxMonsters - openingWaveReduction);
         const count = random.int(minimumMonsterCount, maximumMonsterCount);
@@ -467,7 +471,8 @@ function populateFloor(state, runRandom) {
                 tierBlend.upperChance > 0 && random.chance(tierBlend.upperChance);
             const templateTier = useUpperTier ? upperTier : lowerTier;
             const template = random.pick(templateTier);
-            state.monsters.push(createRegularMonster(state, point, random, index, progress, template));
+            const tierEntryScale = useUpperTier ? getMonsterTierEntryMultiplier(tierBlend) : 1;
+            state.monsters.push(createRegularMonster(state, point, random, index, progress, template, tierEntryScale));
         }
         if (random.chance(mode.floorLootChance)) {
             const point = takePoint();
