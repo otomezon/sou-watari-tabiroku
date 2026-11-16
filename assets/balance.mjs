@@ -10,6 +10,38 @@ export function getRegularMonsterDepthScale(modeId, floor) {
     return 1 - progress * 0.06;
 }
 
+/**
+ * Expected player level at the start of each floor, assuming roughly 70% of
+ * ordinary monsters are defeated and normal exploration rewards are collected.
+ * This is a balancing target, not a level cap; rare encounters can move the
+ * actual player ahead of or behind the curve.
+ */
+export const EXPECTED_PLAYER_LEVELS = Object.freeze({
+    tutorial: Object.freeze([1, 2, 3, 3, 4]),
+    beginner: Object.freeze([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
+    intermediate: Object.freeze([1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]),
+    advanced: Object.freeze([1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 26, 27]),
+    expert: Object.freeze([1, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 30, 31, 32, 34, 35]),
+});
+
+export function getExpectedPlayerLevel(modeId, floor) {
+    const levels = EXPECTED_PLAYER_LEVELS[modeId] ?? EXPECTED_PLAYER_LEVELS.beginner;
+    const numericFloor = Number.isFinite(floor) ? Math.floor(floor) : 1;
+    const index = Math.min(levels.length - 1, Math.max(0, numericFloor - 1));
+    return levels[index] ?? 1;
+}
+
+export function getMonsterLevelForFloor(modeId, floor, levelOffset = 0) {
+    const offset = Number.isFinite(levelOffset) ? Math.round(levelOffset) : 0;
+    return Math.max(1, Math.min(99, getExpectedPlayerLevel(modeId, floor) + offset));
+}
+
+/** Keep tier-adjacent monsters distinct without allowing one tier roll to spike combat. */
+export function getMonsterLevelStatMultiplier(monsterLevel, expectedPlayerLevel) {
+    const delta = Math.max(-4, Math.min(4, monsterLevel - expectedPlayerLevel));
+    return Math.max(0.85, Math.min(1.15, 1 + delta * 0.045));
+}
+
 /** Spread the expert sixth-tier introduction across floors 25–29. */
 export function getMonsterTierProgress(modeId, floor, totalFloors) {
     const denominator = Math.max(1, totalFloors - 2);
