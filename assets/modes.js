@@ -61,6 +61,7 @@ export function getBossStats(modeId, form = 'normal') {
         defense: Math.max(0, mode.bossDefense),
         bossSize: mode.bossSize ?? 2,
         bossVisualScale: mode.bossVisualScale ?? 1,
+        bossVisualStyle: mode.id,
         bossAreaAttackChance: mode.bossAreaAttackChance ?? 0,
         bossNovaAttackChance: mode.bossNovaAttackChance ?? 0,
         bossEnrageThreshold: mode.bossEnrageThreshold ?? 0,
