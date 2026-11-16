@@ -190,9 +190,17 @@ export class SoundManager {
             return;
         const now = this.context.currentTime;
         let offset = 0;
-        for (const effect of effects) {
+        for (let index = 0; index < effects.length; index += 1) {
+            const effect = effects[index];
             if (effect === 'level') {
-                this.playLevelUpFanfare(now + offset);
+                const fanfareStart = now + offset;
+                this.playLevelUpFanfare(fanfareStart);
+                let synchronizedHit = 0;
+                while (effects[index + 1] === 'damage') {
+                    index += 1;
+                    this.playDamageEffect(fanfareStart + synchronizedHit * 0.24);
+                    synchronizedHit += 1;
+                }
                 offset += 3.05;
             } else if (effect === 'hunter-level') {
                 this.playHunterLevelUpFanfare(now + offset);
