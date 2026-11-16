@@ -25,6 +25,7 @@ function getBaseShopBuyPrice(item, floor) {
 }
 function getEquipmentPriceMultiplier(item) {
     const power = (item.kind === 'weapon' ? item.attack : item.defense) + itemEnhancement(item);
+    if (power >= 18) return 1.55;
     if (power >= 16) return 1.40;
     if (power >= 12) return 1.25;
     if (power >= 8) return 1.12;
