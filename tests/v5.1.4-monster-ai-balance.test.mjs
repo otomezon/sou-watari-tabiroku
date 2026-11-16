@@ -52,7 +52,7 @@ test('a monster that defeats a magic-eater gains a level and stronger stats', ()
   const hunter = {
     id: 'hunter', kind: 'slime', name: '魔喰いのスライム',
     x: 5, y: 5, hp: 1, maxHp: 80, attack: 8, defense: 2,
-    exp: 30, boss: false, floorBalanceVersion: 1, hunterVariant: true, hunterLevel: 4,
+    exp: 30, boss: false, floorBalanceVersion: 2, hunterVariant: true, hunterLevel: 4,
   };
   const winner = {
     id: 'winner', kind: 'bat', name: '洞窟コウモリ',
