@@ -231,7 +231,9 @@ function calculateFloorMonsterCalibration(
 export function getExpectedMonsterDefenseCap(modeId, floor, defeatRate = EXPECTED_MONSTER_DEFEAT_RATE) {
     const expectedLevel = getExpectedPlayerLevel(modeId, floor, defeatRate);
     const expectedPlayerAttack = 5 + (expectedLevel - 1);
-    return Math.max(1, expectedPlayerAttack - 7);
+    // Deep expert enemies may be very durable, but must not become damage walls for unlucky gear runs.
+    const minimumNoGearDamage = modeId === 'expert' && floor >= 16 ? 12 : 7;
+    return Math.max(1, expectedPlayerAttack - minimumNoGearDamage);
 }
 
 /** Balance durable monsters against a 50% progression estimate while limiting burst damage. */
