@@ -237,7 +237,7 @@ export function getExpectedMonsterDefenseCap(modeId, floor, defeatRate = EXPECTE
 /** Balance durable monsters against a 50% progression estimate while limiting burst damage. */
 export function getFloorMonsterCalibration(modeId, floor, defeatRate = EXPECTED_MONSTER_DEFEAT_RATE) {
     return calculateFloorMonsterCalibration(
-        modeId, floor, defeatRate, FLOOR_ENCOUNTER_POWER_TARGET, 0.60, 1.18,
+        modeId, floor, defeatRate, FLOOR_ENCOUNTER_POWER_TARGET, 0.65, 1.18,
         FLOOR_MONSTER_HP_MULTIPLIER, FLOOR_MONSTER_ATTACK_MULTIPLIER, FLOOR_MONSTER_DEFENSE_MULTIPLIER,
         getExpectedMonsterDefenseCap(modeId, floor, defeatRate),
     );
