@@ -12,7 +12,7 @@ release:
   changes:
     - set_expected_regular_monster_defeat_rate_to_50_percent
     - recalculate_campaign_player_level_targets
-    - set_campaign_encounter_power_targets_to_54_62_70_70_86_percent
+    - set_campaign_encounter_power_targets_to_54_62_70_70_82_percent
     - separate_enemy_hp_attack_defense_scaling
     - cap_ordinary_monster_defense_against_expected_unequipped_player_attack
     - raise_current_floor_calibration_minimum_to_60_percent_to_avoid_underpowered_opening_floors
