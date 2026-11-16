@@ -101,6 +101,7 @@ test('player level-up and received-hit cues share the start of the fanfare', asy
   const [main, audio] = await Promise.all([read('assets/main.js'), read('assets/audio.js')]);
   assert.match(main, /\? \['level', \.\.\.damageCues\] : \[\]/);
   assert.match(main, /needsFloorMonsterBalanceMigration/);
+  assert.match(main, /floorBalanceVersion \?\? 0\) < 2/);
   assert.match(audio, /while \(effects\[index \+ 1\] === 'damage'\)/);
   assert.match(audio, /playDamageEffect\(fanfareStart \+ synchronizedHit \* 0\.24\)/);
 });
