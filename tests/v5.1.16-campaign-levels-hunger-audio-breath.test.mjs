@@ -119,7 +119,7 @@ test('ordinary enemies stay challenging but a typical no-gear duel remains survi
           // Expert floors 1–5 deliberately ease into upper-tier families; small floor samples can skew lower.
           const lowerTolerance = modeId === 'expert' && floor <= 10 ? 0.35 : 0.24;
           assert.ok(ratio >= target - lowerTolerance && ratio <= target + 0.20,
-            `${modeId} F${floor}: un-geared monster power ratio ${ratio.toFixed(3)}, target ${target}`);
+            `${modeId} F${floor}: un-geared monster power ratio ${ratio.toFixed(3)}, target ${target}, calibration ${getFloorMonsterCalibration(modeId, floor).toFixed(3)}, average power ${averageMonsterPower.toFixed(1)}, player power ${playerPower.toFixed(1)}`);
 
           if (floor < mode.floors) {
             const playerHp = 34 + (playerLevel - 1) * 6;
