@@ -6,7 +6,7 @@ import { getShopSellPrice, remainingShopGoods, unpaidShopGoods } from "./shop.js
 import { RenderManager } from "./renderer.js";
 import { DEFAULT_AUDIO_SETTINGS, SaveManager } from "./storage.js";
 import { DUNGEON_MODES, MODE_ORDER, getModeConfig } from "./modes.js";
-const APP_VERSION = '5.1.15';
+const APP_VERSION = '5.1.16';
 const byId = (id) => {
     const element = document.getElementById(id);
     if (!element)
@@ -143,11 +143,15 @@ class GameApp {
             }
             const hadBossArena = loaded.dungeon.bossArena === true;
             const previousBossBalanceVersion = loaded.monsters?.find((monster) => monster.boss)?.bossBalanceVersion ?? 0;
+            const needsFloorMonsterBalanceMigration = loaded.status === 'playing' &&
+                loaded.monsters?.some((monster) => !monster.boss && !monster.shopkeeper &&
+                    (monster.floorBalanceVersion ?? 0) < 1);
             this.state = loaded;
             this.engine = new GameEngine(loaded);
             const currentBossBalanceVersion = loaded.monsters?.find((monster) => monster.boss)?.bossBalanceVersion ?? 0;
             if ((!hadBossArena && loaded.dungeon.bossArena === true) ||
-                previousBossBalanceVersion !== currentBossBalanceVersion)
+                previousBossBalanceVersion !== currentBossBalanceVersion ||
+                needsFloorMonsterBalanceMigration)
                 await this.persist();
             if (loaded.status === 'gameover' || loaded.status === 'clear')
                 this.showResult();
@@ -203,10 +207,10 @@ class GameApp {
                     : postActionStatus === 'clear' ? ['clear'] : [];
                 const cues = [
                     ...actionCues,
-                    ...(leveledUp ? ['level'] : []),
+                    ...(leveledUp ? ['level', ...damageCues] : []),
                     ...hunterLevelCues,
                     ...monsterLevelCues,
-                    ...damageCues,
+                    ...(leveledUp ? [] : damageCues),
                     ...resultCues,
                 ];
                 if (cues.length)
