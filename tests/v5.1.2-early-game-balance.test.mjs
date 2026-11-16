@@ -9,11 +9,11 @@ const root = new URL('../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
 
 const OPENING_RANGES = {
-  tutorial: { floor1: [2, 3], floor2: [2, 4] },
-  beginner: { floor1: [2, 5], floor2: [3, 6] },
-  intermediate: { floor1: [3, 6], floor2: [4, 7] },
-  advanced: { floor1: [3, 7], floor2: [4, 8] },
-  expert: { floor1: [4, 8], floor2: [5, 9] },
+  tutorial: { floor1: [2, 4], floor2: [2, 4] },
+  beginner: { floor1: [3, 6], floor2: [3, 6] },
+  intermediate: { floor1: [4, 7], floor2: [4, 7] },
+  advanced: { floor1: [4, 8], floor2: [4, 8] },
+  expert: { floor1: [5, 9], floor2: [5, 9] },
 };
 
 function assertSafeOpening(state, range) {
@@ -73,23 +73,25 @@ for (const modeId of MODE_ORDER) {
   });
 }
 
-test('5.1.10 app, manifest, cache and release metadata stay aligned without changing save schema', async () => {
+test('5.1.12 app, manifest, cache and release metadata stay aligned without changing save schema', async () => {
   const [main, manifest, sw, engine, storage, release] = await Promise.all([
     read('assets/main.js'), read('manifest.webmanifest'), read('sw.js'),
-    read('assets/engine.js'), read('assets/storage.js'), read('RELEASE_v5.1.10.yaml'),
+    read('assets/engine.js'), read('assets/storage.js'), read('RELEASE_v5.1.12.yaml'),
   ]);
-  assert.match(main, /APP_VERSION = '5.1.11'/);
-  assert.match(manifest, /"version": "5.1.11"/);
-  assert.match(sw, /sou-watari-tabiroku-v5-1-11/);
+  assert.match(main, /APP_VERSION = '5.1.12'/);
+  assert.match(manifest, /"version": "5.1.12"/);
+  assert.match(sw, /sou-watari-tabiroku-v5-1-12/);
   assert.match(engine, /schemaVersion: 12/);
   assert.match(storage, /state\.schemaVersion !== 12/);
   assert.match(release, /type: patch/);
 });
 
-test('opening difficulty guard and original rare encounter eligibility are explicit', async () => {
+test('opening wave taper, stat curve and first-floor rare eligibility are explicit', async () => {
   const engine = await read('assets/engine.js');
-  assert.match(engine, /state\.floor <= 2 \? 0\.95 : 1/);
-  assert.match(engine, /const floorOneSoften = state\.floor === 1 \? 0\.80 : 1/);
-  assert.match(engine, /const canSpawnRare = state\.modeId !== 'tutorial'/);
-  assert.match(engine, /state\.floor > 1 && state\.modeId !== 'beginner'/);
+  assert.match(engine, /getFloorStatAdjustment\(state\.modeId, state\.floor, mode\.floors\)/);
+  assert.doesNotMatch(engine, /floorOneSoften/);
+  assert.match(engine, /const canSpawnRare = canSpawnRareMonster\(state\.modeId\)/);
+  assert.match(engine, /canSpawnMagicEater\(state\.modeId\)/);
+  assert.doesNotMatch(engine, /state\.floor > 1 &&/);
+  assert.match(engine, /floor <= 2 \|\| state\.modeId === 'tutorial' \? 1 : 0/);
 });

@@ -1,0 +1,18 @@
+release:
+  project: 層渡りの旅録
+  version: 5.1.12
+  previous_version: 5.1.11
+  type: patch
+  title: 全キャンペーン・全フロアの難易度再調整
+  invariants:
+    starter_equipment: none
+    starter_inventory: []
+    save_schema: 12
+  changes:
+    - remove_compounded_floor_one_enemy_stat_nerf
+    - restore_floor_one_rare_monster_eligibility_except_tutorial
+    - taper_opening_enemy_count_over_floors_one_to_three
+    - add_small_per_floor_stat_pressure_ramp_to_all_campaigns
+    - soften_new_upper_tier_monsters_during_tier_handoffs
+    - spread_expert_final_tier_transition_across_floors_25_to_29
+    - add_multi_seed_full_campaign_floor_regression_tests
