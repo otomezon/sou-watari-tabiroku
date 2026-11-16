@@ -2,10 +2,10 @@ import { canStepBetween, DIRECTION_DELTA, generateBossDungeon, generateDungeon, 
 import { createFloorLoot, createItem, itemDisplayName, itemDurability, itemEnhancement } from "./items.js";
 import { floorSeed, makeSeed, Random } from "./random.js";
 import { getBossStats, getModeConfig } from "./modes.js";
-import { getItemRecovery, getMonsterTierBlend, getMonsterTierProgress, getFloorStatAdjustment, getMonsterTierEntryMultiplier, canSpawnRareMonster, canSpawnMagicEater, getRegularMonsterDepthScale, getRareHunterStatScale, getSlowVariantAttackMultiplier, getGoldDropChance, getGoldDropAmount, getRareValuableDropChances } from "./balance.mjs";
+import { getItemRecovery, getMonsterTierBlend, getMonsterTierProgress, getFloorStatAdjustment, getMonsterTierEntryMultiplier, canSpawnRareMonster, canSpawnMagicEater, getRegularMonsterDepthScale, getRareHunterStatScale, getSlowVariantAttackMultiplier, getGoldDropChance, getGoldDropAmount, getRareValuableDropChances, getExpectedPlayerLevel, getMonsterLevelForFloor, getMonsterLevelStatMultiplier } from "./balance.mjs";
 import { getShopBuyPrice, getShopSellPrice } from "./shop.js";
 export const MAX_HUNGER = 120;
-export const HUNGER_DECAY_EVERY_ACTIONS = 4;
+export const HUNGER_DECAY_EVERY_ACTIONS = 5;
 const FED_HP_RECOVERY_TURNS = 9;
 const STARVATION_DAMAGE_TURNS = 6;
 const DRAGON_BREATHS = Object.freeze({
@@ -389,15 +389,19 @@ export function findItemDropPoint(state, monster) {
     }
     return origin;
 }
-function createRegularMonster(state, point, random, index, progress, template, tierEntryScale = 1, rareSpawnChanceOverride = undefined) {
+function createRegularMonster(state, point, random, index, progress, template, tierEntryScale = 1, rareSpawnChanceOverride = undefined, tierLevelOffset = 0) {
     const mode = getModeConfig(state.modeId);
+    const expectedPlayerLevel = getExpectedPlayerLevel(state.modeId, state.floor);
+    const monsterLevel = getMonsterLevelForFloor(state.modeId, state.floor, tierLevelOffset);
     const statScale = mode.difficultyScale * (1.00 + progress * 0.40) *
         getFloorStatAdjustment(state.modeId, state.floor, mode.floors) *
-        getRegularMonsterDepthScale(state.modeId, state.floor) * tierEntryScale;
+        getRegularMonsterDepthScale(state.modeId, state.floor) * tierEntryScale *
+        getMonsterLevelStatMultiplier(monsterLevel, expectedPlayerLevel);
     const hp = Math.max(1, Math.round((template.hp + Math.floor(state.floor * 0.35) + random.int(0, 2)) * statScale));
     const monster = {
         id: `f${state.floor}-m${index}-${random.int(1000, 9999)}`,
         kind: template.kind, name: template.name, x: point.x, y: point.y,
+        level: monsterLevel,
         hp, maxHp: hp,
         attack: Math.max(1, Math.round((template.attack + Math.floor(state.floor * 0.18)) * statScale)),
         defense: Math.max(0, Math.round((template.defense + Math.floor((state.floor - 1) / 7)) * statScale)),
@@ -410,7 +414,8 @@ function createRegularMonster(state, point, random, index, progress, template, t
     if (canSpawnRare && canSpawnMagicEater(state.modeId) && rarityRoll < 0.012) {
         monster.rareVariant = true;
         monster.hunterVariant = true;
-        monster.hunterLevel = getHunterInitialLevel(progress);
+        monster.hunterLevel = Math.max(getHunterInitialLevel(progress), Math.min(99, monsterLevel + 2));
+        monster.level = monster.hunterLevel;
         monster.name = `魔喰いの${template.name}`;
         // 魔喰いは同格の魔物との連戦に勝てるよう、耐久を軸に一段階上の能力へ。
         const hunterScale = getRareHunterStatScale(state.modeId, state.floor);
@@ -440,6 +445,8 @@ function createRegularMonster(state, point, random, index, progress, template, t
         monster.defense += 1;
         monster.exp = Math.ceil(monster.exp * 2.3);
     }
+    if (monster.rareVariant && !monster.hunterVariant)
+        monster.level = Math.min(99, monster.level + 2);
     return monster;
 }
 function populateFloor(state, runRandom) {
@@ -496,7 +503,8 @@ function populateFloor(state, runRandom) {
             const formName = form === 'slow' ? `${mode.bossName}・剛腕形態` : form === 'fast' ? `${mode.bossName}・疾風形態` : mode.bossName;
             state.monsters.push({
                 id: `boss-${state.modeId}-${state.seed}`, kind: 'boss', name: formName,
-                x: bossPoint.x, y: bossPoint.y, hp, maxHp: hp, attack, defense: bossStats.defense,
+                x: bossPoint.x, y: bossPoint.y, level: getMonsterLevelForFloor(state.modeId, floor, 3),
+                hp, maxHp: hp, attack, defense: bossStats.defense,
                 exp: mode.bossExp, boss: true, bossBalanceVersion: 3, bossSize: bossStats.bossSize,
                 bossVisualScale: bossStats.bossVisualScale, bossVisualStyle: bossStats.bossVisualStyle, bossAreaAttackChance: bossStats.bossAreaAttackChance,
                 bossNovaAttackChance: bossStats.bossNovaAttackChance, bossEnrageThreshold: bossStats.bossEnrageThreshold,
@@ -513,7 +521,7 @@ function populateFloor(state, runRandom) {
             for (let index = 0; index < supportPoints.length; index += 1) {
                 const point = supportPoints[index];
                 state.monsters.push(createRegularMonster(
-                    state, point, random, index, progress, random.pick(tier), 1, mode.bossSupportRareChance,
+                    state, point, random, index, progress, random.pick(tier), 1, mode.bossSupportRareChance, 0,
                 ));
                 occupied.add(pointKey(point));
             }
@@ -550,7 +558,8 @@ function populateFloor(state, runRandom) {
             const templateTier = useUpperTier ? upperTier : lowerTier;
             const template = random.pick(templateTier);
             const tierEntryScale = useUpperTier ? getMonsterTierEntryMultiplier(tierBlend) : 1;
-            state.monsters.push(createRegularMonster(state, point, random, index, progress, template, tierEntryScale));
+            const tierLevelOffset = tierBlend.upperTierIndex === tierBlend.lowerTierIndex ? 0 : (useUpperTier ? 1 : -1);
+            state.monsters.push(createRegularMonster(state, point, random, index, progress, template, tierEntryScale, undefined, tierLevelOffset));
         }
         if (random.chance(mode.floorLootChance)) {
             const point = takePoint();
@@ -596,7 +605,26 @@ export class GameEngine {
     constructor(state) {
         this.state = state;
         this.ensureBossArena();
+        this.ensureMonsterLevels();
         this.relocateStairOccupants();
+    }
+    /** Assign floor-appropriate levels to monsters in saves created before explicit levels existed. */
+    ensureMonsterLevels() {
+        const expectedLevel = getExpectedPlayerLevel(this.state.modeId, this.state.floor);
+        for (const monster of this.state.monsters ?? []) {
+            if (Number.isInteger(monster.level)) continue;
+            if (monster.boss) {
+                monster.level = getMonsterLevelForFloor(this.state.modeId, this.state.floor, 3);
+            } else if (monster.hunterVariant) {
+                monster.hunterLevel = Math.max(
+                    Number.isInteger(monster.hunterLevel) ? monster.hunterLevel : 1,
+                    getMonsterLevelForFloor(this.state.modeId, this.state.floor, 2),
+                );
+                monster.level = monster.hunterLevel;
+            } else {
+                monster.level = getMonsterLevelForFloor(this.state.modeId, this.state.floor, monster.rareVariant ? 2 : 0);
+            }
+        }
     }
     /** Migrate legacy boss encounters once, preserving boss HP ratio and surviving support monsters. */
     ensureBossArena() {
