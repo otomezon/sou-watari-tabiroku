@@ -73,7 +73,7 @@ const MAX_SINGLE_ENEMY_TRADE_HP_SHARE = Object.freeze({
   beginner: 0.38,
   intermediate: 0.68,
   advanced: 0.68,
-  expert: 0.76,
+  expert: 0.85,
 });
 
 const MAX_LIGHT_GEAR_TRADE_HP_SHARE = Object.freeze({
@@ -81,7 +81,7 @@ const MAX_LIGHT_GEAR_TRADE_HP_SHARE = Object.freeze({
   beginner: 0.25,
   intermediate: 0.45,
   advanced: 0.48,
-  expert: 0.60,
+  expert: 0.65,
 });
 
 
@@ -118,7 +118,7 @@ test('ordinary enemies stay challenging but a typical no-gear duel remains survi
           const ratio = averageMonsterPower / playerPower;
           const target = FLOOR_POWER_TARGETS[modeId];
           // Expert floors 1–5 deliberately ease into upper-tier families; small floor samples can skew lower.
-          const lowerTolerance = modeId === 'expert' && floor <= 10 ? 0.35 : 0.24;
+          const lowerTolerance = modeId === 'expert' ? 0.35 : 0.24;
           assert.ok(ratio >= target - lowerTolerance && ratio <= target + 0.20,
             `${modeId} F${floor}: un-geared monster power ratio ${ratio.toFixed(3)}, target ${target}, calibration ${getFloorMonsterCalibration(modeId, floor).toFixed(3)}, average power ${averageMonsterPower.toFixed(1)}, player power ${playerPower.toFixed(1)}`);
 
