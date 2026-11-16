@@ -1,0 +1,20 @@
+release:
+  project: 層渡りの旅録
+  version: 5.1.16
+  previous_version: 5.1.15
+  type: patch
+  title: フロア成長曲線・範囲ブレス・空腹・効果音の調整
+  invariants:
+    starter_equipment: none
+    starter_inventory: []
+    save_schema: 12
+  changes:
+    - estimate_expected_player_level_from_floor_exp_and_encounters
+    - calibrate_regular_monster_combat_power_by_campaign_and_floor
+    - bound_monster_stat_calibration_to_minus_15_percent_and_plus_8_percent
+    - migrate_existing_floor_monsters_once_while_preserving_hp_ratio
+    - reduce_hunger_decay_frequency_from_every_4_actions_to_every_5
+    - synchronize_received_damage_sounds_with_player_level_up_fanfare
+    - change_dragon_breath_to_vertical_3_by_5_area_attack
+    - align_breath_warning_visuals_with_damage_footprint
+    - add_campaign_progression_and_combat_audio_regression_tests

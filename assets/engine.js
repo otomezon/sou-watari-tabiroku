@@ -5,7 +5,7 @@ import { getBossStats, getModeConfig } from "./modes.js";
 import { getItemRecovery, getMonsterTierBlend, getMonsterTierProgress, getFloorStatAdjustment, getMonsterTierEntryMultiplier, canSpawnRareMonster, canSpawnMagicEater, getRegularMonsterDepthScale, getRareHunterStatScale, getSlowVariantAttackMultiplier, getGoldDropChance, getGoldDropAmount, getRareValuableDropChances } from "./balance.mjs";
 import { getShopBuyPrice, getShopSellPrice } from "./shop.js";
 export const MAX_HUNGER = 120;
-export const HUNGER_DECAY_EVERY_ACTIONS = 4;
+export const HUNGER_DECAY_EVERY_ACTIONS = 5;
 const FED_HP_RECOVERY_TURNS = 9;
 const STARVATION_DAMAGE_TURNS = 6;
 const DRAGON_BREATHS = Object.freeze({
@@ -119,6 +119,86 @@ export function levelUpMonsterAfterHunterVictory(monster) {
     monster.defense = Math.min(10000, monster.defense + 1);
     return nextLevel;
 }
+
+const EXPECTED_MONSTER_DEFEAT_RATE = 0.55;
+const FLOOR_ENCOUNTER_POWER_TARGET = Object.freeze({
+    tutorial: 0.68, beginner: 0.78, intermediate: 0.90, advanced: 1.02, expert: 1.12,
+});
+
+/** Estimate player level at floor entry from prior-floor EXP and expected kills. */
+export function getExpectedPlayerLevel(modeId, floor) {
+    const mode = getModeConfig(modeId);
+    const targetFloor = Math.max(1, Math.min(mode.floors, Math.floor(Number(floor) || 1)));
+    let expectedExperience = 0;
+    for (let completedFloor = 1; completedFloor < targetFloor; completedFloor += 1) {
+        const blend = getMonsterTierBlend(
+            getMonsterTierProgress(modeId, completedFloor, mode.floors), mode.maxMonsterTier,
+        );
+        const lowerTier = MONSTER_TIERS[blend.lowerTierIndex] ?? MONSTER_TIERS[0];
+        const upperTier = MONSTER_TIERS[blend.upperTierIndex] ?? lowerTier;
+        const averageExp = (tier) => tier.reduce((sum, template) => sum + template.exp, 0) / tier.length;
+        const monsterExp = averageExp(lowerTier) * (1 - blend.upperChance) +
+            averageExp(upperTier) * blend.upperChance;
+        const openingReduction = completedFloor <= 2 || modeId === 'tutorial'
+            ? 1 : completedFloor === 3 ? 0.5 : 0;
+        const minimumCount = Math.max(2, mode.minMonsters - openingReduction);
+        const maximumCount = Math.max(minimumCount, mode.maxMonsters - openingReduction);
+        const expectedMonsterCount = (minimumCount + maximumCount) / 2;
+        expectedExperience += (monsterExp + completedFloor) *
+            (0.8 + mode.difficultyScale * 0.2) * expectedMonsterCount * EXPECTED_MONSTER_DEFEAT_RATE;
+    }
+    let level = 1;
+    while (level < 99 && expectedExperience >= experienceToNext(level)) {
+        expectedExperience -= experienceToNext(level);
+        level += 1;
+    }
+    return level;
+}
+
+/**
+ * Calibrate average floor-monster combat power against the expected player's
+ * un-geared combat power. Difficulty targets rise by campaign; adjustment is
+ * bounded to +8% / -15% so relative monster-template strength remains.
+ */
+export function getFloorMonsterCalibration(modeId, floor) {
+    const mode = getModeConfig(modeId);
+    const targetFloor = Math.max(1, Math.min(mode.floors, Math.floor(Number(floor) || 1)));
+    const progress = mode.floors <= 1 ? 0 : (targetFloor - 1) / (mode.floors - 1);
+    const blend = getMonsterTierBlend(
+        getMonsterTierProgress(modeId, targetFloor, mode.floors), mode.maxMonsterTier,
+    );
+    const lowerTier = MONSTER_TIERS[blend.lowerTierIndex] ?? MONSTER_TIERS[0];
+    const upperTier = MONSTER_TIERS[blend.upperTierIndex] ?? lowerTier;
+    const baseStatScale = mode.difficultyScale * (1 + progress * 0.40) *
+        getFloorStatAdjustment(modeId, targetFloor, mode.floors) *
+        getRegularMonsterDepthScale(modeId, targetFloor);
+    const upperTierScale = getMonsterTierEntryMultiplier(blend);
+    const averageCombatPower = (tier, entryScale) => tier.reduce((sum, template) => {
+        const hp = Math.max(1, Math.round(
+            (template.hp + Math.floor(targetFloor * 0.35) + 1) * baseStatScale * entryScale,
+        ));
+        const attack = Math.max(1, Math.round(
+            (template.attack + Math.floor(targetFloor * 0.18)) * baseStatScale * entryScale,
+        ));
+        const defense = Math.max(0, Math.round(
+            (template.defense + Math.floor((targetFloor - 1) / 7)) * baseStatScale * entryScale,
+        ));
+        return sum + hp + attack * 6 + defense * 4;
+    }, 0) / tier.length;
+    const lowerPower = averageCombatPower(lowerTier, 1);
+    const upperPower = blend.upperTierIndex === blend.lowerTierIndex
+        ? lowerPower : averageCombatPower(upperTier, upperTierScale);
+    const expectedMonsterPower = lowerPower * (1 - blend.upperChance) + upperPower * blend.upperChance;
+    const playerLevel = getExpectedPlayerLevel(modeId, targetFloor);
+    const playerHp = 34 + (playerLevel - 1) * 6;
+    const playerAttack = 5 + (playerLevel - 1);
+    const playerDefense = 2 + Math.floor(playerLevel / 2);
+    const expectedPlayerPower = playerHp + playerAttack * 6 + playerDefense * 4;
+    const targetRatio = FLOOR_ENCOUNTER_POWER_TARGET[modeId] ?? FLOOR_ENCOUNTER_POWER_TARGET.beginner;
+    const adjustment = targetRatio * expectedPlayerPower / Math.max(1, expectedMonsterPower);
+    return Math.max(0.85, Math.min(1.08, adjustment));
+}
+
 export function createNewGame(seed = makeSeed(), modeId = 'beginner') {
     const random = new Random(seed);
     const mode = getModeConfig(modeId);
@@ -393,7 +473,8 @@ function createRegularMonster(state, point, random, index, progress, template, t
     const mode = getModeConfig(state.modeId);
     const statScale = mode.difficultyScale * (1.00 + progress * 0.40) *
         getFloorStatAdjustment(state.modeId, state.floor, mode.floors) *
-        getRegularMonsterDepthScale(state.modeId, state.floor) * tierEntryScale;
+        getRegularMonsterDepthScale(state.modeId, state.floor) *
+        getFloorMonsterCalibration(state.modeId, state.floor) * tierEntryScale;
     const hp = Math.max(1, Math.round((template.hp + Math.floor(state.floor * 0.35) + random.int(0, 2)) * statScale));
     const monster = {
         id: `f${state.floor}-m${index}-${random.int(1000, 9999)}`,
@@ -402,7 +483,8 @@ function createRegularMonster(state, point, random, index, progress, template, t
         attack: Math.max(1, Math.round((template.attack + Math.floor(state.floor * 0.18)) * statScale)),
         defense: Math.max(0, Math.round((template.defense + Math.floor((state.floor - 1) / 7)) * statScale)),
         exp: Math.max(1, Math.round((template.exp + state.floor) * (0.8 + mode.difficultyScale * 0.2))),
-        boss: false, actionSpeed: 'normal', actionProgress: 0, rareVariant: false,
+        boss: false, floorBalanceVersion: 1,
+        actionSpeed: 'normal', actionProgress: 0, rareVariant: false,
     };
     const rarityRate = Number.isFinite(rareSpawnChanceOverride) ? rareSpawnChanceOverride : mode.rareMonsterChance;
     const rarityRoll = random.next() * 0.062 / Math.max(0.001, rarityRate);
@@ -596,7 +678,32 @@ export class GameEngine {
     constructor(state) {
         this.state = state;
         this.ensureBossArena();
+        this.ensureFloorMonsterBalance();
         this.relocateStairOccupants();
+    }
+
+    /** One-time stat migration for normal monsters already present in older saves. */
+    ensureFloorMonsterBalance() {
+        if (this.state.status !== 'playing' || !Array.isArray(this.state.monsters))
+            return false;
+        const calibration = getFloorMonsterCalibration(this.state.modeId, this.state.floor);
+        let migrated = false;
+        for (const monster of this.state.monsters) {
+            if (!monster || monster.boss || monster.shopkeeper ||
+                (monster.floorBalanceVersion ?? 0) >= 1)
+                continue;
+            const oldMaxHp = Math.max(1, Number(monster.maxHp) || 1);
+            const oldHp = Math.max(0, Number(monster.hp) || 0);
+            const hpRatio = Math.min(1, oldHp / oldMaxHp);
+            const newMaxHp = Math.max(1, Math.round(oldMaxHp * calibration));
+            monster.maxHp = newMaxHp;
+            monster.hp = Math.max(0, Math.min(newMaxHp, Math.round(newMaxHp * hpRatio)));
+            monster.attack = Math.max(1, Math.round((Number(monster.attack) || 1) * calibration));
+            monster.defense = Math.max(0, Math.round((Number(monster.defense) || 0) * calibration));
+            monster.floorBalanceVersion = 1;
+            migrated = true;
+        }
+        return migrated;
     }
     /** Migrate legacy boss encounters once, preserving boss HP ratio and surviving support monsters. */
     ensureBossArena() {
@@ -1174,19 +1281,25 @@ export class GameEngine {
     }
     performElementalAreaAttack(monster, random, breath) {
         const center = { x: this.state.player.x, y: this.state.player.y };
-        const radius = 0;
+        const areaWidth = 3;
+        const areaHeight = 5;
+        const left = center.x - Math.floor(areaWidth / 2);
+        const top = center.y - Math.floor(areaHeight / 2);
+        const right = left + areaWidth - 1;
+        const bottom = top + areaHeight - 1;
         const breathAttack = monster.attack;
         const damageBase = Math.max(1, Math.round(breathAttack * 0.60));
         this.state.elementalAreaEffect = {
-            x: center.x, y: center.y, radius, element: breath.element, turn: this.state.turn + 1,
+            x: center.x, y: center.y, width: areaWidth, height: areaHeight,
+            element: breath.element, turn: this.state.turn + 1,
         };
 
-        // Use the same reduced area power for every caught monster. A defeated
-        // target feeds the dragon, following the existing monster-growth rules.
+        // A tall, centered 3x5 blast catches every monster footprint crossing
+        // the warned rectangle. A defeated target feeds the dragon as before.
         const caughtMonsters = this.state.monsters.filter((target) =>
             target.id !== monster.id && target.hp > 0 && !target.boss && !target.shopkeeper &&
             monsterFootprintCells(target).some((cell) =>
-                Math.max(Math.abs(cell.x - center.x), Math.abs(cell.y - center.y)) <= radius),
+                cell.x >= left && cell.x <= right && cell.y >= top && cell.y <= bottom),
         );
         const monsterMessages = [];
         for (const target of caughtMonsters) {
