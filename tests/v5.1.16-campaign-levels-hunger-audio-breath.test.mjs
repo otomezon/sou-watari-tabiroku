@@ -127,8 +127,11 @@ test('ordinary enemies stay challenging but a typical no-gear duel remains survi
             });
             const averageBareTrade = bareTrade.reduce((sum, share) => sum + share, 0) / bareTrade.length;
             const averagePartialTrade = partialGearTrade.reduce((sum, share) => sum + share, 0) / partialGearTrade.length;
+            const tradeDetails = ordinary.map((monster, index) =>
+              `${monster.kind}[HP${monster.maxHp}/ATK${monster.attack}/DEF${monster.defense}: no-gear ${bareTrade[index].toFixed(2)}, light-gear ${partialGearTrade[index].toFixed(2)}]`,
+            ).join(', ');
             assert.ok(averageBareTrade <= MAX_SINGLE_ENEMY_TRADE_HP_SHARE[modeId],
-              `${modeId} F${floor}: one no-gear enemy duel costs ${averageBareTrade.toFixed(2)} HP bars`);
+              `${modeId} F${floor}: no-gear average ${averageBareTrade.toFixed(2)} HP bars, light-gear average ${averagePartialTrade.toFixed(2)}; ${tradeDetails}`);
             assert.ok(averagePartialTrade < averageBareTrade,
               `${modeId} F${floor}: modest equipment should improve the trade`);
           }
