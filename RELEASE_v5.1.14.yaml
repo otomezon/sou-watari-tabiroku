@@ -1,0 +1,16 @@
+release:
+  project: 層渡りの旅録
+  version: 5.1.14
+  previous_version: 5.1.13
+  type: patch
+  title: ドラゴンブレスの範囲縮小
+  invariants:
+    starter_equipment: none
+    starter_inventory: []
+    save_schema: 12
+  changes:
+    - reduce_dragon_breath_area_from_3x3_to_single_tile
+    - retain_breath_range_and_damage_multiplier
+    - retain_dragon_growth_on_breath_kills
+    - preserve_fixed_hp_recovery
+    - add_single_tile_breath_regression_tests

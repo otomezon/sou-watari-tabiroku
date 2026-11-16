@@ -241,7 +241,7 @@ export class RenderManager {
     }
     drawElementalAreaEffect(effect, originX, originY) {
         const ctx = this.context;
-        const radius = Math.max(0, Math.min(2, effect.radius ?? 1));
+        const radius = 0;
         const blizzard = effect.element === 'blizzard';
         for (let y = effect.y - radius; y <= effect.y + radius; y += 1) {
             for (let x = effect.x - radius; x <= effect.x + radius; x += 1) {
