@@ -8,6 +8,15 @@ export const MAX_HUNGER = 120;
 export const HUNGER_DECAY_EVERY_ACTIONS = 4;
 const FED_HP_RECOVERY_TURNS = 9;
 const STARVATION_DAMAGE_TURNS = 6;
+const DRAGON_BREATHS = Object.freeze({
+    wyvern: Object.freeze({ element: 'fire', name: '炎のブレス' }),
+    'black-drake': Object.freeze({ element: 'fire', name: '炎のブレス' }),
+    'void-dragon': Object.freeze({ element: 'fire', name: '炎のブレス' }),
+    'frost-drake': Object.freeze({ element: 'blizzard', name: 'ブリザード' }),
+});
+export function getDragonBreath(kind) {
+    return DRAGON_BREATHS[kind] ?? null;
+}
 // Six depth bands provide distinct enemy families throughout the five campaigns.
 export const MONSTER_TIERS = [
     [
@@ -290,6 +299,18 @@ function nextFootprintPathStep(tiles, from, target, blocked, size = 2) {
 
 function insideBounds(point, bounds) {
     return point.x >= bounds.x && point.y >= bounds.y && point.x < bounds.x + bounds.width && point.y < bounds.y + bounds.height;
+}
+function hasLineOfSight(tiles, from, to) {
+    const steps = Math.max(Math.abs(to.x - from.x), Math.abs(to.y - from.y));
+    for (let index = 1; index < steps; index += 1) {
+        const point = {
+            x: Math.round(from.x + (to.x - from.x) * index / steps),
+            y: Math.round(from.y + (to.y - from.y) * index / steps),
+        };
+        if (!isWalkable(tiles, point))
+            return false;
+    }
+    return isWalkable(tiles, to);
 }
 export function findItemDropPoint(state, monster) {
     const origin = { x: monster.x, y: monster.y };
@@ -1069,6 +1090,47 @@ export class GameEngine {
         const speedLabel = monster.actionSpeed === 'fast' ? '（連続攻撃）' : '';
         this.state.message = `${this.state.message} ${monster.name}の${attackName}${speedLabel}！ ${damage} ダメージを受けた。${broken.length ? ` ${broken.join(' ')}` : ''}`.slice(0, 480);
     }
+    performElementalAreaAttack(monster, random, breath) {
+        const center = { x: this.state.player.x, y: this.state.player.y };
+        const radius = 1;
+        const damageBase = Math.max(1, Math.round(monster.attack * 0.60));
+        this.state.elementalAreaEffect = {
+            x: center.x, y: center.y, radius, element: breath.element, turn: this.state.turn + 1,
+        };
+
+        // Use the same reduced area power for every caught monster. A defeated
+        // target feeds the dragon, following the existing monster-growth rules.
+        const caughtMonsters = this.state.monsters.filter((target) =>
+            target.id !== monster.id && target.hp > 0 && !target.boss && !target.shopkeeper &&
+            monsterFootprintCells(target).some((cell) =>
+                Math.max(Math.abs(cell.x - center.x), Math.abs(cell.y - center.y)) <= radius),
+        );
+        const monsterMessages = [];
+        for (const target of caughtMonsters) {
+            const damage = Math.max(1, damageBase + random.int(-1, 1) - target.defense);
+            target.hp -= damage;
+            if (target.hp > 0) {
+                monsterMessages.push(`${target.name}に${damage}ダメージ`);
+                continue;
+            }
+            this.state.monsters = this.state.monsters.filter((entry) => entry.id !== target.id);
+            for (const survivor of this.state.monsters) {
+                if (survivor.retaliationTargetId === target.id)
+                    delete survivor.retaliationTargetId;
+            }
+            const currentLevel = Math.max(1, Math.min(99, Number.isInteger(monster.level) ? monster.level : 1));
+            const nextLevel = levelUpMonsterAfterHunterVictory(monster);
+            if (nextLevel > currentLevel)
+                this.monsterLevelUpCount += 1;
+            const growthMessage = nextLevel > currentLevel
+                ? `Lv.${nextLevel}に成長`
+                : 'これ以上は成長できない';
+            monsterMessages.push(`${target.name}を倒した！ ${monster.name}は${growthMessage}`);
+        }
+
+        this.state.message = `${monster.name}が${breath.name}を放った。${monsterMessages.length ? ` ${monsterMessages.join('、')}。` : ''}`;
+        this.attackPlayer(monster, random, 0.60, breath.name);
+    }
     performMonsterAction(monster, random) {
         if (monster.shopkeeper) {
             const dx = this.state.player.x - monster.x;
@@ -1244,6 +1306,13 @@ export class GameEngine {
         const distance = Math.max(Math.abs(dx), Math.abs(dy));
         if (adjacent) {
             this.attackPlayer(monster, random);
+            return;
+        }
+        const breath = getDragonBreath(monster.kind);
+        if (breath && distance >= 2 && distance <= 6 &&
+            hasLineOfSight(this.state.dungeon.tiles, monster, this.state.player) &&
+            random.chance(0.36)) {
+            this.performElementalAreaAttack(monster, random, breath);
             return;
         }
         if (distance > 14)
