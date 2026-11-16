@@ -37,10 +37,13 @@ test('all normal floors in all five campaigns generate within calibrated encount
       assert.equal(state.monsters.filter((monster) => monster.boss).length, 1);
       assert.equal(state.monsters.length, mode.bossFloorMonsters + 1);
       const boss = state.monsters.find((monster) => monster.boss);
-      assert.equal(boss.bossBalanceVersion, 2);
+      assert.equal(boss.bossBalanceVersion, 3);
+      assert.equal(boss.bossSize, mode.bossSize);
+      assert.equal(state.monsters.filter((monster) => !monster.boss).length, mode.bossFloorMonsters);
+      const profile = getBossStats(modeId, boss.actionSpeed);
       assert.deepEqual(
         { hp: boss.maxHp, attack: boss.attack, defense: boss.defense },
-        getBossStats(modeId, boss.actionSpeed),
+        { hp: profile.hp, attack: profile.attack, defense: profile.defense },
       );
     }
   }
