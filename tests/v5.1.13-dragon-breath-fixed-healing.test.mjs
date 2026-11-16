@@ -28,13 +28,13 @@ test('dragon breath patterns are based on dragon kind, not rare-variant status',
   assert.equal(getDragonBreath('salamander'), null);
 });
 
-test('a normal wyvern breathes fire at range and grows for every monster it kills', () => {
+test('a normal wyvern breathes fire into one tile only', () => {
   const state = makeDragonState('wyvern', 0x51301);
   const dragon = state.monsters[0];
   state.monsters.push(
-    { id: 'caught-kill-a', kind: 'slime', name: '巻き込まれたスライム', x: 12, y: 9, hp: 1, maxHp: 1, attack: 1, defense: 0, exp: 1, boss: false },
-    { id: 'caught-kill-b', kind: 'bat', name: '巻き込まれたコウモリ', x: 11, y: 10, hp: 1, maxHp: 1, attack: 1, defense: 0, exp: 1, boss: false },
-    { id: 'caught-survivor', kind: 'kobold', name: '巻き込まれたコボルト', x: 11, y: 11, hp: 40, maxHp: 40, attack: 1, defense: 0, exp: 1, boss: false },
+    { id: 'impact-tile', kind: 'slime', name: '着弾マスのスライム', x: 12, y: 10, hp: 1, maxHp: 1, attack: 1, defense: 0, exp: 1, boss: false },
+    { id: 'adjacent-a', kind: 'bat', name: '隣接マスのコウモリ', x: 12, y: 9, hp: 40, maxHp: 40, attack: 1, defense: 0, exp: 1, boss: false },
+    { id: 'adjacent-b', kind: 'kobold', name: '隣接マスのコボルト', x: 11, y: 10, hp: 40, maxHp: 40, attack: 1, defense: 0, exp: 1, boss: false },
     { id: 'outside-area', kind: 'wolf', name: '範囲外のオオカミ', x: 14, y: 10, hp: 40, maxHp: 40, attack: 1, defense: 0, exp: 1, boss: false },
   );
   const engine = new GameEngine(state);
@@ -42,33 +42,35 @@ test('a normal wyvern breathes fire at range and grows for every monster it kill
   engine.performMonsterAction(dragon, guaranteedBreath);
 
   assert.deepEqual(state.elementalAreaEffect, {
-    x: 12, y: 10, radius: 1, element: 'fire', turn: state.turn + 1,
+    x: 12, y: 10, radius: 0, element: 'fire', turn: state.turn + 1,
   });
-  assert.equal(state.monsters.some((monster) => monster.id === 'caught-kill-a'), false);
-  assert.equal(state.monsters.some((monster) => monster.id === 'caught-kill-b'), false);
-  assert.equal(state.monsters.find((monster) => monster.id === 'caught-survivor').hp, 29);
+  assert.equal(state.monsters.some((monster) => monster.id === 'impact-tile'), false);
+  assert.equal(state.monsters.find((monster) => monster.id === 'adjacent-a').hp, 40);
+  assert.equal(state.monsters.find((monster) => monster.id === 'adjacent-b').hp, 40);
   assert.equal(state.monsters.find((monster) => monster.id === 'outside-area').hp, 40);
-  assert.equal(dragon.level, 3);
-  assert.equal(getEnemyLevel(dragon), 3);
-  assert.equal(engine.getMonsterLevelUpCount(), 2);
+  assert.equal(dragon.level, 2);
+  assert.equal(getEnemyLevel(dragon), 2);
+  assert.equal(engine.getMonsterLevelUpCount(), 1);
   assert.equal(state.player.hp, playerHpBefore - 9);
   assert.match(state.message, /炎のブレス/);
-  assert.match(state.message, /Lv\.2に成長/);
-  assert.match(state.message, /Lv\.3に成長/);
+  assert.match(state.message, /Lv\\.2に成長/);
 });
 
-test('frost drakes use a blizzard area attack without requiring a rare form', () => {
+test('frost drakes use blizzard on one tile without hitting adjacent monsters', () => {
   const state = makeDragonState('frost-drake', 0x51302);
   const dragon = state.monsters[0];
-  state.monsters.push({
-    id: 'caught-by-ice', kind: 'slime', name: '氷に巻き込まれたスライム',
-    x: 12, y: 11, hp: 40, maxHp: 40, attack: 1, defense: 0, exp: 1, boss: false,
-  });
+  state.monsters.push(
+    { id: 'ice-impact', kind: 'slime', name: '氷に巻き込まれたスライム', x: 12, y: 10, hp: 40, maxHp: 40, attack: 1, defense: 0, exp: 1, boss: false },
+    { id: 'ice-adjacent', kind: 'bat', name: '隣のコウモリ', x: 12, y: 9, hp: 40, maxHp: 40, attack: 1, defense: 0, exp: 1, boss: false },
+  );
   const engine = new GameEngine(state);
   engine.performMonsterAction(dragon, guaranteedBreath);
 
-  assert.equal(state.elementalAreaEffect.element, 'blizzard');
-  assert.equal(state.monsters.find((monster) => monster.id === 'caught-by-ice').hp, 29);
+  assert.deepEqual(state.elementalAreaEffect, {
+    x: 12, y: 10, radius: 0, element: 'blizzard', turn: state.turn + 1,
+  });
+  assert.equal(state.monsters.find((monster) => monster.id === 'ice-impact').hp, 29);
+  assert.equal(state.monsters.find((monster) => monster.id === 'ice-adjacent').hp, 40);
   assert.match(state.message, /ブリザード/);
 });
 
