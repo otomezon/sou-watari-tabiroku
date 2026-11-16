@@ -19,11 +19,11 @@ test('expert regular-monster scaling eases gradually only in the last ten floors
 });
 
 test('late expert rare forms retain their identities with moderated burst damage', () => {
-  assert.deepEqual(getRareHunterStatScale('expert', 25), { hp: 1.38, attack: 1.12, defense: 3 });
-  assert.deepEqual(getRareHunterStatScale('expert', 26), { hp: 1.30, attack: 1.08, defense: 2 });
-  assert.equal(getSlowVariantAttackMultiplier('expert', 25), 1.70);
-  assert.equal(getSlowVariantAttackMultiplier('expert', 26), 1.50);
-  assert.equal(getSlowVariantAttackMultiplier('advanced', 30), 1.70);
+  assert.deepEqual(getRareHunterStatScale('expert', 25), { hp: 1.48, attack: 1.16, defense: 4 });
+  assert.deepEqual(getRareHunterStatScale('expert', 26), { hp: 1.38, attack: 1.12, defense: 3 });
+  assert.equal(getSlowVariantAttackMultiplier('expert', 25), 1.85);
+  assert.equal(getSlowVariantAttackMultiplier('expert', 26), 1.65);
+  assert.equal(getSlowVariantAttackMultiplier('advanced', 30), 1.85);
 });
 
 test('monster gold yield is reduced while rare encounters remain more rewarding', () => {
