@@ -68,7 +68,7 @@ function monsterCombatPower(monster) {
 
 const MAX_SINGLE_ENEMY_TRADE_HP_SHARE = Object.freeze({
   tutorial: 0.33,
-  beginner: 0.34,
+  beginner: 0.38,
   intermediate: 0.45,
   advanced: 0.58,
   expert: 0.70,
