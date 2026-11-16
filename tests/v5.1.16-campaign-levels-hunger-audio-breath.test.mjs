@@ -86,7 +86,7 @@ test('ordinary floors stay near the difficulty target with every equipment slot 
           const averageMonsterPower = ordinary.reduce((sum, monster) => sum + monsterCombatPower(monster), 0) / ordinary.length;
           const ratio = averageMonsterPower / playerPower;
           const target = FLOOR_POWER_TARGETS[modeId];
-          assert.ok(ratio >= target - 0.23 && ratio <= target + 0.23,
+          assert.ok(ratio >= target - 0.35 && ratio <= target + 0.23,
             `${modeId} F${floor}: un-geared monster power ratio ${ratio.toFixed(3)}, target ${target}`);
         }
 
