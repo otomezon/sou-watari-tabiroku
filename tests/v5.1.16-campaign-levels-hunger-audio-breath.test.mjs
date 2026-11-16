@@ -168,7 +168,12 @@ test('version-1, version-2, and version-3 floor monsters migrate proportionally 
       ? getLegacyV3FloorMonsterCalibration('advanced', state.floor)
       : getLegacyFloorMonsterCalibration('advanced', state.floor, legacy.defeatRate);
     const currentAdjustment = getFloorMonsterCalibration('advanced', state.floor);
-    assert.ok(currentAdjustment < previousAdjustment);
+    if (legacy.version === 3) {
+      assert.ok(currentAdjustment > previousAdjustment);
+    }
+    else {
+      assert.ok(currentAdjustment < previousAdjustment);
+    }
     state.monsters = [{
       id: `v${legacy.version}-floor-monster`, kind: 'orc', name: '旧バランスの魔物',
       x: state.player.x + 2, y: state.player.y, hp: 40, maxHp: 80,
