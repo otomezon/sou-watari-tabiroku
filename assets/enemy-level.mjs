@@ -14,6 +14,8 @@ function finiteNonNegative(value) {
 }
 
 export function getEnemyLevel(monster) {
+    if (Number.isInteger(monster?.level))
+        return Math.max(1, Math.min(99, monster.level));
     const hp = finiteNonNegative(
         Number.isFinite(monster?.maxHp) ? monster.maxHp : monster?.hp,
     );

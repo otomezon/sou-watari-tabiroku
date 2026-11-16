@@ -51,22 +51,22 @@ test('rare monsters can spawn on the first floor outside tutorial; beginner stil
   assert.equal(canSpawnMagicEater('expert'), true);
 });
 
-test('HP recovery items use a percentage of the actual maximum HP', () => {
+test('HP recovery items restore fixed hit points regardless of maximum HP', () => {
   const potion = { kind: 'potion', heal: 50, hungerRestore: 3 };
-  assert.deepEqual(getItemRecovery(potion, 80), { heal: 40, healPercent: 50, hungerRestore: 3 });
+  assert.deepEqual(getItemRecovery(potion, 80), { heal: 50, hungerRestore: 3 });
   assert.deepEqual(getItemRecovery({ kind: 'food', hungerRestore: 20 }, 80),
-    { heal: 0, healPercent: 0, hungerRestore: 25 });
-  assert.match(itemDescription(potion), /最大HPの50%/);
+    { heal: 0, hungerRestore: 25 });
+  assert.match(itemDescription(potion), /HPを50回復/);
 
   const state = createNewGame(0x51111, 'beginner');
   state.monsters = [];
   state.player.maxHp = 80;
   state.player.hp = 20;
   state.player.hunger = 120;
-  state.inventory = [{ item: { uid: 'percent-potion', name: '割合回復薬', kind: 'potion', heal: 50, hungerRestore: 0 }, count: 1 }];
+  state.inventory = [{ item: { uid: 'fixed-potion', name: '回復薬', kind: 'potion', heal: 50, hungerRestore: 0 }, count: 1 }];
   const engine = new GameEngine(state);
-  assert.equal(engine.useItem('percent-potion'), true);
-  assert.equal(state.player.hp, 60);
+  assert.equal(engine.useItem('fixed-potion'), true);
+  assert.equal(state.player.hp, 70);
 });
 
 test('natural HP regeneration scales with max HP instead of always restoring one point', () => {
