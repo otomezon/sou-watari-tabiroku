@@ -11,7 +11,7 @@ import {
   HUNGER_DECAY_EVERY_ACTIONS,
 } from '../assets/engine.js';
 import { validateGameState, migrateGameState } from '../assets/storage.js';
-import { MODE_ORDER } from '../assets/modes.js';
+import { MODE_ORDER, getModeConfig } from '../assets/modes.js';
 import { getRareHunterStatScale, getSlowVariantAttackMultiplier } from '../assets/balance.mjs';
 
 const root = new URL('../', import.meta.url);
