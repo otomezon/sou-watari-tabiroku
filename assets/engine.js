@@ -186,6 +186,7 @@ export function getExpectedPlayerLevel(modeId, floor, defeatRate = EXPECTED_MONS
 function calculateFloorMonsterCalibration(
     modeId, floor, defeatRate, targets, minimum, maximum,
     hpMultiplier = 1, attackMultiplier = 1, defenseMultiplier = 1,
+    expectedMonsterDefenseCap = Number.POSITIVE_INFINITY,
 ) {
     const mode = getModeConfig(modeId);
     const targetFloor = Math.max(1, Math.min(mode.floors, Math.floor(Number(floor) || 1)));
@@ -206,9 +207,9 @@ function calculateFloorMonsterCalibration(
         const attack = Math.max(1, Math.round(
             (template.attack + Math.floor(targetFloor * 0.18)) * baseStatScale * entryScale * attackMultiplier,
         ));
-        const defense = Math.max(0, Math.round(
+        const defense = Math.min(expectedMonsterDefenseCap, Math.max(0, Math.round(
             (template.defense + Math.floor((targetFloor - 1) / 7)) * baseStatScale * entryScale * defenseMultiplier,
-        ));
+        )));
         return sum + hp + attack * 6 + defense * 4;
     }, 0) / tier.length;
     const lowerPower = averageCombatPower(lowerTier, 1);
@@ -226,11 +227,19 @@ function calculateFloorMonsterCalibration(
     return Math.max(minimum, Math.min(maximum, adjustment));
 }
 
+/** Prevent defense-heavy ordinary monsters from becoming unequipped damage walls. */
+export function getExpectedMonsterDefenseCap(modeId, floor, defeatRate = EXPECTED_MONSTER_DEFEAT_RATE) {
+    const expectedLevel = getExpectedPlayerLevel(modeId, floor, defeatRate);
+    const expectedPlayerAttack = 5 + (expectedLevel - 1);
+    return Math.max(1, expectedPlayerAttack - 7);
+}
+
 /** Balance durable monsters against a 50% progression estimate while limiting burst damage. */
 export function getFloorMonsterCalibration(modeId, floor, defeatRate = EXPECTED_MONSTER_DEFEAT_RATE) {
     return calculateFloorMonsterCalibration(
         modeId, floor, defeatRate, FLOOR_ENCOUNTER_POWER_TARGET, 0.50, 1.18,
         FLOOR_MONSTER_HP_MULTIPLIER, FLOOR_MONSTER_ATTACK_MULTIPLIER, FLOOR_MONSTER_DEFENSE_MULTIPLIER,
+        getExpectedMonsterDefenseCap(modeId, floor, defeatRate),
     );
 }
 
@@ -535,9 +544,9 @@ function createRegularMonster(state, point, random, index, progress, template, t
         attack: Math.max(1, Math.round(
             (template.attack + Math.floor(state.floor * 0.18)) * statScale * FLOOR_MONSTER_ATTACK_MULTIPLIER,
         )),
-        defense: Math.max(0, Math.round(
+        defense: Math.min(getExpectedMonsterDefenseCap(state.modeId, state.floor), Math.max(0, Math.round(
             (template.defense + Math.floor((state.floor - 1) / 7)) * statScale * FLOOR_MONSTER_DEFENSE_MULTIPLIER,
-        )),
+        ))),
         exp: Math.max(1, Math.round((template.exp + state.floor) * (0.8 + mode.difficultyScale * 0.2))),
         boss: false, floorBalanceVersion: FLOOR_MONSTER_BALANCE_VERSION,
         actionSpeed: 'normal', actionProgress: 0, rareVariant: false,
@@ -770,7 +779,12 @@ export class GameEngine {
             monster.maxHp = newMaxHp;
             monster.hp = Math.max(0, Math.min(newMaxHp, Math.round(newMaxHp * hpRatio)));
             monster.attack = Math.max(1, Math.round((Number(monster.attack) || 1) * attackMigrationScale));
-            monster.defense = Math.max(0, Math.round((Number(monster.defense) || 0) * defenseMigrationScale));
+            const rareDefenseAllowance = monster.hunterVariant
+                ? (this.state.modeId === 'expert' && this.state.floor >= 26 ? 3 : 4)
+                : monster.actionSpeed === 'slow' ? 2 : monster.actionSpeed === 'fast' ? 1 : 0;
+            const defenseCap = getExpectedMonsterDefenseCap(this.state.modeId, this.state.floor) + rareDefenseAllowance;
+            monster.defense = Math.min(defenseCap,
+                Math.max(0, Math.round((Number(monster.defense) || 0) * defenseMigrationScale)));
             monster.floorBalanceVersion = FLOOR_MONSTER_BALANCE_VERSION;
             migrated = true;
         }
