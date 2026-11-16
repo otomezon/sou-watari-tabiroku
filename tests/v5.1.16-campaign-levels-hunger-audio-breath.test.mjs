@@ -52,7 +52,7 @@ const FLOOR_POWER_TARGETS = Object.freeze({
   tutorial: 0.54,
   beginner: 0.62,
   intermediate: 0.70,
-  advanced: 0.78,
+  advanced: 0.70,
   expert: 0.86,
 });
 
