@@ -8,6 +8,7 @@ import {
   getFloorMonsterCalibration,
   HUNGER_DECAY_EVERY_ACTIONS,
 } from '../assets/engine.js';
+import { validateGameState, migrateGameState } from '../assets/storage.js';
 
 const root = new URL('../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
@@ -64,6 +65,13 @@ test('hunger decreases once every five actions rather than every four', () => {
   assert.equal(state.player.hunger, 120);
   engine.tickHunger();
   assert.equal(state.player.hunger, 119);
+});
+
+test('the four-action progress toward five-step hunger decay remains save-valid', () => {
+  const state = createNewGame(0x5162028, 'beginner');
+  state.hungerDecayCounter = 4;
+  assert.equal(validateGameState(state), true);
+  assert.equal(migrateGameState(state).hungerDecayCounter, 4);
 });
 
 test('player level-up and received-hit cues share the start of the fanfare', async () => {
