@@ -14,13 +14,17 @@ test('expert regular monsters ease gradually toward the final floor', () => {
   assert.equal(getRegularMonsterDepthScale('intermediate', 15), 1);
 });
 
-test('only Primal Guardian is slightly softened to match the level-18 endgame band', () => {
+test('the two hardest expert tier monsters keep their attack but avoid combined HP-defense spikes', () => {
   const finalTier = MONSTER_TIERS[5];
   const guardian = finalTier.find((monster) => monster.kind === 'primal-guardian');
   const nightEmperor = finalTier.find((monster) => monster.kind === 'night-emperor');
   assert.deepEqual(
     { hp: guardian.hp, attack: guardian.attack, defense: guardian.defense },
-    { hp: 108, attack: 23, defense: 12 },
+    { hp: 96, attack: 23, defense: 9 },
+  );
+  assert.deepEqual(
+    { hp: nightEmperor.hp, attack: nightEmperor.attack, defense: nightEmperor.defense },
+    { hp: 98, attack: 23, defense: 9 },
   );
 
   const floor30Stats = (template) => {
@@ -33,10 +37,10 @@ test('only Primal Guardian is slightly softened to match the level-18 endgame ba
   };
   const guardianStats = floor30Stats(guardian);
   const nightEmperorStats = floor30Stats(nightEmperor);
-  assert.deepEqual(guardianStats, { maxHp: 210, attack: 50, defense: 28 });
-  assert.deepEqual(nightEmperorStats, { maxHp: 213, attack: 50, defense: 28 });
-  assert.equal(getEnemyLevel(guardianStats), 17);
-  assert.equal(getEnemyLevel(nightEmperorStats), 17);
+  assert.deepEqual(guardianStats, { maxHp: 188, attack: 50, defense: 23 });
+  assert.deepEqual(nightEmperorStats, { maxHp: 192, attack: 50, defense: 23 });
+  assert.equal(getEnemyLevel(guardianStats), 16);
+  assert.equal(getEnemyLevel(nightEmperorStats), 16);
 });
 
 test('valuable and gold drop rates are trimmed in the late campaigns without changing rare spawn eligibility', () => {
