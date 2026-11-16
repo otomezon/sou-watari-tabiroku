@@ -52,16 +52,16 @@ export function canSpawnMagicEater(modeId) {
     return modeId !== 'tutorial' && modeId !== 'beginner';
 }
 
-/** Preserve rare-form identity while taking the sharpest late-game spikes down slightly. */
+/** Rare hunters remain dangerous specialists, without returning to their earlier extreme multipliers. */
 export function getRareHunterStatScale(modeId, floor) {
     if (modeId === 'expert' && Number.isFinite(floor) && floor >= 26) {
-        return { hp: 1.30, attack: 1.08, defense: 2 };
+        return { hp: 1.38, attack: 1.12, defense: 3 };
     }
-    return { hp: 1.38, attack: 1.12, defense: 3 };
+    return { hp: 1.48, attack: 1.16, defense: 4 };
 }
 
 export function getSlowVariantAttackMultiplier(modeId, floor) {
-    return modeId === 'expert' && Number.isFinite(floor) && floor >= 26 ? 1.50 : 1.70;
+    return modeId === 'expert' && Number.isFinite(floor) && floor >= 26 ? 1.65 : 1.85;
 }
 
 export function getRareValuableDropChances(modeId) {
