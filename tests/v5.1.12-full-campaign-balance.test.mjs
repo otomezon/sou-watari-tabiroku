@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createNewGame, GameEngine } from '../assets/engine.js';
-import { MODE_ORDER, getModeConfig } from '../assets/modes.js';
+import { MODE_ORDER, getModeConfig, getBossStats } from '../assets/modes.js';
 
 test('all normal floors in all five campaigns generate within calibrated encounter ranges', () => {
   for (const modeId of MODE_ORDER) {
@@ -35,7 +35,13 @@ test('all normal floors in all five campaigns generate within calibrated encount
 
       assert.equal(state.floor, mode.floors);
       assert.equal(state.monsters.filter((monster) => monster.boss).length, 1);
-      assert.equal(state.monsters.length, mode.bossFloorMonsters + 2);
+      assert.equal(state.monsters.length, mode.bossFloorMonsters + 1);
+      const boss = state.monsters.find((monster) => monster.boss);
+      assert.equal(boss.bossBalanceVersion, 2);
+      assert.deepEqual(
+        { hp: boss.maxHp, attack: boss.attack, defense: boss.defense },
+        getBossStats(modeId, boss.actionSpeed),
+      );
     }
   }
 });
