@@ -6,7 +6,7 @@ import { getShopSellPrice, remainingShopGoods, unpaidShopGoods } from "./shop.js
 import { RenderManager } from "./renderer.js";
 import { DEFAULT_AUDIO_SETTINGS, SaveManager } from "./storage.js";
 import { DUNGEON_MODES, MODE_ORDER, getModeConfig } from "./modes.js";
-const APP_VERSION = '5.1.14';
+const APP_VERSION = '5.1.15';
 const byId = (id) => {
     const element = document.getElementById(id);
     if (!element)
@@ -142,9 +142,12 @@ class GameApp {
                 return;
             }
             const hadBossArena = loaded.dungeon.bossArena === true;
+            const previousBossBalanceVersion = loaded.monsters?.find((monster) => monster.boss)?.bossBalanceVersion ?? 0;
             this.state = loaded;
             this.engine = new GameEngine(loaded);
-            if (!hadBossArena && loaded.dungeon.bossArena === true)
+            const currentBossBalanceVersion = loaded.monsters?.find((monster) => monster.boss)?.bossBalanceVersion ?? 0;
+            if ((!hadBossArena && loaded.dungeon.bossArena === true) ||
+                previousBossBalanceVersion !== currentBossBalanceVersion)
                 await this.persist();
             if (loaded.status === 'gameover' || loaded.status === 'clear')
                 this.showResult();
@@ -168,7 +171,7 @@ class GameApp {
         const targetX = (player?.x ?? 0) + step.x;
         const targetY = (player?.y ?? 0) + step.y;
         const attacks = Boolean(player && this.state?.monsters.some((monster) => {
-            const size = monster.boss ? 2 : 1;
+            const size = monster.boss ? Math.max(1, Math.min(4, monster.bossSize ?? 2)) : 1;
             return targetX >= monster.x && targetY >= monster.y &&
                 targetX < monster.x + size && targetY < monster.y + size;
         }));

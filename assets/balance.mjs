@@ -87,15 +87,19 @@ export function getGoldDropAmount(randomBase, rareVariant = false, modeId = 'exp
 }
 
 export const FOOD_HUNGER_MULTIPLIER = 1.25;
+export const POTION_HP_MULTIPLIER = 1.75;
 
-/** Potion heal values are fixed hit points. maxHp is retained for old callers. */
+/** Potion template values are fixed amounts scaled by the original 1.75 multiplier. */
 export function getItemRecovery(item, _maxHp = 100) {
-    const heal = Number.isFinite(item?.heal) ? Math.round(Math.max(0, item.heal)) : 0;
+    const rawHeal = Number.isFinite(item?.heal) ? Math.max(0, item.heal) : 0;
     const rawHunger = Number.isFinite(item?.hungerRestore) ? Math.max(0, item.hungerRestore) : 0;
     if (item?.kind === 'food') {
         return { heal: 0, hungerRestore: Math.round(rawHunger * FOOD_HUNGER_MULTIPLIER) };
     }
-    return { heal, hungerRestore: rawHunger };
+    if (item?.kind === 'potion') {
+        return { heal: Math.round(rawHeal * POTION_HP_MULTIPLIER), hungerRestore: rawHunger };
+    }
+    return { heal: rawHeal, hungerRestore: rawHunger };
 }
 export function itemDescription(item) {
     if (item?.kind === 'food') return `満腹度を${getItemRecovery(item).hungerRestore}回復`;
