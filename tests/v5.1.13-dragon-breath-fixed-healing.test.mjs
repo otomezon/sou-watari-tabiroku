@@ -32,12 +32,12 @@ test('a normal wyvern breathes fire into a centered vertical 1x5 area', () => {
   const state = makeDragonState('wyvern', 0x51301);
   const dragon = state.monsters[0];
   state.monsters.push(
-    { id: 'impact-tile', kind: 'slime', name: '着弾マスのスライム', x: 12, y: 10, hp: 1, maxHp: 1, attack: 1, defense: 0, exp: 1, boss: false, floorBalanceVersion: 1 },
-    { id: 'adjacent-a', kind: 'bat', name: '隣接マスのコウモリ', x: 12, y: 9, hp: 40, maxHp: 40, attack: 1, defense: 0, exp: 1, boss: false, floorBalanceVersion: 1 },
-    { id: 'adjacent-b', kind: 'kobold', name: '横隣のコボルト', x: 11, y: 10, hp: 40, maxHp: 40, attack: 1, defense: 0, exp: 1, boss: false, floorBalanceVersion: 1 },
-    { id: 'vertical-upper', kind: 'mushroom', name: '上側の胞子キノコ', x: 12, y: 8, hp: 40, maxHp: 40, attack: 1, defense: 0, exp: 1, boss: false, floorBalanceVersion: 1 },
-    { id: 'vertical-lower', kind: 'scorpion', name: '下側の銅サソリ', x: 12, y: 12, hp: 40, maxHp: 40, attack: 1, defense: 0, exp: 1, boss: false, floorBalanceVersion: 1 },
-    { id: 'outside-area', kind: 'wolf', name: '範囲外のオオカミ', x: 14, y: 10, hp: 40, maxHp: 40, attack: 1, defense: 0, exp: 1, boss: false, floorBalanceVersion: 1 },
+    { id: 'impact-tile', kind: 'slime', name: '着弾マスのスライム', x: 12, y: 10, hp: 1, maxHp: 1, attack: 1, defense: 0, exp: 1, boss: false, floorBalanceVersion: 3 },
+    { id: 'adjacent-a', kind: 'bat', name: '隣接マスのコウモリ', x: 12, y: 9, hp: 40, maxHp: 40, attack: 1, defense: 0, exp: 1, boss: false, floorBalanceVersion: 3 },
+    { id: 'adjacent-b', kind: 'kobold', name: '横隣のコボルト', x: 11, y: 10, hp: 40, maxHp: 40, attack: 1, defense: 0, exp: 1, boss: false, floorBalanceVersion: 3 },
+    { id: 'vertical-upper', kind: 'mushroom', name: '上側の胞子キノコ', x: 12, y: 8, hp: 40, maxHp: 40, attack: 1, defense: 0, exp: 1, boss: false, floorBalanceVersion: 3 },
+    { id: 'vertical-lower', kind: 'scorpion', name: '下側の銅サソリ', x: 12, y: 12, hp: 40, maxHp: 40, attack: 1, defense: 0, exp: 1, boss: false, floorBalanceVersion: 3 },
+    { id: 'outside-area', kind: 'wolf', name: '範囲外のオオカミ', x: 14, y: 10, hp: 40, maxHp: 40, attack: 1, defense: 0, exp: 1, boss: false, floorBalanceVersion: 3 },
   );
   const engine = new GameEngine(state);
   const playerHpBefore = state.player.hp;
@@ -64,9 +64,9 @@ test('frost drakes use blizzard across the same vertical 1x5 area', () => {
   const state = makeDragonState('frost-drake', 0x51302);
   const dragon = state.monsters[0];
   state.monsters.push(
-    { id: 'ice-impact', kind: 'slime', name: '氷に巻き込まれたスライム', x: 12, y: 10, hp: 40, maxHp: 40, attack: 1, defense: 0, exp: 1, boss: false, floorBalanceVersion: 1 },
-    { id: 'ice-adjacent', kind: 'bat', name: '縦列のコウモリ', x: 12, y: 9, hp: 40, maxHp: 40, attack: 1, defense: 0, exp: 1, boss: false, floorBalanceVersion: 1 },
-    { id: 'ice-side', kind: 'wolf', name: '横のオオカミ', x: 11, y: 10, hp: 40, maxHp: 40, attack: 1, defense: 0, exp: 1, boss: false, floorBalanceVersion: 1 },
+    { id: 'ice-impact', kind: 'slime', name: '氷に巻き込まれたスライム', x: 12, y: 10, hp: 40, maxHp: 40, attack: 1, defense: 0, exp: 1, boss: false, floorBalanceVersion: 3 },
+    { id: 'ice-adjacent', kind: 'bat', name: '縦列のコウモリ', x: 12, y: 9, hp: 40, maxHp: 40, attack: 1, defense: 0, exp: 1, boss: false, floorBalanceVersion: 3 },
+    { id: 'ice-side', kind: 'wolf', name: '横のオオカミ', x: 11, y: 10, hp: 40, maxHp: 40, attack: 1, defense: 0, exp: 1, boss: false, floorBalanceVersion: 3 },
   );
   const engine = new GameEngine(state);
   engine.performMonsterAction(dragon, guaranteedBreath);
