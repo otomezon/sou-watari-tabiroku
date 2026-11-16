@@ -120,16 +120,27 @@ export function levelUpMonsterAfterHunterVictory(monster) {
     return nextLevel;
 }
 
-// A conservative 40% clear rate avoids assuming players can defeat most encounters.
-export const EXPECTED_MONSTER_DEFEAT_RATE = 0.40;
+// A middle-ground 50% clear rate avoids both optimistic 70% and overly cautious 40% progression assumptions.
+export const EXPECTED_MONSTER_DEFEAT_RATE = 0.50;
 const LEGACY_V1_MONSTER_DEFEAT_RATE = 0.55;
 const LEGACY_V2_MONSTER_DEFEAT_RATE = 0.70;
-const FLOOR_MONSTER_BALANCE_VERSION = 3;
-// Target average monster power as a share of the unequipped player's expected power.
+const LEGACY_V3_MONSTER_DEFEAT_RATE = 0.40;
+const FLOOR_MONSTER_BALANCE_VERSION = 4;
+
+// Average ordinary-monster pressure rises by campaign without requiring perfect equipment drops.
 const FLOOR_ENCOUNTER_POWER_TARGET = Object.freeze({
+    tutorial: 0.54, beginner: 0.62, intermediate: 0.70, advanced: 0.78, expert: 0.86,
+});
+// Keep fights durable, but avoid scaling raw incoming damage and monster defense at the same rate.
+export const FLOOR_MONSTER_HP_MULTIPLIER = 1.08;
+export const FLOOR_MONSTER_ATTACK_MULTIPLIER = 0.92;
+export const FLOOR_MONSTER_DEFENSE_MULTIPLIER = 0.95;
+
+// v5.1.19 (v3) is retained for one-time migration of existing saves.
+const LEGACY_V3_FLOOR_ENCOUNTER_POWER_TARGET = Object.freeze({
     tutorial: 0.48, beginner: 0.56, intermediate: 0.64, advanced: 0.72, expert: 0.80,
 });
-// Retained only to migrate saves created by the two earlier floor-balance models.
+// v5.1.18 (v1/v2) used a stronger target and a narrower correction range.
 const LEGACY_FLOOR_ENCOUNTER_POWER_TARGET = Object.freeze({
     tutorial: 0.68, beginner: 0.78, intermediate: 0.90, advanced: 1.02, expert: 1.12,
 });
@@ -172,7 +183,10 @@ export function getExpectedPlayerLevel(modeId, floor, defeatRate = EXPECTED_MONS
  * un-geared combat power. The tighter campaign targets keep ordinary fights
  * manageable without assuming that weapon, shield, or armor drops are lucky.
  */
-function calculateFloorMonsterCalibration(modeId, floor, defeatRate, targets, minimum, maximum) {
+function calculateFloorMonsterCalibration(
+    modeId, floor, defeatRate, targets, minimum, maximum,
+    hpMultiplier = 1, attackMultiplier = 1, defenseMultiplier = 1,
+) {
     const mode = getModeConfig(modeId);
     const targetFloor = Math.max(1, Math.min(mode.floors, Math.floor(Number(floor) || 1)));
     const progress = mode.floors <= 1 ? 0 : (targetFloor - 1) / (mode.floors - 1);
@@ -187,13 +201,13 @@ function calculateFloorMonsterCalibration(modeId, floor, defeatRate, targets, mi
     const upperTierScale = getMonsterTierEntryMultiplier(blend);
     const averageCombatPower = (tier, entryScale) => tier.reduce((sum, template) => {
         const hp = Math.max(1, Math.round(
-            (template.hp + Math.floor(targetFloor * 0.35) + 1) * baseStatScale * entryScale,
+            (template.hp + Math.floor(targetFloor * 0.35) + 1) * baseStatScale * entryScale * hpMultiplier,
         ));
         const attack = Math.max(1, Math.round(
-            (template.attack + Math.floor(targetFloor * 0.18)) * baseStatScale * entryScale,
+            (template.attack + Math.floor(targetFloor * 0.18)) * baseStatScale * entryScale * attackMultiplier,
         ));
         const defense = Math.max(0, Math.round(
-            (template.defense + Math.floor((targetFloor - 1) / 7)) * baseStatScale * entryScale,
+            (template.defense + Math.floor((targetFloor - 1) / 7)) * baseStatScale * entryScale * defenseMultiplier,
         ));
         return sum + hp + attack * 6 + defense * 4;
     }, 0) / tier.length;
@@ -212,14 +226,22 @@ function calculateFloorMonsterCalibration(modeId, floor, defeatRate, targets, mi
     return Math.max(minimum, Math.min(maximum, adjustment));
 }
 
-/** Balance ordinary monsters against the expected unequipped player, not lucky gear drops. */
+/** Balance durable monsters against a 50% progression estimate while limiting burst damage. */
 export function getFloorMonsterCalibration(modeId, floor, defeatRate = EXPECTED_MONSTER_DEFEAT_RATE) {
     return calculateFloorMonsterCalibration(
-        modeId, floor, defeatRate, FLOOR_ENCOUNTER_POWER_TARGET, 0.45, 1.05,
+        modeId, floor, defeatRate, FLOOR_ENCOUNTER_POWER_TARGET, 0.50, 1.18,
+        FLOOR_MONSTER_HP_MULTIPLIER, FLOOR_MONSTER_ATTACK_MULTIPLIER, FLOOR_MONSTER_DEFENSE_MULTIPLIER,
     );
 }
 
-/** Previous release calibration retained to migrate existing floors without double-scaling. */
+/** v5.1.19 calibration (v3), needed to migrate its saved monsters exactly once. */
+export function getLegacyV3FloorMonsterCalibration(modeId, floor) {
+    return calculateFloorMonsterCalibration(
+        modeId, floor, LEGACY_V3_MONSTER_DEFEAT_RATE, LEGACY_V3_FLOOR_ENCOUNTER_POWER_TARGET, 0.45, 1.05,
+    );
+}
+
+/** v5.1.18 calibrations (v1/v2), retained for safe, proportional save migration. */
 export function getLegacyFloorMonsterCalibration(modeId, floor, defeatRate = LEGACY_V1_MONSTER_DEFEAT_RATE) {
     return calculateFloorMonsterCalibration(
         modeId, floor, defeatRate, LEGACY_FLOOR_ENCOUNTER_POWER_TARGET, 0.85, 1.08,
@@ -502,13 +524,20 @@ function createRegularMonster(state, point, random, index, progress, template, t
         getFloorStatAdjustment(state.modeId, state.floor, mode.floors) *
         getRegularMonsterDepthScale(state.modeId, state.floor) *
         getFloorMonsterCalibration(state.modeId, state.floor) * tierEntryScale;
-    const hp = Math.max(1, Math.round((template.hp + Math.floor(state.floor * 0.35) + random.int(0, 2)) * statScale));
+    const hp = Math.max(1, Math.round(
+        (template.hp + Math.floor(state.floor * 0.35) + random.int(0, 2)) *
+        statScale * FLOOR_MONSTER_HP_MULTIPLIER,
+    ));
     const monster = {
         id: `f${state.floor}-m${index}-${random.int(1000, 9999)}`,
         kind: template.kind, name: template.name, x: point.x, y: point.y,
         hp, maxHp: hp,
-        attack: Math.max(1, Math.round((template.attack + Math.floor(state.floor * 0.18)) * statScale)),
-        defense: Math.max(0, Math.round((template.defense + Math.floor((state.floor - 1) / 7)) * statScale)),
+        attack: Math.max(1, Math.round(
+            (template.attack + Math.floor(state.floor * 0.18)) * statScale * FLOOR_MONSTER_ATTACK_MULTIPLIER,
+        )),
+        defense: Math.max(0, Math.round(
+            (template.defense + Math.floor((state.floor - 1) / 7)) * statScale * FLOOR_MONSTER_DEFENSE_MULTIPLIER,
+        )),
         exp: Math.max(1, Math.round((template.exp + state.floor) * (0.8 + mode.difficultyScale * 0.2))),
         boss: false, floorBalanceVersion: FLOOR_MONSTER_BALANCE_VERSION,
         actionSpeed: 'normal', actionProgress: 0, rareVariant: false,
@@ -723,20 +752,25 @@ export class GameEngine {
                 : 0;
             if (previousVersion >= FLOOR_MONSTER_BALANCE_VERSION)
                 continue;
-            const previousCalibration = previousVersion >= 2
-                ? getLegacyFloorMonsterCalibration(this.state.modeId, this.state.floor, LEGACY_V2_MONSTER_DEFEAT_RATE)
-                : previousVersion >= 1
-                    ? getLegacyFloorMonsterCalibration(this.state.modeId, this.state.floor, LEGACY_V1_MONSTER_DEFEAT_RATE)
-                    : 1;
-            const migrationScale = calibration / Math.max(0.01, previousCalibration);
+            const previousCalibration = previousVersion >= 3
+                ? getLegacyV3FloorMonsterCalibration(this.state.modeId, this.state.floor)
+                : previousVersion >= 2
+                    ? getLegacyFloorMonsterCalibration(this.state.modeId, this.state.floor, LEGACY_V2_MONSTER_DEFEAT_RATE)
+                    : previousVersion >= 1
+                        ? getLegacyFloorMonsterCalibration(this.state.modeId, this.state.floor, LEGACY_V1_MONSTER_DEFEAT_RATE)
+                        : 1;
+            const previousScale = Math.max(0.01, previousCalibration);
+            const hpMigrationScale = calibration * FLOOR_MONSTER_HP_MULTIPLIER / previousScale;
+            const attackMigrationScale = calibration * FLOOR_MONSTER_ATTACK_MULTIPLIER / previousScale;
+            const defenseMigrationScale = calibration * FLOOR_MONSTER_DEFENSE_MULTIPLIER / previousScale;
             const oldMaxHp = Math.max(1, Number(monster.maxHp) || 1);
             const oldHp = Math.max(0, Number(monster.hp) || 0);
             const hpRatio = Math.min(1, oldHp / oldMaxHp);
-            const newMaxHp = Math.max(1, Math.round(oldMaxHp * migrationScale));
+            const newMaxHp = Math.max(1, Math.round(oldMaxHp * hpMigrationScale));
             monster.maxHp = newMaxHp;
             monster.hp = Math.max(0, Math.min(newMaxHp, Math.round(newMaxHp * hpRatio)));
-            monster.attack = Math.max(1, Math.round((Number(monster.attack) || 1) * migrationScale));
-            monster.defense = Math.max(0, Math.round((Number(monster.defense) || 0) * migrationScale));
+            monster.attack = Math.max(1, Math.round((Number(monster.attack) || 1) * attackMigrationScale));
+            monster.defense = Math.max(0, Math.round((Number(monster.defense) || 0) * defenseMigrationScale));
             monster.floorBalanceVersion = FLOOR_MONSTER_BALANCE_VERSION;
             migrated = true;
         }
