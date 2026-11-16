@@ -13,6 +13,7 @@ on:
       - 'tests/v5.1.10-hunter-defeat-growth.test.mjs'
       - 'tests/v5.1.11-balance-hunter-shopkeeper-boss-recovery.test.mjs'
       - 'tests/v5.1.12-full-campaign-balance.test.mjs'
+      - 'tests/v5.1.12-full-campaign-balance.test.mjs'
       - 'tests/v5.1.13-dragon-breath-fixed-healing.test.mjs'
       - 'tests/v5.0.2-mode-spawn-balance.test.mjs'
       - '.github/workflows/test-early-game-balance.yml'
