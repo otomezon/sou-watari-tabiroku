@@ -120,13 +120,15 @@ export function levelUpMonsterAfterHunterVictory(monster) {
     return nextLevel;
 }
 
-const EXPECTED_MONSTER_DEFEAT_RATE = 0.55;
+export const EXPECTED_MONSTER_DEFEAT_RATE = 0.70;
+const LEGACY_MONSTER_DEFEAT_RATE = 0.55;
+const FLOOR_MONSTER_BALANCE_VERSION = 2;
 const FLOOR_ENCOUNTER_POWER_TARGET = Object.freeze({
     tutorial: 0.68, beginner: 0.78, intermediate: 0.90, advanced: 1.02, expert: 1.12,
 });
 
 /** Estimate player level at floor entry from prior-floor EXP and expected kills. */
-export function getExpectedPlayerLevel(modeId, floor) {
+export function getExpectedPlayerLevel(modeId, floor, defeatRate = EXPECTED_MONSTER_DEFEAT_RATE) {
     const mode = getModeConfig(modeId);
     const targetFloor = Math.max(1, Math.min(mode.floors, Math.floor(Number(floor) || 1)));
     let expectedExperience = 0;
@@ -144,8 +146,11 @@ export function getExpectedPlayerLevel(modeId, floor) {
         const minimumCount = Math.max(2, mode.minMonsters - openingReduction);
         const maximumCount = Math.max(minimumCount, mode.maxMonsters - openingReduction);
         const expectedMonsterCount = (minimumCount + maximumCount) / 2;
+        const effectiveDefeatRate = Number.isFinite(defeatRate)
+            ? Math.max(0, Math.min(1, defeatRate))
+            : EXPECTED_MONSTER_DEFEAT_RATE;
         expectedExperience += (monsterExp + completedFloor) *
-            (0.8 + mode.difficultyScale * 0.2) * expectedMonsterCount * EXPECTED_MONSTER_DEFEAT_RATE;
+            (0.8 + mode.difficultyScale * 0.2) * expectedMonsterCount * effectiveDefeatRate;
     }
     let level = 1;
     while (level < 99 && expectedExperience >= experienceToNext(level)) {
@@ -160,7 +165,7 @@ export function getExpectedPlayerLevel(modeId, floor) {
  * un-geared combat power. Difficulty targets rise by campaign; adjustment is
  * bounded to +8% / -15% so relative monster-template strength remains.
  */
-export function getFloorMonsterCalibration(modeId, floor) {
+export function getFloorMonsterCalibration(modeId, floor, defeatRate = EXPECTED_MONSTER_DEFEAT_RATE) {
     const mode = getModeConfig(modeId);
     const targetFloor = Math.max(1, Math.min(mode.floors, Math.floor(Number(floor) || 1)));
     const progress = mode.floors <= 1 ? 0 : (targetFloor - 1) / (mode.floors - 1);
@@ -189,7 +194,7 @@ export function getFloorMonsterCalibration(modeId, floor) {
     const upperPower = blend.upperTierIndex === blend.lowerTierIndex
         ? lowerPower : averageCombatPower(upperTier, upperTierScale);
     const expectedMonsterPower = lowerPower * (1 - blend.upperChance) + upperPower * blend.upperChance;
-    const playerLevel = getExpectedPlayerLevel(modeId, targetFloor);
+    const playerLevel = getExpectedPlayerLevel(modeId, targetFloor, defeatRate);
     const playerHp = 34 + (playerLevel - 1) * 6;
     const playerAttack = 5 + (playerLevel - 1);
     const playerDefense = 2 + Math.floor(playerLevel / 2);
@@ -483,7 +488,7 @@ function createRegularMonster(state, point, random, index, progress, template, t
         attack: Math.max(1, Math.round((template.attack + Math.floor(state.floor * 0.18)) * statScale)),
         defense: Math.max(0, Math.round((template.defense + Math.floor((state.floor - 1) / 7)) * statScale)),
         exp: Math.max(1, Math.round((template.exp + state.floor) * (0.8 + mode.difficultyScale * 0.2))),
-        boss: false, floorBalanceVersion: 1,
+        boss: false, floorBalanceVersion: FLOOR_MONSTER_BALANCE_VERSION,
         actionSpeed: 'normal', actionProgress: 0, rareVariant: false,
     };
     const rarityRate = Number.isFinite(rareSpawnChanceOverride) ? rareSpawnChanceOverride : mode.rareMonsterChance;
@@ -689,18 +694,26 @@ export class GameEngine {
         const calibration = getFloorMonsterCalibration(this.state.modeId, this.state.floor);
         let migrated = false;
         for (const monster of this.state.monsters) {
-            if (!monster || monster.boss || monster.shopkeeper ||
-                (monster.floorBalanceVersion ?? 0) >= 1)
+            if (!monster || monster.boss || monster.shopkeeper)
                 continue;
+            const previousVersion = Number.isInteger(monster.floorBalanceVersion)
+                ? monster.floorBalanceVersion
+                : 0;
+            if (previousVersion >= FLOOR_MONSTER_BALANCE_VERSION)
+                continue;
+            const previousCalibration = previousVersion >= 1
+                ? getFloorMonsterCalibration(this.state.modeId, this.state.floor, LEGACY_MONSTER_DEFEAT_RATE)
+                : 1;
+            const migrationScale = calibration / Math.max(0.01, previousCalibration);
             const oldMaxHp = Math.max(1, Number(monster.maxHp) || 1);
             const oldHp = Math.max(0, Number(monster.hp) || 0);
             const hpRatio = Math.min(1, oldHp / oldMaxHp);
-            const newMaxHp = Math.max(1, Math.round(oldMaxHp * calibration));
+            const newMaxHp = Math.max(1, Math.round(oldMaxHp * migrationScale));
             monster.maxHp = newMaxHp;
             monster.hp = Math.max(0, Math.min(newMaxHp, Math.round(newMaxHp * hpRatio)));
-            monster.attack = Math.max(1, Math.round((Number(monster.attack) || 1) * calibration));
-            monster.defense = Math.max(0, Math.round((Number(monster.defense) || 0) * calibration));
-            monster.floorBalanceVersion = 1;
+            monster.attack = Math.max(1, Math.round((Number(monster.attack) || 1) * migrationScale));
+            monster.defense = Math.max(0, Math.round((Number(monster.defense) || 0) * migrationScale));
+            monster.floorBalanceVersion = FLOOR_MONSTER_BALANCE_VERSION;
             migrated = true;
         }
         return migrated;
@@ -1281,7 +1294,7 @@ export class GameEngine {
     }
     performElementalAreaAttack(monster, random, breath) {
         const center = { x: this.state.player.x, y: this.state.player.y };
-        const areaWidth = 3;
+        const areaWidth = 1;
         const areaHeight = 5;
         const left = center.x - Math.floor(areaWidth / 2);
         const top = center.y - Math.floor(areaHeight / 2);
@@ -1294,8 +1307,8 @@ export class GameEngine {
             element: breath.element, turn: this.state.turn + 1,
         };
 
-        // A tall, centered 3x5 blast catches every monster footprint crossing
-        // the warned rectangle. A defeated target feeds the dragon as before.
+        // A one-tile-wide, five-tile-tall column catches only aligned footprints.
+        // A defeated target feeds the dragon as before.
         const caughtMonsters = this.state.monsters.filter((target) =>
             target.id !== monster.id && target.hp > 0 && !target.boss && !target.shopkeeper &&
             monsterFootprintCells(target).some((cell) =>
