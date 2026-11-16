@@ -1,0 +1,20 @@
+release:
+  project: 層渡りの旅録
+  version: 5.1.16
+  previous_version: 5.1.15
+  type: patch
+  title: 階層別モンスターLv・空腹・遠距離攻撃の調整
+  invariants:
+    starter_equipment: none
+    starter_inventory: []
+    save_schema: 12
+  changes:
+    - define_expected_player_level_curve_for_every_campaign_floor
+    - assign_floor_and_tier_relative_monster_levels
+    - apply_gentle_monster_stat_scaling_by_level_difference
+    - migrate_legacy_saved_monster_levels_without_save_schema_change
+    - overlap_damage_sfx_with_level_up_fanfare
+    - reduce_hunger_decay_to_one_per_five_actions
+    - change_dragon_breath_to_vertical_three_tile_area_attack
+    - align_elemental_attack_preview_with_vertical_area
+    - add_floor_level_hunger_audio_and_breath_regression_tests
