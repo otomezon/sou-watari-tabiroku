@@ -28,7 +28,7 @@ test('dragon breath patterns are based on dragon kind, not rare-variant status',
   assert.equal(getDragonBreath('salamander'), null);
 });
 
-test('a normal wyvern breathes fire into one tile only', () => {
+test('a normal wyvern breathes fire into a centered vertical 3x5 area', () => {
   const state = makeDragonState('wyvern', 0x51301);
   const dragon = state.monsters[0];
   state.monsters.push(
@@ -42,11 +42,11 @@ test('a normal wyvern breathes fire into one tile only', () => {
   engine.performMonsterAction(dragon, guaranteedBreath);
 
   assert.deepEqual(state.elementalAreaEffect, {
-    x: 12, y: 10, radius: 0, element: 'fire', turn: state.turn + 1,
+    x: 12, y: 10, width: 3, height: 5, element: 'fire', turn: state.turn + 1,
   });
   assert.equal(state.monsters.some((monster) => monster.id === 'impact-tile'), false);
-  assert.equal(state.monsters.find((monster) => monster.id === 'adjacent-a').hp, 40);
-  assert.equal(state.monsters.find((monster) => monster.id === 'adjacent-b').hp, 40);
+  assert.equal(state.monsters.find((monster) => monster.id === 'adjacent-a').hp, 29);
+  assert.equal(state.monsters.find((monster) => monster.id === 'adjacent-b').hp, 29);
   assert.equal(state.monsters.find((monster) => monster.id === 'outside-area').hp, 40);
   assert.equal(dragon.level, 2);
   assert.equal(getEnemyLevel(dragon), 2);
@@ -56,7 +56,7 @@ test('a normal wyvern breathes fire into one tile only', () => {
   assert.ok(state.message.includes('Lv.2に成長'));
 });
 
-test('frost drakes use blizzard on one tile without hitting adjacent monsters', () => {
+test('frost drakes use blizzard across the same vertical 3x5 area', () => {
   const state = makeDragonState('frost-drake', 0x51302);
   const dragon = state.monsters[0];
   state.monsters.push(
@@ -67,10 +67,10 @@ test('frost drakes use blizzard on one tile without hitting adjacent monsters', 
   engine.performMonsterAction(dragon, guaranteedBreath);
 
   assert.deepEqual(state.elementalAreaEffect, {
-    x: 12, y: 10, radius: 0, element: 'blizzard', turn: state.turn + 1,
+    x: 12, y: 10, width: 3, height: 5, element: 'blizzard', turn: state.turn + 1,
   });
   assert.equal(state.monsters.find((monster) => monster.id === 'ice-impact').hp, 29);
-  assert.equal(state.monsters.find((monster) => monster.id === 'ice-adjacent').hp, 40);
+  assert.equal(state.monsters.find((monster) => monster.id === 'ice-adjacent').hp, 29);
   assert.match(state.message, /ブリザード/);
 });
 
@@ -90,4 +90,6 @@ test('elemental area warnings are rendered on the marked turn', async () => {
   const renderer = await readFile(new URL('../assets/renderer.js', import.meta.url), 'utf8');
   assert.match(renderer, /elementalAreaEffect\.turn === state\.turn/);
   assert.match(renderer, /drawElementalAreaEffect/);
+  assert.match(renderer, /effect\.width/);
+  assert.match(renderer, /effect\.height/);
 });
