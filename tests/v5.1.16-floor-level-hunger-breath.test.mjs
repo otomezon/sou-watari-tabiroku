@@ -5,7 +5,7 @@ import {
   createNewGame, GameEngine, HUNGER_DECAY_EVERY_ACTIONS,
 } from '../assets/engine.js';
 import {
-  EXPECTED_PLAYER_LEVELS, getExpectedPlayerLevel, getMonsterLevelForFloor,
+  EXPECTED_MONSTER_KILL_RATE, EXPECTED_PLAYER_LEVELS, getExpectedPlayerLevel, getMonsterLevelForFloor,
   getMonsterLevelStatMultiplier,
 } from '../assets/balance.mjs';
 import { getEffectCueSchedule } from '../assets/audio.js';
@@ -15,7 +15,8 @@ import { MODE_ORDER, getModeConfig } from '../assets/modes.js';
 const root = new URL('../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
 
-test('expected player levels cover every floor in all five campaigns', () => {
+test('expected player levels use near-clear progression and cover every campaign floor', () => {
+  assert.equal(EXPECTED_MONSTER_KILL_RATE, 0.90);
   const expectedCounts = { tutorial: 5, beginner: 10, intermediate: 15, advanced: 25, expert: 30 };
   for (const modeId of MODE_ORDER) {
     const mode = getModeConfig(modeId);
@@ -25,6 +26,9 @@ test('expected player levels cover every floor in all five campaigns', () => {
     assert.equal(getExpectedPlayerLevel(modeId, mode.floors + 20), EXPECTED_PLAYER_LEVELS[modeId].at(-1));
   }
   assert.equal(getExpectedPlayerLevel('beginner', 0), 1);
+  assert.deepEqual(EXPECTED_PLAYER_LEVELS.tutorial, [1, 2, 3, 4, 5]);
+  assert.deepEqual(EXPECTED_PLAYER_LEVELS.beginner, [1, 2, 4, 5, 6, 7, 8, 9, 10, 11]);
+  assert.deepEqual(EXPECTED_PLAYER_LEVELS.intermediate, [1, 3, 4, 5, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 19]);
 });
 
 test('ordinary monsters track expected player level, tier offset and gentle stat scaling', () => {
