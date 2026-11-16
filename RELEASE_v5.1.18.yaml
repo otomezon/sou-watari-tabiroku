@@ -1,0 +1,20 @@
+release:
+  project: 層渡りの旅録
+  version: 5.1.18
+  previous_version: 5.1.17
+  type: patch
+  title: 想定撃破率と縦列ブレスの修正
+  invariants:
+    starter_equipment: none
+    starter_inventory: []
+    save_schema: 12
+  changes:
+    - raise_expected_regular_monster_defeat_rate_from_55_to_70_percent
+    - recalculate_campaign_player_level_targets_from_exp_curve
+    - recalibrate_floor_monster_combat_power_to_updated_player_curve
+    - migrate_floor_monster_balance_v1_to_v2_by_calibration_delta
+    - preserve_current_hp_ratio_during_balance_migration
+    - change_dragon_breath_width_from_3_to_1_tile
+    - preserve_five_tile_vertical_breath_length
+    - align_breath_warning_renderer_with_one_tile_width
+    - add_70_percent_progression_and_vertical_column_regression_tests
