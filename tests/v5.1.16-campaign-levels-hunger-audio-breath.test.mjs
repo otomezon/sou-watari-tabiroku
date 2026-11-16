@@ -85,6 +85,20 @@ const MAX_LIGHT_GEAR_TRADE_HP_SHARE = Object.freeze({
 });
 
 
+test('deep expert ordinary monsters remain hittable without high-tier weapon drops', () => {
+  for (const floor of [16, 22, 29]) {
+    const level = getExpectedPlayerLevel('expert', floor);
+    const attack = 5 + level - 1;
+    assert.equal(getExpectedMonsterDefenseCap('expert', floor), Math.max(1, attack - 12));
+  }
+  for (const mode of ['tutorial', 'beginner', 'intermediate', 'advanced']) {
+    assert.equal(
+      getExpectedMonsterDefenseCap(mode, getModeConfig(mode).floors - 1),
+      Math.max(1, 5 + getExpectedPlayerLevel(mode, getModeConfig(mode).floors - 1) - 1 - 7),
+    );
+  }
+});
+
 test('rare variants have meaningful special pressure without their old extreme multipliers', () => {
   assert.deepEqual(getRareHunterStatScale('beginner', 5), { hp: 1.48, attack: 1.16, defense: 4 });
   assert.deepEqual(getRareHunterStatScale('expert', 28), { hp: 1.38, attack: 1.12, defense: 3 });
