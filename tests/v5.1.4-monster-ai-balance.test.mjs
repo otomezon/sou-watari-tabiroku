@@ -57,7 +57,7 @@ test('a monster that defeats a magic-eater gains a level and stronger stats', ()
   const winner = {
     id: 'winner', kind: 'bat', name: '洞窟コウモリ',
     x: 6, y: 5, hp: 12, maxHp: 20, attack: 5, defense: 1,
-    exp: 10, boss: false, floorBalanceVersion: 1, hunterVariant: false, retaliationTargetId: 'hunter',
+    exp: 10, boss: false, floorBalanceVersion: 2, hunterVariant: false, retaliationTargetId: 'hunter',
   };
   state.monsters = [hunter, winner];
   const engine = new GameEngine(state);
