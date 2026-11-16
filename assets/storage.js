@@ -57,7 +57,7 @@ export function validateGameState(value) {
     const mode = getModeConfig(state.modeId);
     if (!Number.isInteger(state.seed) || !Number.isInteger(state.floor) || state.floor < 1 || state.floor > mode.floors)
         return false;
-    if (!Number.isInteger(state.turn) || state.turn < 0 || !Number.isInteger(state.fedTurnCounter) || state.fedTurnCounter < 0 || state.fedTurnCounter > 8 || !Number.isInteger(state.starvationTurnCounter) || state.starvationTurnCounter < 0 || state.starvationTurnCounter > 5 || !Number.isInteger(state.hungerDecayCounter) || state.hungerDecayCounter < 0 || state.hungerDecayCounter > 3 || !Array.isArray(state.monsters) || !Array.isArray(state.groundItems) || !Array.isArray(state.groundGold) || !Array.isArray(state.inventory) || !Number.isInteger(state.gold) || state.gold < 0 || state.gold > 20_000_000)
+    if (!Number.isInteger(state.turn) || state.turn < 0 || !Number.isInteger(state.fedTurnCounter) || state.fedTurnCounter < 0 || state.fedTurnCounter > 8 || !Number.isInteger(state.starvationTurnCounter) || state.starvationTurnCounter < 0 || state.starvationTurnCounter > 5 || !Number.isInteger(state.hungerDecayCounter) || state.hungerDecayCounter < 0 || state.hungerDecayCounter > 4 || !Array.isArray(state.monsters) || !Array.isArray(state.groundItems) || !Array.isArray(state.groundGold) || !Array.isArray(state.inventory) || !Number.isInteger(state.gold) || state.gold < 0 || state.gold > 20_000_000)
         return false;
     if (!state.player || !Number.isInteger(state.player.hunger) || state.player.hunger < 0 || state.player.hunger > 120 || !Number.isInteger(state.player.hp) || !Number.isInteger(state.player.maxHp) || state.player.maxHp < 30 || state.player.maxHp > 10000)
         return false;
@@ -362,9 +362,9 @@ export function migrateGameState(value) {
         schemaVersion: 12,
         modeId: isDungeonModeId(state.modeId) ? state.modeId : 'beginner',
         player: { ...player, hunger },
-        // v3.0.0 and older used a different decay cadence; start the new 4-action phase cleanly.
+        // v3.0.0 and older used a different decay cadence; start the new 5-action phase cleanly.
         // v3.1.0 saves preserve the accumulated phase across reloads.
-        hungerDecayCounter: sourceSchema >= 8 && Number.isInteger(state.hungerDecayCounter) && Number(state.hungerDecayCounter) >= 0 && Number(state.hungerDecayCounter) <= 3
+        hungerDecayCounter: sourceSchema >= 8 && Number.isInteger(state.hungerDecayCounter) && Number(state.hungerDecayCounter) >= 0 && Number(state.hungerDecayCounter) <= 4
             ? Number(state.hungerDecayCounter)
             : 0,
         fedTurnCounter: Number.isInteger(state.fedTurnCounter) && Number(state.fedTurnCounter) >= 0 ? Number(state.fedTurnCounter) % 9 : 0,
