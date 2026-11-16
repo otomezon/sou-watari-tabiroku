@@ -610,7 +610,6 @@ export class GameEngine {
     }
     /** Assign floor-appropriate levels to monsters in saves created before explicit levels existed. */
     ensureMonsterLevels() {
-        const expectedLevel = getExpectedPlayerLevel(this.state.modeId, this.state.floor);
         for (const monster of this.state.monsters ?? []) {
             if (Number.isInteger(monster.level)) continue;
             if (monster.boss) {
@@ -1202,11 +1201,12 @@ export class GameEngine {
     }
     performElementalAreaAttack(monster, random, breath) {
         const center = { x: this.state.player.x, y: this.state.player.y };
-        const radius = 0;
+        const halfWidth = 0;
+        const halfHeight = 1;
         const breathAttack = monster.attack;
         const damageBase = Math.max(1, Math.round(breathAttack * 0.60));
         this.state.elementalAreaEffect = {
-            x: center.x, y: center.y, radius, element: breath.element, turn: this.state.turn + 1,
+            x: center.x, y: center.y, halfWidth, halfHeight, element: breath.element, turn: this.state.turn + 1,
         };
 
         // Use the same reduced area power for every caught monster. A defeated
@@ -1214,7 +1214,7 @@ export class GameEngine {
         const caughtMonsters = this.state.monsters.filter((target) =>
             target.id !== monster.id && target.hp > 0 && !target.boss && !target.shopkeeper &&
             monsterFootprintCells(target).some((cell) =>
-                Math.max(Math.abs(cell.x - center.x), Math.abs(cell.y - center.y)) <= radius),
+                Math.abs(cell.x - center.x) <= halfWidth && Math.abs(cell.y - center.y) <= halfHeight),
         );
         const monsterMessages = [];
         for (const target of caughtMonsters) {
