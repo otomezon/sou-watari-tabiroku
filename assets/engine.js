@@ -153,25 +153,72 @@ export function createNewGame(seed = makeSeed(), modeId = 'beginner') {
     populateFloor(state, random);
     return state;
 }
-function findBossPoint(state, reserved) {
+function findBossPoint(state, reserved, size = 2) {
     const rooms = state.dungeon.rooms;
     const preferredRooms = [...rooms].reverse();
     for (const room of preferredRooms) {
         const center = { x: Math.floor(room.x + room.width / 2), y: Math.floor(room.y + room.height / 2) };
         const candidates = [];
-        for (let y = room.y; y < room.y + room.height - 1; y += 1) {
-            for (let x = room.x; x < room.x + room.width - 1; x += 1) {
+        for (let y = room.y; y <= room.y + room.height - size; y += 1) {
+            for (let x = room.x; x <= room.x + room.width - size; x += 1) {
                 const point = { x, y };
-                const footprint = [{ x, y }, { x: x + 1, y }, { x, y: y + 1 }, { x: x + 1, y: y + 1 }];
-                if (footprint.every((cell) => isWalkable(state.dungeon.tiles, cell) && !reserved.has(pointKey(cell))))
-                    candidates.push(point);
+                let available = true;
+                for (let dy = 0; dy < size && available; dy += 1) {
+                    for (let dx = 0; dx < size; dx += 1) {
+                        const cell = { x: x + dx, y: y + dy };
+                        if (!isWalkable(state.dungeon.tiles, cell) || reserved.has(pointKey(cell))) {
+                            available = false;
+                            break;
+                        }
+                    }
+                }
+                if (available) candidates.push(point);
             }
         }
         candidates.sort((a, b) => (Math.abs(a.x - center.x) + Math.abs(a.y - center.y)) - (Math.abs(b.x - center.x) + Math.abs(b.y - center.y)));
-        if (candidates[0])
-            return candidates[0];
+        if (candidates[0]) return candidates[0];
     }
     return null;
+}
+function findBossSupportPoints(state, boss, count, random) {
+    const blocked = new Set([
+        pointKey(state.player),
+        ...monsterFootprintCells(boss).map(pointKey),
+    ]);
+    const candidates = [];
+    for (let y = 1; y < state.dungeon.height - 1; y += 1) {
+        for (let x = 1; x < state.dungeon.width - 1; x += 1) {
+            const point = { x, y };
+            if (!isWalkable(state.dungeon.tiles, point) || blocked.has(pointKey(point))) continue;
+            const playerDistance = Math.max(Math.abs(x - state.player.x), Math.abs(y - state.player.y));
+            const bossDistance = distanceToFootprint(boss, point, monsterSize(boss));
+            if (playerDistance >= 5 && bossDistance >= 2) candidates.push(point);
+        }
+    }
+    const selected = [];
+    while (selected.length < count && candidates.length) {
+        const index = random.int(0, candidates.length - 1);
+        const [point] = candidates.splice(index, 1);
+        selected.push(point);
+        blocked.add(pointKey(point));
+        for (let i = candidates.length - 1; i >= 0; i -= 1) {
+            const other = candidates[i];
+            if (Math.max(Math.abs(other.x - point.x), Math.abs(other.y - point.y)) < 2)
+                candidates.splice(i, 1);
+        }
+    }
+    if (selected.length < count) {
+        for (let y = 1; y < state.dungeon.height - 1 && selected.length < count; y += 1) {
+            for (let x = 1; x < state.dungeon.width - 1 && selected.length < count; x += 1) {
+                const point = { x, y };
+                if (isWalkable(state.dungeon.tiles, point) && !blocked.has(pointKey(point))) {
+                    selected.push(point);
+                    blocked.add(pointKey(point));
+                }
+            }
+        }
+    }
+    return selected;
 }
 function createShop(state, random) {
     const mode = getModeConfig(state.modeId);
@@ -211,7 +258,7 @@ function createShop(state, random) {
     };
 }
 function monsterSize(monster) {
-    return monster.boss ? 2 : 1;
+    return monster.boss ? Math.max(1, Math.min(4, Math.floor(monster.bossSize ?? 2))) : 1;
 }
 function monsterFootprintCells(monster) {
     const size = monsterSize(monster);
@@ -342,7 +389,7 @@ export function findItemDropPoint(state, monster) {
     }
     return origin;
 }
-function createRegularMonster(state, point, random, index, progress, template, tierEntryScale = 1) {
+function createRegularMonster(state, point, random, index, progress, template, tierEntryScale = 1, rareSpawnChanceOverride = undefined) {
     const mode = getModeConfig(state.modeId);
     const statScale = mode.difficultyScale * (1.00 + progress * 0.40) *
         getFloorStatAdjustment(state.modeId, state.floor, mode.floors) *
@@ -357,7 +404,8 @@ function createRegularMonster(state, point, random, index, progress, template, t
         exp: Math.max(1, Math.round((template.exp + state.floor) * (0.8 + mode.difficultyScale * 0.2))),
         boss: false, actionSpeed: 'normal', actionProgress: 0, rareVariant: false,
     };
-    const rarityRoll = random.next() * 0.062 / Math.max(0.001, mode.rareMonsterChance);
+    const rarityRate = Number.isFinite(rareSpawnChanceOverride) ? rareSpawnChanceOverride : mode.rareMonsterChance;
+    const rarityRoll = random.next() * 0.062 / Math.max(0.001, rarityRate);
     const canSpawnRare = canSpawnRareMonster(state.modeId);
     if (canSpawnRare && canSpawnMagicEater(state.modeId) && rarityRoll < 0.012) {
         monster.rareVariant = true;
@@ -439,9 +487,9 @@ function populateFloor(state, runRandom) {
         const bossPoint = findBossPoint(state, occupied) ?? takePoint();
         if (bossPoint) {
             const formRoll = random.next();
-            const form = state.modeId === 'tutorial'
-                ? 'normal'
-                : formRoll < 0.20 ? 'slow' : formRoll < 0.40 ? 'fast' : 'normal';
+            const form = mode.bossFormChance > 0 && formRoll < mode.bossFormChance
+                ? (random.next() < 0.5 ? 'slow' : 'fast')
+                : 'normal';
             const bossStats = getBossStats(state.modeId, form);
             const hp = bossStats.hp;
             const attack = bossStats.attack;
@@ -449,19 +497,25 @@ function populateFloor(state, runRandom) {
             state.monsters.push({
                 id: `boss-${state.modeId}-${state.seed}`, kind: 'boss', name: formName,
                 x: bossPoint.x, y: bossPoint.y, hp, maxHp: hp, attack, defense: bossStats.defense,
-                exp: mode.bossExp, boss: true, bossBalanceVersion: 2, actionSpeed: form, actionProgress: 0, rareVariant: true,
+                exp: mode.bossExp, boss: true, bossBalanceVersion: 3, bossSize: bossStats.bossSize,
+                bossVisualScale: bossStats.bossVisualScale, bossAreaAttackChance: bossStats.bossAreaAttackChance,
+                bossNovaAttackChance: bossStats.bossNovaAttackChance, bossEnrageThreshold: bossStats.bossEnrageThreshold,
+                bossEnrageAttackMultiplier: bossStats.bossEnrageAttackMultiplier,
+                actionSpeed: form, actionProgress: 0, rareVariant: true,
             });
-            for (let y = 0; y < 2; y += 1) {
-                for (let x = 0; x < 2; x += 1)
+            for (let y = 0; y < bossStats.bossSize; y += 1) {
+                for (let x = 0; x < bossStats.bossSize; x += 1)
                     occupied.add(pointKey({ x: bossPoint.x + x, y: bossPoint.y + y }));
             }
             const progress = 1;
             const tier = MONSTER_TIERS[mode.maxMonsterTier - 1] ?? MONSTER_TIERS[0];
-            for (let index = 0; index < mode.bossFloorMonsters; index += 1) {
-                const point = takePoint();
-                if (!point)
-                    break;
-                state.monsters.push(createRegularMonster(state, point, random, index, progress, random.pick(tier)));
+            const supportPoints = findBossSupportPoints(state, state.monsters[0], mode.bossFloorMonsters, random);
+            for (let index = 0; index < supportPoints.length; index += 1) {
+                const point = supportPoints[index];
+                state.monsters.push(createRegularMonster(
+                    state, point, random, index, progress, random.pick(tier), 1, mode.bossSupportRareChance,
+                ));
+                occupied.add(pointKey(point));
             }
             const supportCount = state.monsters.filter((monster) => !monster.boss).length;
             const supportMessage = supportCount > 0 ? ` 周囲には通常の魔物も${supportCount}体潜んでいる。` : '';
