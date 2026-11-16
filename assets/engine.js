@@ -129,7 +129,7 @@ const FLOOR_MONSTER_BALANCE_VERSION = 4;
 
 // Average ordinary-monster pressure rises by campaign without requiring perfect equipment drops.
 const FLOOR_ENCOUNTER_POWER_TARGET = Object.freeze({
-    tutorial: 0.54, beginner: 0.62, intermediate: 0.70, advanced: 0.78, expert: 0.86,
+    tutorial: 0.54, beginner: 0.62, intermediate: 0.70, advanced: 0.70, expert: 0.86,
 });
 // Keep fights durable, but avoid scaling raw incoming damage and monster defense at the same rate.
 export const FLOOR_MONSTER_HP_MULTIPLIER = 1.08;
