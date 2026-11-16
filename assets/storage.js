@@ -362,7 +362,7 @@ export function migrateGameState(value) {
         schemaVersion: 12,
         modeId: isDungeonModeId(state.modeId) ? state.modeId : 'beginner',
         player: { ...player, hunger },
-        // v3.0.0 and older used a different decay cadence; start the new 4-action phase cleanly.
+        // v3.0.0 and older used a different decay cadence; start the new 5-action phase cleanly.
         // v3.1.0 saves preserve the accumulated phase across reloads.
         hungerDecayCounter: sourceSchema >= 8 && Number.isInteger(state.hungerDecayCounter) && Number(state.hungerDecayCounter) >= 0 && Number(state.hungerDecayCounter) <= 4
             ? Number(state.hungerDecayCounter)
