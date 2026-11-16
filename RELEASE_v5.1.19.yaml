@@ -1,0 +1,20 @@
+release:
+  project: 層渡りの旅録
+  version: 5.1.19
+  previous_version: 5.1.18
+  type: patch
+  title: 装備運に依存しにくい階層別モンスターバランス
+  invariants:
+    starter_equipment: none
+    starter_inventory: []
+    save_schema: 12
+  changes:
+    - lower_expected_regular_monster_defeat_rate_from_70_to_40_percent
+    - recalculate_campaign_player_level_targets_from_actual_exp_curve
+    - rebalance_enemy_power_against_unequipped_player_baseline
+    - lower_campaign_enemy_power_targets_to_48_56_64_72_80_percent
+    - widen_floor_monster_calibration_range_to_45_105_percent
+    - migrate_floor_monster_balance_v1_and_v2_to_v3_by_calibration_delta
+    - preserve_current_hp_ratio_during_balance_migration
+    - keep_boss_profiles_and_save_schema_unchanged
+    - add_unequipped_full_campaign_balance_regression_tests
