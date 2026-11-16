@@ -1,7 +1,7 @@
 import { canStepBetween, DIRECTION_DELTA, generateBossDungeon, generateDungeon, isWalkable, nextPathStep, pointKey } from "./dungeon.js";
 import { createFloorLoot, createItem, itemDisplayName, itemDurability, itemEnhancement } from "./items.js";
 import { floorSeed, makeSeed, Random } from "./random.js";
-import { getModeConfig } from "./modes.js";
+import { getBossStats, getModeConfig } from "./modes.js";
 import { getItemRecovery, getMonsterTierBlend, getMonsterTierProgress, getFloorStatAdjustment, getMonsterTierEntryMultiplier, canSpawnRareMonster, canSpawnMagicEater, getRegularMonsterDepthScale, getRareHunterStatScale, getSlowVariantAttackMultiplier, getGoldDropChance, getGoldDropAmount, getRareValuableDropChances } from "./balance.mjs";
 import { getShopBuyPrice, getShopSellPrice } from "./shop.js";
 export const MAX_HUNGER = 120;
@@ -439,14 +439,17 @@ function populateFloor(state, runRandom) {
         const bossPoint = findBossPoint(state, occupied) ?? takePoint();
         if (bossPoint) {
             const formRoll = random.next();
-            const form = formRoll < 0.20 ? 'slow' : formRoll < 0.40 ? 'fast' : 'normal';
-            const hp = Math.round(mode.bossHp * 1.15 * (form === 'slow' ? 1.12 : form === 'fast' ? 0.93 : 1));
-            const attack = Math.ceil(mode.bossAttack * 1.10 * (form === 'slow' ? 1.8 : form === 'fast' ? 0.80 : 1));
+            const form = state.modeId === 'tutorial'
+                ? 'normal'
+                : formRoll < 0.20 ? 'slow' : formRoll < 0.40 ? 'fast' : 'normal';
+            const bossStats = getBossStats(state.modeId, form);
+            const hp = bossStats.hp;
+            const attack = bossStats.attack;
             const formName = form === 'slow' ? `${mode.bossName}・剛腕形態` : form === 'fast' ? `${mode.bossName}・疾風形態` : mode.bossName;
             state.monsters.push({
                 id: `boss-${state.modeId}-${state.seed}`, kind: 'boss', name: formName,
-                x: bossPoint.x, y: bossPoint.y, hp, maxHp: hp, attack, defense: mode.bossDefense + 2,
-                exp: mode.bossExp, boss: true, actionSpeed: form, actionProgress: 0, rareVariant: true,
+                x: bossPoint.x, y: bossPoint.y, hp, maxHp: hp, attack, defense: bossStats.defense,
+                exp: mode.bossExp, boss: true, bossBalanceVersion: 2, actionSpeed: form, actionProgress: 0, rareVariant: true,
             });
             for (let y = 0; y < 2; y += 1) {
                 for (let x = 0; x < 2; x += 1)
@@ -454,7 +457,7 @@ function populateFloor(state, runRandom) {
             }
             const progress = 1;
             const tier = MONSTER_TIERS[mode.maxMonsterTier - 1] ?? MONSTER_TIERS[0];
-            for (let index = 0; index < mode.bossFloorMonsters + 1; index += 1) {
+            for (let index = 0; index < mode.bossFloorMonsters; index += 1) {
                 const point = takePoint();
                 if (!point)
                     break;
@@ -544,19 +547,29 @@ export class GameEngine {
     /** Move in-progress legacy final-floor saves into the new arena without resetting boss HP. */
     ensureBossArena() {
         const mode = getModeConfig(this.state.modeId);
-        if (this.state.status !== 'playing' || this.state.floor !== mode.floors || this.state.dungeon.bossArena)
+        if (this.state.status !== 'playing' || this.state.floor !== mode.floors)
             return;
         const boss = this.state.monsters.find((monster) => monster.boss);
         if (!boss)
             return;
+        if (boss.bossBalanceVersion !== 2) {
+            const form = this.state.modeId === 'tutorial' ? 'normal' : (boss.actionSpeed ?? 'normal');
+            const profile = getBossStats(this.state.modeId, form);
+            const previousMaxHp = Number.isFinite(boss.maxHp) && boss.maxHp > 0 ? boss.maxHp : Math.max(1, boss.hp ?? 1);
+            const remainingHpRatio = Math.min(1, Math.max(0, (Number.isFinite(boss.hp) ? boss.hp : previousMaxHp) / previousMaxHp));
+            boss.maxHp = profile.hp;
+            boss.hp = Math.max(1, Math.min(profile.hp, Math.round(profile.hp * remainingHpRatio)));
+            boss.attack = profile.attack;
+            boss.defense = profile.defense;
+            if (this.state.modeId === 'tutorial')
+                boss.actionSpeed = 'normal';
+            boss.bossBalanceVersion = 2;
+        }
+        if (this.state.dungeon.bossArena)
+            return;
         // Keep floor loot while moving the legacy encounter into the new arena.
         const previousGroundItems = this.state.groundItems ?? [];
         const previousGroundGold = this.state.groundGold ?? [];
-        // Apply the new large-boss balance to legacy runs while preserving the remaining HP ratio.
-        boss.hp = Math.ceil(boss.hp * 1.15);
-        boss.maxHp = Math.ceil(boss.maxHp * 1.15);
-        boss.attack = Math.ceil(boss.attack * 1.10);
-        boss.defense += 2;
         this.state.dungeon = generateBossDungeon(floorSeed(this.state.seed, this.state.floor, MODE_SALT[this.state.modeId]));
         this.state.player.x = this.state.dungeon.start.x;
         this.state.player.y = this.state.dungeon.start.y;
@@ -1280,11 +1293,14 @@ export class GameEngine {
                 return;
             }
             const bossDistance = distanceToFootprint(monster, this.state.player, 2);
-            if (bossDistance >= 3 && bossDistance <= 6 && random.chance(0.38)) {
+            const mode = getModeConfig(this.state.modeId);
+            const areaAttackChance = Math.max(0, Math.min(1,
+                (mode.bossAreaAttackChance ?? 0) * (monster.actionSpeed === 'fast' ? 0.55 : 1)));
+            if (bossDistance >= 3 && bossDistance <= 6 && areaAttackChance > 0 && random.chance(areaAttackChance)) {
                 this.state.bossAreaEffect = {
                     x: this.state.player.x, y: this.state.player.y, radius: 1, turn: this.state.turn + 1,
                 };
-                this.attackPlayer(monster, random, 0.72, '範囲攻撃');
+                this.attackPlayer(monster, random, 0.62, '範囲攻撃');
                 return;
             }
             if (bossDistance > 14)
