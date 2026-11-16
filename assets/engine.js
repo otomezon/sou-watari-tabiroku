@@ -533,17 +533,17 @@ function createRegularMonster(state, point, random, index, progress, template, t
         monster.actionSpeed = 'slow';
         monster.rareVariant = true;
         monster.name = `剛腕の${template.name}`;
-        monster.hp = Math.ceil(monster.hp * 1.38);
+        monster.hp = Math.ceil(monster.hp * 1.25);
         monster.maxHp = monster.hp;
         monster.attack = Math.ceil(monster.attack * getSlowVariantAttackMultiplier(state.modeId, state.floor));
-        monster.defense += 3;
+        monster.defense += 2;
         monster.exp = Math.ceil(monster.exp * 2.5);
     }
     else if (canSpawnRare && rarityRoll < 0.062) {
         monster.actionSpeed = 'fast';
         monster.rareVariant = true;
         monster.name = `俊敏な${template.name}`;
-        monster.hp = Math.ceil(monster.hp * 1.25);
+        monster.hp = Math.ceil(monster.hp * 1.15);
         monster.maxHp = monster.hp;
         monster.attack = getFastVariantAttack(monster.attack);
         monster.defense += 1;
