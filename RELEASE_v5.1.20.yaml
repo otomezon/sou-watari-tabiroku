@@ -12,9 +12,10 @@ release:
   changes:
     - set_expected_regular_monster_defeat_rate_to_50_percent
     - recalculate_campaign_player_level_targets
-    - set_campaign_encounter_power_targets_to_54_62_70_78_86_percent
+    - set_campaign_encounter_power_targets_to_54_62_70_70_86_percent
     - separate_enemy_hp_attack_defense_scaling
     - cap_ordinary_monster_defense_against_expected_unequipped_player_attack
+    - keep_advanced_average_power_target_at_intermediate_level_to_offset_higher_enemy_density_and_tier_ramp
     - apply_enemy_hp_multiplier_1_08_attack_multiplier_0_92_defense_multiplier_0_95
     - moderately_restore_rare_monster_threat_without_extreme_burst
     - migrate_floor_monster_balance_v1_v2_v3_to_v4_by_stat_specific_delta
