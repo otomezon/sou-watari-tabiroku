@@ -11,6 +11,31 @@ const TRACK_URLS = {
     expert: './audio/expert-theme.mp3',
     boss: './audio/boss-theme.mp3',
 };
+export function getEffectCueSchedule(effects) {
+    const schedule = [];
+    let offset = 0;
+    let fanfareStart = null;
+    let damageIndex = 0;
+    for (const effect of effects) {
+        if (effect === 'level' || effect === 'hunter-level') {
+            if (fanfareStart === null) fanfareStart = offset;
+            schedule.push({ effect, offset });
+            offset += 3.05;
+        } else if (effect === 'damage') {
+            const damageOffset = fanfareStart === null ? offset : fanfareStart + damageIndex * 0.18;
+            schedule.push({ effect, offset: damageOffset });
+            damageIndex += 1;
+            if (fanfareStart === null) offset += 0.24;
+        } else {
+            schedule.push({ effect, offset });
+            if (effect === 'gameover') offset += 3.8;
+            else if (effect === 'attack') offset += 0.18;
+            else offset += 0.115;
+        }
+    }
+    return schedule;
+}
+
 export class SoundManager {
     context = null;
     master = null;
@@ -189,26 +214,20 @@ export class SoundManager {
         if (!this.context || !this.sfxGain || this.settings.muteSfx || this.settings.sfxVolume <= 0)
             return;
         const now = this.context.currentTime;
-        let offset = 0;
-        for (const effect of effects) {
+        for (const { effect, offset } of getEffectCueSchedule(effects)) {
+            const startAt = now + offset;
             if (effect === 'level') {
-                this.playLevelUpFanfare(now + offset);
-                offset += 3.05;
+                this.playLevelUpFanfare(startAt);
             } else if (effect === 'hunter-level') {
-                this.playHunterLevelUpFanfare(now + offset);
-                offset += 3.05;
+                this.playHunterLevelUpFanfare(startAt);
             } else if (effect === 'gameover') {
-                void this.playEventCue(effect, now + offset);
-                offset += 3.8;
+                void this.playEventCue(effect, startAt);
             } else if (effect === 'attack') {
-                this.playAttackEffect(now + offset);
-                offset += 0.18;
+                this.playAttackEffect(startAt);
             } else if (effect === 'damage') {
-                this.playDamageEffect(now + offset);
-                offset += 0.24;
+                this.playDamageEffect(startAt);
             } else {
-                this.playEffect(effect, now + offset);
-                offset += 0.115;
+                this.playEffect(effect, startAt);
             }
         }
     }
