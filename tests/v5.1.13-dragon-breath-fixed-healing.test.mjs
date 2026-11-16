@@ -53,7 +53,7 @@ test('a normal wyvern breathes fire into one tile only', () => {
   assert.equal(engine.getMonsterLevelUpCount(), 1);
   assert.equal(state.player.hp, playerHpBefore - 9);
   assert.match(state.message, /炎のブレス/);
-  assert.match(state.message, /Lv\\.2に成長/);
+  assert.ok(state.message.includes('Lv.2に成長'));
 });
 
 test('frost drakes use blizzard on one tile without hitting adjacent monsters', () => {
