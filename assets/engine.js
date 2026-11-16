@@ -169,8 +169,8 @@ export function getExpectedPlayerLevel(modeId, floor, defeatRate = EXPECTED_MONS
 
 /**
  * Calibrate average floor-monster combat power against the expected player's
- * un-geared combat power. Difficulty targets rise by campaign; adjustment is
- * bounded to +8% / -15% so relative monster-template strength remains.
+ * un-geared combat power. The tighter campaign targets keep ordinary fights
+ * manageable without assuming that weapon, shield, or armor drops are lucky.
  */
 function calculateFloorMonsterCalibration(modeId, floor, defeatRate, targets, minimum, maximum) {
     const mode = getModeConfig(modeId);
