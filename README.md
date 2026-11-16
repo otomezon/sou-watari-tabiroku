@@ -7,7 +7,8 @@
 - 満腹度5行動ごとの減少、レベルアップファンファーレと被弾音の同期再生を維持します。
 - セーブスキーマ12は変更していません。
 
-詳細: [PATCH_NOTES_v5.1.17.md](PATCH_NOTES_v5.1.17.md)
+詳細: [PATCH_NOTES_v5.1.18.md](PATCH_NOTES_v5.1.18.md)
+前回の空腹セーブ互換修正: [PATCH_NOTES_v5.1.17.md](PATCH_NOTES_v5.1.17.md)
 前回の階層別敵レベル・空腹・効果音・ブレス調整: [PATCH_NOTES_v5.1.16.md](PATCH_NOTES_v5.1.16.md)
 
 前回の固定回復・難易度別ボス調整: [PATCH_NOTES_v5.1.15.md](PATCH_NOTES_v5.1.15.md)
