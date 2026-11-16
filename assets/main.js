@@ -142,12 +142,13 @@ class GameApp {
                 return;
             }
             const hadBossArena = loaded.dungeon.bossArena === true;
+            const hadUnleveledMonsters = loaded.monsters?.some((monster) => !Number.isInteger(monster.level)) ?? false;
             const previousBossBalanceVersion = loaded.monsters?.find((monster) => monster.boss)?.bossBalanceVersion ?? 0;
             this.state = loaded;
             this.engine = new GameEngine(loaded);
             const currentBossBalanceVersion = loaded.monsters?.find((monster) => monster.boss)?.bossBalanceVersion ?? 0;
             if ((!hadBossArena && loaded.dungeon.bossArena === true) ||
-                previousBossBalanceVersion !== currentBossBalanceVersion)
+                previousBossBalanceVersion !== currentBossBalanceVersion || hadUnleveledMonsters)
                 await this.persist();
             if (loaded.status === 'gameover' || loaded.status === 'clear')
                 this.showResult();
