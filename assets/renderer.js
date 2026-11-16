@@ -242,10 +242,11 @@ export class RenderManager {
     }
     drawElementalAreaEffect(effect, originX, originY) {
         const ctx = this.context;
-        const radius = 0;
+        const halfWidth = Number.isInteger(effect.halfWidth) ? Math.max(0, effect.halfWidth) : 0;
+        const halfHeight = Number.isInteger(effect.halfHeight) ? Math.max(0, effect.halfHeight) : 1;
         const blizzard = effect.element === 'blizzard';
-        for (let y = effect.y - radius; y <= effect.y + radius; y += 1) {
-            for (let x = effect.x - radius; x <= effect.x + radius; x += 1) {
+        for (let y = effect.y - halfHeight; y <= effect.y + halfHeight; y += 1) {
+            for (let x = effect.x - halfWidth; x <= effect.x + halfWidth; x += 1) {
                 const screenX = (x - originX) * TILE;
                 const screenY = (y - originY) * TILE;
                 if (screenX < -TILE || screenY < -TILE || screenX >= WIDTH || screenY >= HEIGHT) continue;
