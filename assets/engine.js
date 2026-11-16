@@ -484,7 +484,7 @@ function populateFloor(state, runRandom) {
     state.groundItems = [];
     if (floor === mode.floors) {
         // Boss placement never releases the stair tile from the reserved set.
-        const bossPoint = findBossPoint(state, occupied) ?? takePoint();
+        const bossPoint = findBossPoint(state, occupied, mode.bossSize ?? 2) ?? takePoint();
         if (bossPoint) {
             const formRoll = random.next();
             const form = mode.bossFormChance > 0 && formRoll < mode.bossFormChance
@@ -598,53 +598,67 @@ export class GameEngine {
         this.ensureBossArena();
         this.relocateStairOccupants();
     }
-    /** Move in-progress legacy final-floor saves into the new arena without resetting boss HP. */
+    /** Migrate legacy boss encounters once, preserving boss HP ratio and surviving support monsters. */
     ensureBossArena() {
         const mode = getModeConfig(this.state.modeId);
         if (this.state.status !== 'playing' || this.state.floor !== mode.floors)
             return;
         const boss = this.state.monsters.find((monster) => monster.boss);
-        if (!boss)
+        if (!boss || (boss.bossBalanceVersion === 3 && this.state.dungeon.bossArena))
             return;
-        if (boss.bossBalanceVersion !== 2) {
-            const form = this.state.modeId === 'tutorial' ? 'normal' : (boss.actionSpeed ?? 'normal');
-            const profile = getBossStats(this.state.modeId, form);
-            const previousMaxHp = Number.isFinite(boss.maxHp) && boss.maxHp > 0 ? boss.maxHp : Math.max(1, boss.hp ?? 1);
-            const remainingHpRatio = Math.min(1, Math.max(0, (Number.isFinite(boss.hp) ? boss.hp : previousMaxHp) / previousMaxHp));
-            boss.maxHp = profile.hp;
-            boss.hp = Math.max(1, Math.min(profile.hp, Math.round(profile.hp * remainingHpRatio)));
-            boss.attack = profile.attack;
-            boss.defense = profile.defense;
-            if (this.state.modeId === 'tutorial')
-                boss.actionSpeed = 'normal';
-            boss.bossBalanceVersion = 2;
-        }
-        if (this.state.dungeon.bossArena)
-            return;
-        // Keep floor loot while moving the legacy encounter into the new arena.
+
+        const wasBossArena = this.state.dungeon.bossArena === true;
         const previousGroundItems = this.state.groundItems ?? [];
         const previousGroundGold = this.state.groundGold ?? [];
-        this.state.dungeon = generateBossDungeon(floorSeed(this.state.seed, this.state.floor, MODE_SALT[this.state.modeId]));
-        this.state.player.x = this.state.dungeon.start.x;
-        this.state.player.y = this.state.dungeon.start.y;
-        this.state.shop = null;
-        const bossPoint = findBossPoint(this.state, new Set([pointKey(this.state.player)]));
+        const form = this.state.modeId === 'tutorial' ? 'normal' : (boss.actionSpeed ?? 'normal');
+        const profile = getBossStats(this.state.modeId, form);
+        const previousMaxHp = Number.isFinite(boss.maxHp) && boss.maxHp > 0 ? boss.maxHp : Math.max(1, boss.hp ?? 1);
+        const remainingHpRatio = Math.min(1, Math.max(0, (Number.isFinite(boss.hp) ? boss.hp : previousMaxHp) / previousMaxHp));
+        boss.maxHp = profile.hp;
+        boss.hp = Math.max(1, Math.min(profile.hp, Math.round(profile.hp * remainingHpRatio)));
+        boss.attack = profile.attack;
+        boss.defense = profile.defense;
+        boss.bossSize = profile.bossSize;
+        boss.bossVisualScale = profile.bossVisualScale;
+        boss.bossAreaAttackChance = profile.bossAreaAttackChance;
+        boss.bossNovaAttackChance = profile.bossNovaAttackChance;
+        boss.bossEnrageThreshold = profile.bossEnrageThreshold;
+        boss.bossEnrageAttackMultiplier = profile.bossEnrageAttackMultiplier;
+        boss.bossBalanceVersion = 3;
+        boss.actionSpeed = form;
+        boss.name = form === 'slow' ? `${mode.bossName}・剛腕形態`
+            : form === 'fast' ? `${mode.bossName}・疾風形態` : mode.bossName;
+        boss.bossEnraged = false;
+
+        if (!wasBossArena) {
+            this.state.dungeon = generateBossDungeon(floorSeed(this.state.seed, this.state.floor, MODE_SALT[this.state.modeId]));
+            this.state.player.x = this.state.dungeon.start.x;
+            this.state.player.y = this.state.dungeon.start.y;
+            this.state.shop = null;
+        }
+        const bossPoint = findBossPoint(this.state, new Set([pointKey(this.state.player)]), monsterSize(boss));
         if (bossPoint) {
             boss.x = bossPoint.x;
             boss.y = bossPoint.y;
         }
-        const supportPoints = [{ x: 12, y: 12 }, { x: 26, y: 12 }, { x: 12, y: 25 }, { x: 26, y: 25 }];
-        let supportIndex = 0;
-        this.state.monsters = this.state.monsters.filter((monster) => {
-            if (monster.boss)
-                return true;
-            const point = supportPoints[supportIndex++];
-            if (!point)
-                return false;
-            monster.x = point.x;
-            monster.y = point.y;
-            return true;
-        });
+
+        const random = new Random(floorSeed(this.state.seed, this.state.floor, MODE_SALT[this.state.modeId] ^ 0x51b055));
+        const supports = this.state.monsters.filter((monster) => !monster.boss).slice(0, mode.bossFloorMonsters);
+        const supportPoints = findBossSupportPoints(this.state, boss, mode.bossFloorMonsters, random);
+        const tier = MONSTER_TIERS[mode.maxMonsterTier - 1] ?? MONSTER_TIERS[0];
+        while (supports.length < supportPoints.length) {
+            const index = supports.length;
+            supports.push(createRegularMonster(
+                this.state, supportPoints[index], random, index, 1, random.pick(tier), 1, mode.bossSupportRareChance,
+            ));
+        }
+        for (let index = 0; index < supports.length && index < supportPoints.length; index += 1) {
+            supports[index].x = supportPoints[index].x;
+            supports[index].y = supportPoints[index].y;
+        }
+        this.state.monsters = [boss, ...supports.slice(0, supportPoints.length)];
+
+        if (wasBossArena) return;
         const blocked = new Set([
             pointKey(this.state.player),
             ...this.state.monsters.flatMap(monsterFootprintCells).map(pointKey),
