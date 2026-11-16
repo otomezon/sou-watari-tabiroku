@@ -1,0 +1,17 @@
+release:
+  project: 層渡りの旅録
+  version: 5.1.15
+  previous_version: 5.1.14
+  type: patch
+  title: 回復量とボス戦バランスの修正
+  invariants:
+    starter_equipment: none
+    starter_inventory: []
+    save_schema: 12
+  changes:
+    - restore_pre_v5_1_11_fixed_potion_values_and_multiplier
+    - rebalance_all_campaign_boss_hp_attack_and_defense
+    - remove_tutorial_boss_support_variants_and_ranged_attack
+    - reduce_boss_support_counts_and_ranged_attack_pressure
+    - preserve_saved_boss_hp_ratio_during_one_time_rebalance
+    - add_healing_and_boss_balance_regression_tests
