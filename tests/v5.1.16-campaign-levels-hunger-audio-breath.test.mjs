@@ -54,7 +54,7 @@ const FLOOR_POWER_TARGETS = Object.freeze({
   beginner: 0.62,
   intermediate: 0.70,
   advanced: 0.70,
-  expert: 0.86,
+  expert: 0.82,
 });
 
 function expectedUnequippedPlayerPower(level) {
