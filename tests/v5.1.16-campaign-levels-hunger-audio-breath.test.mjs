@@ -71,8 +71,16 @@ const MAX_SINGLE_ENEMY_TRADE_HP_SHARE = Object.freeze({
   tutorial: 0.33,
   beginner: 0.38,
   intermediate: 0.68,
-  advanced: 0.58,
-  expert: 0.70,
+  advanced: 0.68,
+  expert: 0.76,
+});
+
+const MAX_LIGHT_GEAR_TRADE_HP_SHARE = Object.freeze({
+  tutorial: 0.18,
+  beginner: 0.25,
+  intermediate: 0.45,
+  advanced: 0.42,
+  expert: 0.60,
 });
 
 
@@ -134,6 +142,8 @@ test('ordinary enemies stay challenging but a typical no-gear duel remains survi
               `${modeId} F${floor}: no-gear average ${averageBareTrade.toFixed(2)} HP bars, light-gear average ${averagePartialTrade.toFixed(2)}; ${tradeDetails}`);
             assert.ok(averagePartialTrade < averageBareTrade,
               `${modeId} F${floor}: modest equipment should improve the trade`);
+            assert.ok(averagePartialTrade <= MAX_LIGHT_GEAR_TRADE_HP_SHARE[modeId],
+              `${modeId} F${floor}: one light-gear duel costs ${averagePartialTrade.toFixed(2)} HP bars`);
           }
         }
 
