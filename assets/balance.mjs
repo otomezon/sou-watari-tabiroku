@@ -11,17 +11,18 @@ export function getRegularMonsterDepthScale(modeId, floor) {
 }
 
 /**
- * Expected player level at the start of each floor, assuming roughly 70% of
- * ordinary monsters are defeated and normal exploration rewards are collected.
- * This is a balancing target, not a level cap; rare encounters can move the
- * actual player ahead of or behind the curve.
+ * Level targets are calculated from the real EXP curve, average generated
+ * monster counts/EXP by tier, and a 90% normal-monster defeat rate. This models
+ * deliberate, near-clear exploration rather than rushing past most encounters.
+ * It is a balance target, not a cap; rare encounters and skipped floors vary.
  */
+export const EXPECTED_MONSTER_KILL_RATE = 0.90;
 export const EXPECTED_PLAYER_LEVELS = Object.freeze({
-    tutorial: Object.freeze([1, 2, 3, 3, 4]),
-    beginner: Object.freeze([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
-    intermediate: Object.freeze([1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]),
-    advanced: Object.freeze([1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 26, 27]),
-    expert: Object.freeze([1, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 30, 31, 32, 34, 35]),
+    tutorial: Object.freeze([1, 2, 3, 4, 5]),
+    beginner: Object.freeze([1, 2, 4, 5, 6, 7, 8, 9, 10, 11]),
+    intermediate: Object.freeze([1, 3, 4, 5, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 19]),
+    advanced: Object.freeze([1, 3, 4, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 26, 27, 28, 30, 31]),
+    expert: Object.freeze([1, 3, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 22, 23, 24, 26, 27, 28, 30, 31, 33, 34, 36, 37, 39, 41]),
 });
 
 export function getExpectedPlayerLevel(modeId, floor) {
