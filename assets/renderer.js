@@ -242,16 +242,20 @@ export class RenderManager {
     }
     drawElementalAreaEffect(effect, originX, originY) {
         const ctx = this.context;
-        const radius = 0;
+        const width = Math.max(1, Math.min(5, effect.width ?? 1));
+        const height = Math.max(1, Math.min(7, effect.height ?? 1));
+        const halfWidth = Math.floor(width / 2);
+        const halfHeight = Math.floor(height / 2);
         const blizzard = effect.element === 'blizzard';
-        for (let y = effect.y - radius; y <= effect.y + radius; y += 1) {
-            for (let x = effect.x - radius; x <= effect.x + radius; x += 1) {
+        for (let y = effect.y - halfHeight; y <= effect.y + halfHeight; y += 1) {
+            for (let x = effect.x - halfWidth; x <= effect.x + halfWidth; x += 1) {
                 const screenX = (x - originX) * TILE;
                 const screenY = (y - originY) * TILE;
                 if (screenX < -TILE || screenY < -TILE || screenX >= WIDTH || screenY >= HEIGHT) continue;
+                const centerTile = x === effect.x && y === effect.y;
                 ctx.fillStyle = blizzard
-                    ? (x === effect.x && y === effect.y ? 'rgba(83, 184, 239, .48)' : 'rgba(91, 177, 225, .25)')
-                    : (x === effect.x && y === effect.y ? 'rgba(237, 102, 43, .48)' : 'rgba(227, 117, 54, .25)');
+                    ? (centerTile ? 'rgba(83, 184, 239, .48)' : 'rgba(91, 177, 225, .25)')
+                    : (centerTile ? 'rgba(237, 102, 43, .48)' : 'rgba(227, 117, 54, .25)');
                 ctx.fillRect(screenX + 2, screenY + 2, TILE - 4, TILE - 4);
                 ctx.strokeStyle = blizzard ? 'rgba(183, 238, 255, .96)' : 'rgba(255, 195, 129, .96)';
                 ctx.lineWidth = 2;
