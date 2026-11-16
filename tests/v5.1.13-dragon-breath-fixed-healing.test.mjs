@@ -13,7 +13,7 @@ function makeDragonState(kind, seed) {
   state.monsters = [{
     id: 'dragon', kind, name: 'テストドラゴン',
     x: 8, y: 10, hp: 100, maxHp: 100, attack: 20, defense: 0,
-    exp: 40, boss: false, floorBalanceVersion: 1, rareVariant: false, actionSpeed: 'normal',
+    exp: 40, boss: false, floorBalanceVersion: 2, rareVariant: false, actionSpeed: 'normal',
   }];
   return state;
 }
