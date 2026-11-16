@@ -610,7 +610,7 @@ export class GameEngine {
         const wasBossArena = this.state.dungeon.bossArena === true;
         const previousGroundItems = this.state.groundItems ?? [];
         const previousGroundGold = this.state.groundGold ?? [];
-        const form = this.state.modeId === 'tutorial' ? 'normal' : (boss.actionSpeed ?? 'normal');
+        const form = mode.bossFormChance > 0 ? (boss.actionSpeed ?? 'normal') : 'normal';
         const profile = getBossStats(this.state.modeId, form);
         const previousMaxHp = Number.isFinite(boss.maxHp) && boss.maxHp > 0 ? boss.maxHp : Math.max(1, boss.hp ?? 1);
         const remainingHpRatio = Math.min(1, Math.max(0, (Number.isFinite(boss.hp) ? boss.hp : previousMaxHp) / previousMaxHp));
