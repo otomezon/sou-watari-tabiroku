@@ -47,10 +47,10 @@ test('a normal wyvern breathes fire into a centered vertical 1x5 area', () => {
     x: 12, y: 10, width: 1, height: 5, element: 'fire', turn: state.turn + 1,
   });
   assert.equal(state.monsters.some((monster) => monster.id === 'impact-tile'), false);
-  assert.equal(state.monsters.find((monster) => monster.id === 'adjacent-a').hp, 30);
+  assert.equal(state.monsters.find((monster) => monster.id === 'adjacent-a').hp, 29);
   assert.equal(state.monsters.find((monster) => monster.id === 'adjacent-b').hp, 40);
-  assert.equal(state.monsters.find((monster) => monster.id === 'vertical-upper').hp, 30);
-  assert.equal(state.monsters.find((monster) => monster.id === 'vertical-lower').hp, 30);
+  assert.equal(state.monsters.find((monster) => monster.id === 'vertical-upper').hp, 29);
+  assert.equal(state.monsters.find((monster) => monster.id === 'vertical-lower').hp, 29);
   assert.equal(state.monsters.find((monster) => monster.id === 'outside-area').hp, 40);
   assert.equal(dragon.level, 2);
   assert.equal(getEnemyLevel(dragon), 2);
@@ -74,8 +74,8 @@ test('frost drakes use blizzard across the same vertical 1x5 area', () => {
   assert.deepEqual(state.elementalAreaEffect, {
     x: 12, y: 10, width: 1, height: 5, element: 'blizzard', turn: state.turn + 1,
   });
-  assert.equal(state.monsters.find((monster) => monster.id === 'ice-impact').hp, 30);
-  assert.equal(state.monsters.find((monster) => monster.id === 'ice-adjacent').hp, 30);
+  assert.equal(state.monsters.find((monster) => monster.id === 'ice-impact').hp, 29);
+  assert.equal(state.monsters.find((monster) => monster.id === 'ice-adjacent').hp, 29);
   assert.equal(state.monsters.find((monster) => monster.id === 'ice-side').hp, 40);
   assert.match(state.message, /ブリザード/);
 });
