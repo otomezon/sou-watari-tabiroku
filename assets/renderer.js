@@ -86,8 +86,9 @@ export class RenderManager {
         }
         for (const monster of state.monsters) {
             const point = toScreen(monster);
+            const bossSpan = monster.boss ? Math.max(1, Math.min(4, monster.bossSize ?? 2)) : 1;
             const visible = monster.boss
-                ? point.x < WIDTH && point.y < HEIGHT && point.x + TILE * 2 > 0 && point.y + TILE * 2 > 0
+                ? point.x < WIDTH && point.y < HEIGHT && point.x + TILE * bossSpan > 0 && point.y + TILE * bossSpan > 0
                 : this.onScreen(point);
             if (!visible)
                 continue;
@@ -419,42 +420,54 @@ export class RenderManager {
     }
     drawBoss(x, y, monster) {
         const ctx = this.context;
+        const scale = Math.max(0.5, Math.min(2, monster.bossVisualScale ?? 1));
+        const palettes = {
+            tutorial: { dark: '#485e50', body: '#6f8f72', armor: '#9db08a', trim: '#d0c58b', eye: '#f7e3a2' },
+            beginner: { dark: '#604638', body: '#8b654d', armor: '#b58b61', trim: '#dfc38b', eye: '#fff0be' },
+            intermediate: { dark: '#563642', body: '#8f4d56', armor: '#a96a6c', trim: '#d4bd87', eye: '#f6d18a' },
+            advanced: { dark: '#593024', body: '#9b4c32', armor: '#c36a3d', trim: '#e2a45c', eye: '#ffe18f' },
+            expert: { dark: '#302744', body: '#62518f', armor: '#8e75bd', trim: '#c2a4e8', eye: '#f2d8ff' },
+        };
+        const palette = palettes[monster.bossVisualStyle] ?? palettes.intermediate;
+        ctx.save();
+        ctx.translate(x * (1 - scale), y * (1 - scale));
+        ctx.scale(scale, scale);
         ctx.fillStyle = 'rgba(5,10,11,.58)';
         ctx.fillRect(x + 8, y + 61, 56, 7);
-        // Broad armored body and shoulders span all four floor tiles.
-        ctx.fillStyle = '#563642';
+        // The same pixel-art base is scaled per campaign, with distinct armor colors.
+        ctx.fillStyle = palette.dark;
         ctx.fillRect(x + 12, y + 25, 48, 34);
         ctx.fillRect(x + 6, y + 26, 15, 25);
         ctx.fillRect(x + 51, y + 26, 15, 25);
-        ctx.fillStyle = '#8f4d56';
+        ctx.fillStyle = palette.body;
         ctx.fillRect(x + 18, y + 21, 36, 33);
         ctx.fillRect(x + 22, y + 12, 28, 20);
-        ctx.fillStyle = '#c49a65';
+        ctx.fillStyle = palette.trim;
         ctx.fillRect(x + 15, y + 7, 8, 12);
         ctx.fillRect(x + 49, y + 7, 8, 12);
         ctx.fillRect(x + 21, y + 15, 5, 9);
         ctx.fillRect(x + 46, y + 15, 5, 9);
-        ctx.fillStyle = '#f6d18a';
+        ctx.fillStyle = palette.eye;
         ctx.fillRect(x + 27, y + 23, 5, 4);
         ctx.fillRect(x + 42, y + 23, 5, 4);
         ctx.fillStyle = '#281e27';
         ctx.fillRect(x + 29, y + 34, 14, 5);
-        ctx.fillStyle = '#d4bd87';
+        ctx.fillStyle = palette.armor;
         ctx.fillRect(x + 23, y + 43, 26, 5);
-        ctx.fillStyle = '#3a2a32';
+        ctx.fillStyle = palette.dark;
         ctx.fillRect(x + 19, y + 54, 13, 8);
         ctx.fillRect(x + 41, y + 54, 13, 8);
-        // A full-width health bar makes the large target easy to read.
+        // Health and name plates scale with the boss's visible size.
         ctx.fillStyle = '#1a2021';
         ctx.fillRect(x + 8, y + 2, 56, 5);
         ctx.fillStyle = '#d16d63';
         ctx.fillRect(x + 8, y + 2, Math.max(1, 56 * monster.hp / monster.maxHp), 5);
-        ctx.strokeStyle = '#e3bd8d';
+        ctx.strokeStyle = palette.trim;
         ctx.lineWidth = 1;
         ctx.strokeRect(x + 8, y + 2, 56, 5);
         ctx.fillStyle = 'rgba(42,25,31,.96)';
         ctx.fillRect(x + 12, y + 63, 48, 8);
-        ctx.strokeStyle = '#b77d70';
+        ctx.strokeStyle = palette.trim;
         ctx.lineWidth = 0.7;
         ctx.strokeRect(x + 12, y + 63, 48, 8);
         ctx.fillStyle = '#fff1cf';
@@ -462,6 +475,7 @@ export class RenderManager {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(`Lv${getEnemyLevel(monster)} BOSS`, x + 36, y + 67);
+        ctx.restore();
     }
     drawVignette() {
         const ctx = this.context;
