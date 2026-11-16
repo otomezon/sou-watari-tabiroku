@@ -11,7 +11,8 @@ import {
   HUNGER_DECAY_EVERY_ACTIONS,
 } from '../assets/engine.js';
 import { validateGameState, migrateGameState } from '../assets/storage.js';
-import { MODE_ORDER, getModeConfig } from '../assets/modes.js';
+import { MODE_ORDER } from '../assets/modes.js';
+import { getRareHunterStatScale, getSlowVariantAttackMultiplier } from '../assets/balance.mjs';
 
 const root = new URL('../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
@@ -61,6 +62,13 @@ function expectedUnequippedPlayerPower(level) {
 function monsterCombatPower(monster) {
   return monster.maxHp + monster.attack * 6 + monster.defense * 4;
 }
+
+test('rare monsters keep distinct roles without extreme un-geared damage spikes', () => {
+  assert.deepEqual(getRareHunterStatScale('beginner', 5), { hp: 1.38, attack: 1.12, defense: 3 });
+  assert.deepEqual(getRareHunterStatScale('expert', 28), { hp: 1.30, attack: 1.08, defense: 2 });
+  assert.equal(getSlowVariantAttackMultiplier('beginner', 5), 1.70);
+  assert.equal(getSlowVariantAttackMultiplier('expert', 28), 1.50);
+});
 
 test('ordinary floors stay near the difficulty target with every equipment slot empty', () => {
   for (const modeId of MODE_ORDER) {
