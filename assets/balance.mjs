@@ -55,13 +55,13 @@ export function canSpawnMagicEater(modeId) {
 /** Preserve rare-form identity while taking the sharpest late-game spikes down slightly. */
 export function getRareHunterStatScale(modeId, floor) {
     if (modeId === 'expert' && Number.isFinite(floor) && floor >= 26) {
-        return { hp: 1.55, attack: 1.15, defense: 4 };
+        return { hp: 1.30, attack: 1.08, defense: 2 };
     }
-    return { hp: 1.70, attack: 1.25, defense: 6 };
+    return { hp: 1.38, attack: 1.12, defense: 3 };
 }
 
 export function getSlowVariantAttackMultiplier(modeId, floor) {
-    return modeId === 'expert' && Number.isFinite(floor) && floor >= 26 ? 1.9 : 2.3;
+    return modeId === 'expert' && Number.isFinite(floor) && floor >= 26 ? 1.50 : 1.70;
 }
 
 export function getRareValuableDropChances(modeId) {
