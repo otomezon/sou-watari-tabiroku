@@ -88,22 +88,20 @@ export function getGoldDropAmount(randomBase, rareVariant = false, modeId = 'exp
 
 export const FOOD_HUNGER_MULTIPLIER = 1.25;
 
-/** Potion heal values are percentages of max HP, not fixed hit points. */
-export function getItemRecovery(item, maxHp = 100) {
-    const rawHealPercent = Number.isFinite(item?.heal) ? Math.min(100, Math.max(0, item.heal)) : 0;
+/** Potion heal values are fixed hit points. maxHp is retained for old callers. */
+export function getItemRecovery(item, _maxHp = 100) {
+    const heal = Number.isFinite(item?.heal) ? Math.round(Math.max(0, item.heal)) : 0;
     const rawHunger = Number.isFinite(item?.hungerRestore) ? Math.max(0, item.hungerRestore) : 0;
-    const hpBase = Number.isFinite(maxHp) ? Math.max(0, maxHp) : 100;
-    const heal = Math.round(hpBase * rawHealPercent / 100);
     if (item?.kind === 'food') {
-        return { heal: 0, healPercent: 0, hungerRestore: Math.round(rawHunger * FOOD_HUNGER_MULTIPLIER) };
+        return { heal: 0, hungerRestore: Math.round(rawHunger * FOOD_HUNGER_MULTIPLIER) };
     }
-    return { heal, healPercent: rawHealPercent, hungerRestore: rawHunger };
+    return { heal, hungerRestore: rawHunger };
 }
 export function itemDescription(item) {
     if (item?.kind === 'food') return `満腹度を${getItemRecovery(item).hungerRestore}回復`;
     if (item?.kind === 'potion') {
         const recovery = getItemRecovery(item);
-        return `HPを最大HPの${recovery.healPercent}%・満腹度を${recovery.hungerRestore}回復`;
+        return `HPを${recovery.heal}回復・満腹度を${recovery.hungerRestore}回復`;
     }
     return typeof item?.description === 'string' ? item.description : '';
 }
