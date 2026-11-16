@@ -498,7 +498,7 @@ function populateFloor(state, runRandom) {
                 id: `boss-${state.modeId}-${state.seed}`, kind: 'boss', name: formName,
                 x: bossPoint.x, y: bossPoint.y, hp, maxHp: hp, attack, defense: bossStats.defense,
                 exp: mode.bossExp, boss: true, bossBalanceVersion: 3, bossSize: bossStats.bossSize,
-                bossVisualScale: bossStats.bossVisualScale, bossAreaAttackChance: bossStats.bossAreaAttackChance,
+                bossVisualScale: bossStats.bossVisualScale, bossVisualStyle: bossStats.bossVisualStyle, bossAreaAttackChance: bossStats.bossAreaAttackChance,
                 bossNovaAttackChance: bossStats.bossNovaAttackChance, bossEnrageThreshold: bossStats.bossEnrageThreshold,
                 bossEnrageAttackMultiplier: bossStats.bossEnrageAttackMultiplier,
                 actionSpeed: form, actionProgress: 0, rareVariant: true,
@@ -620,6 +620,7 @@ export class GameEngine {
         boss.defense = profile.defense;
         boss.bossSize = profile.bossSize;
         boss.bossVisualScale = profile.bossVisualScale;
+        boss.bossVisualStyle = profile.bossVisualStyle;
         boss.bossAreaAttackChance = profile.bossAreaAttackChance;
         boss.bossNovaAttackChance = profile.bossNovaAttackChance;
         boss.bossEnrageThreshold = profile.bossEnrageThreshold;
@@ -1356,19 +1357,38 @@ export class GameEngine {
             }
         }
         if (monster.boss) {
-            if (isFootprintAdjacentToPoint(this.state.dungeon.tiles, monster, this.state.player, 2)) {
-                this.attackPlayer(monster, random);
+            const bossHpRatio = monster.maxHp > 0 ? monster.hp / monster.maxHp : 1;
+            const enrageThreshold = monster.bossEnrageThreshold ?? 0;
+            if (enrageThreshold > 0 && bossHpRatio <= enrageThreshold && !monster.bossEnraged) {
+                monster.bossEnraged = true;
+                this.state.message = `${monster.name}が怒りに震え、攻撃が激しくなった！`;
+            }
+            const phaseMultiplier = monster.bossEnraged
+                ? (monster.bossEnrageAttackMultiplier ?? 1) : 1;
+            const bossSize = monsterSize(monster);
+            if (isFootprintAdjacentToPoint(this.state.dungeon.tiles, monster, this.state.player, bossSize)) {
+                this.attackPlayer(monster, random, phaseMultiplier);
                 return;
             }
-            const bossDistance = distanceToFootprint(monster, this.state.player, 2);
-            const mode = getModeConfig(this.state.modeId);
+            const bossDistance = distanceToFootprint(monster, this.state.player, bossSize);
             const areaAttackChance = Math.max(0, Math.min(1,
-                (mode.bossAreaAttackChance ?? 0) * (monster.actionSpeed === 'fast' ? 0.55 : 1)));
+                (monster.bossAreaAttackChance ?? 0) * (monster.actionSpeed === 'fast' ? 0.75 : 1) +
+                (monster.bossEnraged ? 0.06 : 0)));
+            const novaAttackChance = Math.max(0, Math.min(1,
+                (monster.bossNovaAttackChance ?? 0) * (monster.actionSpeed === 'fast' ? 0.75 : 1) +
+                (monster.bossEnraged ? 0.04 : 0)));
+            if (bossDistance >= 4 && bossDistance <= 8 && novaAttackChance > 0 && random.chance(novaAttackChance)) {
+                this.state.bossAreaEffect = {
+                    x: this.state.player.x, y: this.state.player.y, radius: 2, turn: this.state.turn + 1,
+                };
+                this.attackPlayer(monster, random, 0.55 * phaseMultiplier, '大爆発');
+                return;
+            }
             if (bossDistance >= 3 && bossDistance <= 6 && areaAttackChance > 0 && random.chance(areaAttackChance)) {
                 this.state.bossAreaEffect = {
                     x: this.state.player.x, y: this.state.player.y, radius: 1, turn: this.state.turn + 1,
                 };
-                this.attackPlayer(monster, random, 0.62, '範囲攻撃');
+                this.attackPlayer(monster, random, 0.62 * phaseMultiplier, '範囲攻撃');
                 return;
             }
             if (bossDistance > 14)
@@ -1377,7 +1397,7 @@ export class GameEngine {
             blocked.add(pointKey(this.state.player));
             if (this.state.dungeon.stairs)
                 blocked.add(pointKey(this.state.dungeon.stairs));
-            const step = nextFootprintPathStep(this.state.dungeon.tiles, monster, this.state.player, blocked, 2);
+            const step = nextFootprintPathStep(this.state.dungeon.tiles, monster, this.state.player, blocked, bossSize);
             if (step) {
                 monster.x = step.x;
                 monster.y = step.y;
