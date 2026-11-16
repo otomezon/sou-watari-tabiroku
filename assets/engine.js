@@ -1075,8 +1075,8 @@ export class GameEngine {
             }
         }
     }
-    attackPlayer(monster, random, damageMultiplier = 1, attackName = '攻撃') {
-        const damage = Math.max(1, Math.round(monster.attack * damageMultiplier) + random.int(-1, 1) - getDefense(this.state));
+    attackPlayer(monster, random, damageMultiplier = 1, attackName = '攻撃', baseAttack = monster.attack) {
+        const damage = Math.max(1, Math.round(baseAttack * damageMultiplier) + random.int(-1, 1) - getDefense(this.state));
         this.state.player.hp = Math.max(0, this.state.player.hp - damage);
         this.combatDamageReceived = true;
         this.combatHitCount += 1;
