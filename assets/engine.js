@@ -120,10 +120,17 @@ export function levelUpMonsterAfterHunterVictory(monster) {
     return nextLevel;
 }
 
-export const EXPECTED_MONSTER_DEFEAT_RATE = 0.70;
-const LEGACY_MONSTER_DEFEAT_RATE = 0.55;
-const FLOOR_MONSTER_BALANCE_VERSION = 2;
+// A conservative 40% clear rate avoids assuming players can defeat most encounters.
+export const EXPECTED_MONSTER_DEFEAT_RATE = 0.40;
+const LEGACY_V1_MONSTER_DEFEAT_RATE = 0.55;
+const LEGACY_V2_MONSTER_DEFEAT_RATE = 0.70;
+const FLOOR_MONSTER_BALANCE_VERSION = 3;
+// Target average monster power as a share of the unequipped player's expected power.
 const FLOOR_ENCOUNTER_POWER_TARGET = Object.freeze({
+    tutorial: 0.48, beginner: 0.56, intermediate: 0.64, advanced: 0.72, expert: 0.80,
+});
+// Retained only to migrate saves created by the two earlier floor-balance models.
+const LEGACY_FLOOR_ENCOUNTER_POWER_TARGET = Object.freeze({
     tutorial: 0.68, beginner: 0.78, intermediate: 0.90, advanced: 1.02, expert: 1.12,
 });
 
@@ -165,7 +172,7 @@ export function getExpectedPlayerLevel(modeId, floor, defeatRate = EXPECTED_MONS
  * un-geared combat power. Difficulty targets rise by campaign; adjustment is
  * bounded to +8% / -15% so relative monster-template strength remains.
  */
-export function getFloorMonsterCalibration(modeId, floor, defeatRate = EXPECTED_MONSTER_DEFEAT_RATE) {
+function calculateFloorMonsterCalibration(modeId, floor, defeatRate, targets, minimum, maximum) {
     const mode = getModeConfig(modeId);
     const targetFloor = Math.max(1, Math.min(mode.floors, Math.floor(Number(floor) || 1)));
     const progress = mode.floors <= 1 ? 0 : (targetFloor - 1) / (mode.floors - 1);
@@ -195,13 +202,28 @@ export function getFloorMonsterCalibration(modeId, floor, defeatRate = EXPECTED_
         ? lowerPower : averageCombatPower(upperTier, upperTierScale);
     const expectedMonsterPower = lowerPower * (1 - blend.upperChance) + upperPower * blend.upperChance;
     const playerLevel = getExpectedPlayerLevel(modeId, targetFloor, defeatRate);
+    // These are the actual level-up gains in checkLevelUp(), with all equipment slots empty.
     const playerHp = 34 + (playerLevel - 1) * 6;
     const playerAttack = 5 + (playerLevel - 1);
     const playerDefense = 2 + Math.floor(playerLevel / 2);
     const expectedPlayerPower = playerHp + playerAttack * 6 + playerDefense * 4;
-    const targetRatio = FLOOR_ENCOUNTER_POWER_TARGET[modeId] ?? FLOOR_ENCOUNTER_POWER_TARGET.beginner;
+    const targetRatio = targets[modeId] ?? targets.beginner;
     const adjustment = targetRatio * expectedPlayerPower / Math.max(1, expectedMonsterPower);
-    return Math.max(0.85, Math.min(1.08, adjustment));
+    return Math.max(minimum, Math.min(maximum, adjustment));
+}
+
+/** Balance ordinary monsters against the expected unequipped player, not lucky gear drops. */
+export function getFloorMonsterCalibration(modeId, floor, defeatRate = EXPECTED_MONSTER_DEFEAT_RATE) {
+    return calculateFloorMonsterCalibration(
+        modeId, floor, defeatRate, FLOOR_ENCOUNTER_POWER_TARGET, 0.45, 1.05,
+    );
+}
+
+/** Previous release calibration retained to migrate existing floors without double-scaling. */
+export function getLegacyFloorMonsterCalibration(modeId, floor, defeatRate = LEGACY_V1_MONSTER_DEFEAT_RATE) {
+    return calculateFloorMonsterCalibration(
+        modeId, floor, defeatRate, LEGACY_FLOOR_ENCOUNTER_POWER_TARGET, 0.85, 1.08,
+    );
 }
 
 export function createNewGame(seed = makeSeed(), modeId = 'beginner') {
@@ -701,9 +723,11 @@ export class GameEngine {
                 : 0;
             if (previousVersion >= FLOOR_MONSTER_BALANCE_VERSION)
                 continue;
-            const previousCalibration = previousVersion >= 1
-                ? getFloorMonsterCalibration(this.state.modeId, this.state.floor, LEGACY_MONSTER_DEFEAT_RATE)
-                : 1;
+            const previousCalibration = previousVersion >= 2
+                ? getLegacyFloorMonsterCalibration(this.state.modeId, this.state.floor, LEGACY_V2_MONSTER_DEFEAT_RATE)
+                : previousVersion >= 1
+                    ? getLegacyFloorMonsterCalibration(this.state.modeId, this.state.floor, LEGACY_V1_MONSTER_DEFEAT_RATE)
+                    : 1;
             const migrationScale = calibration / Math.max(0.01, previousCalibration);
             const oldMaxHp = Math.max(1, Number(monster.maxHp) || 1);
             const oldHp = Math.max(0, Number(monster.hp) || 0);
