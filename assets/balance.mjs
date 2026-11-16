@@ -10,6 +10,13 @@ export function getRegularMonsterDepthScale(modeId, floor) {
     return 1 - progress * 0.06;
 }
 
+/** Introduce the sixth enemy tier later and more smoothly in the expert campaign. */
+export function getMonsterTierProgress(modeId, floor, totalFloors) {
+    const denominator = Math.max(1, totalFloors - 2);
+    const progress = Math.min(1, Math.max(0, (floor - 1) / denominator));
+    return modeId === 'expert' ? Math.pow(progress, 1.6) : progress;
+}
+
 /** Preserve rare-form identity while taking the sharpest late-game spikes down slightly. */
 export function getRareHunterStatScale(modeId, floor) {
     if (modeId === 'expert' && Number.isFinite(floor) && floor >= 26) {
@@ -45,20 +52,23 @@ export function getGoldDropAmount(randomBase, rareVariant = false, modeId = 'exp
 }
 
 export const FOOD_HUNGER_MULTIPLIER = 1.25;
-export const POTION_HP_MULTIPLIER = 1.75;
 
-export function getItemRecovery(item) {
-    const rawHeal = Number.isFinite(item?.heal) ? Math.max(0, item.heal) : 0;
+/** Potion heal values are percentages of max HP, not fixed hit points. */
+export function getItemRecovery(item, maxHp = 100) {
+    const rawHealPercent = Number.isFinite(item?.heal) ? Math.min(100, Math.max(0, item.heal)) : 0;
     const rawHunger = Number.isFinite(item?.hungerRestore) ? Math.max(0, item.hungerRestore) : 0;
-    if (item?.kind === 'food') return { heal: 0, hungerRestore: Math.round(rawHunger * FOOD_HUNGER_MULTIPLIER) };
-    if (item?.kind === 'potion') return { heal: Math.round(rawHeal * POTION_HP_MULTIPLIER), hungerRestore: rawHunger };
-    return { heal: rawHeal, hungerRestore: rawHunger };
+    const hpBase = Number.isFinite(maxHp) ? Math.max(0, maxHp) : 100;
+    const heal = Math.round(hpBase * rawHealPercent / 100);
+    if (item?.kind === 'food') {
+        return { heal: 0, healPercent: 0, hungerRestore: Math.round(rawHunger * FOOD_HUNGER_MULTIPLIER) };
+    }
+    return { heal, healPercent: rawHealPercent, hungerRestore: rawHunger };
 }
 export function itemDescription(item) {
     if (item?.kind === 'food') return `満腹度を${getItemRecovery(item).hungerRestore}回復`;
     if (item?.kind === 'potion') {
         const recovery = getItemRecovery(item);
-        return `HPを${recovery.heal}・満腹度を${recovery.hungerRestore}回復`;
+        return `HPを最大HPの${recovery.healPercent}%・満腹度を${recovery.hungerRestore}回復`;
     }
     return typeof item?.description === 'string' ? item.description : '';
 }

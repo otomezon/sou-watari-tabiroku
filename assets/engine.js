@@ -2,7 +2,7 @@ import { canStepBetween, DIRECTION_DELTA, generateBossDungeon, generateDungeon, 
 import { createFloorLoot, createItem, itemDisplayName, itemDurability, itemEnhancement } from "./items.js";
 import { floorSeed, makeSeed, Random } from "./random.js";
 import { getModeConfig } from "./modes.js";
-import { getItemRecovery, getMonsterTierBlend, getRegularMonsterDepthScale, getRareHunterStatScale, getSlowVariantAttackMultiplier, getGoldDropChance, getGoldDropAmount, getRareValuableDropChances } from "./balance.mjs";
+import { getItemRecovery, getMonsterTierBlend, getMonsterTierProgress, getRegularMonsterDepthScale, getRareHunterStatScale, getSlowVariantAttackMultiplier, getGoldDropChance, getGoldDropAmount, getRareValuableDropChances } from "./balance.mjs";
 import { getShopBuyPrice, getShopSellPrice } from "./shop.js";
 export const MAX_HUNGER = 120;
 export const HUNGER_DECAY_EVERY_ACTIONS = 4;
@@ -324,7 +324,8 @@ export function findItemDropPoint(state, monster) {
 function createRegularMonster(state, point, random, index, progress, template) {
     const mode = getModeConfig(state.modeId);
     const openingDifficultyScale = state.floor <= 2 ? 0.95 : 1;
-    const statScale = mode.difficultyScale * (1.00 + progress * 0.40) * openingDifficultyScale * getRegularMonsterDepthScale(state.modeId, state.floor);
+    const floorOneSoften = state.floor === 1 ? 0.80 : 1;
+    const statScale = mode.difficultyScale * (1.00 + progress * 0.40) * openingDifficultyScale * floorOneSoften * getRegularMonsterDepthScale(state.modeId, state.floor);
     const hp = Math.max(1, Math.round((template.hp + Math.floor(state.floor * 0.35) + random.int(0, 2)) * statScale));
     const monster = {
         id: `f${state.floor}-m${index}-${random.int(1000, 9999)}`,
@@ -337,7 +338,7 @@ function createRegularMonster(state, point, random, index, progress, template) {
     };
     const rarityRoll = random.next() * 0.062 / Math.max(0.001, mode.rareMonsterChance);
     const canSpawnRare = state.modeId !== 'tutorial';
-    if (canSpawnRare && state.modeId !== 'beginner' && rarityRoll < 0.012) {
+    if (canSpawnRare && state.floor > 1 && state.modeId !== 'beginner' && rarityRoll < 0.012) {
         monster.rareVariant = true;
         monster.hunterVariant = true;
         monster.hunterLevel = getHunterInitialLevel(progress);
@@ -350,7 +351,7 @@ function createRegularMonster(state, point, random, index, progress, template) {
         monster.defense += hunterScale.defense;
         monster.exp = Math.ceil(monster.exp * 2.8);
     }
-    else if (canSpawnRare && rarityRoll < 0.037) {
+    else if (canSpawnRare && state.floor > 1 && rarityRoll < 0.037) {
         monster.actionSpeed = 'slow';
         monster.rareVariant = true;
         monster.name = `剛腕の${template.name}`;
@@ -360,7 +361,7 @@ function createRegularMonster(state, point, random, index, progress, template) {
         monster.defense += 3;
         monster.exp = Math.ceil(monster.exp * 2.5);
     }
-    else if (canSpawnRare && rarityRoll < 0.062) {
+    else if (canSpawnRare && state.floor > 1 && rarityRoll < 0.062) {
         monster.actionSpeed = 'fast';
         monster.rareVariant = true;
         monster.name = `俊敏な${template.name}`;
@@ -449,7 +450,7 @@ function populateFloor(state, runRandom) {
     }
     else {
         const progress = mode.floors <= 1 ? 0 : (floor - 1) / (mode.floors - 1);
-        const tierProgress = (floor - 1) / Math.max(1, mode.floors - 2);
+        const tierProgress = getMonsterTierProgress(state.modeId, floor, mode.floors);
         const tierBlend = getMonsterTierBlend(tierProgress, mode.maxMonsterTier);
         const lowerTier = MONSTER_TIERS[tierBlend.lowerTierIndex] ?? MONSTER_TIERS[0];
         const upperTier = MONSTER_TIERS[tierBlend.upperTierIndex] ?? lowerTier;
@@ -651,7 +652,7 @@ export class GameEngine {
         if (!stack)
             return false;
         const item = stack.item;
-        const itemRecovery = getItemRecovery(item);
+        const itemRecovery = getItemRecovery(item, this.state.player.maxHp);
         const hpRecovery = Math.min(itemRecovery.heal, this.state.player.maxHp - this.state.player.hp);
         const hungerRecovery = Math.min(itemRecovery.hungerRestore, MAX_HUNGER - this.state.player.hunger);
         if (hpRecovery <= 0 && hungerRecovery <= 0) {
@@ -863,7 +864,7 @@ export class GameEngine {
         this.state.monsters.push({
             id: `stonewing-keeper-${shop.id}`, kind: 'stonewing-keeper', name: '石翼の番商',
             x: keeperPoint.x, y: keeperPoint.y, hp, maxHp: hp,
-            attack: Math.max(1, Math.round((14 + Math.floor(this.state.floor * 1.1) + Math.round(getModeConfig(this.state.modeId).difficultyScale * 2)) * 0.90)),
+            attack: Math.max(1, Math.round((14 + Math.floor(this.state.floor * 1.1) + Math.round(getModeConfig(this.state.modeId).difficultyScale * 2)) * 1.20)),
             defense: 4 + Math.floor(this.state.floor * 0.12), exp: 0, boss: false,
             actionSpeed: 'fast', actionProgress: 0, rareVariant: true, shopkeeper: true,
         });
@@ -915,7 +916,7 @@ export class GameEngine {
             if (this.state.fedTurnCounter >= FED_HP_RECOVERY_TURNS) {
                 this.state.fedTurnCounter = 0;
                 if (player.hp > 0 && player.hp < player.maxHp) {
-                    player.hp += 1;
+                    player.hp = Math.min(player.maxHp, player.hp + Math.max(1, Math.round(player.maxHp * 0.01)));
                 }
             }
             return;
@@ -1048,8 +1049,8 @@ export class GameEngine {
             }
         }
     }
-    attackPlayer(monster, random) {
-        const damage = Math.max(1, monster.attack + random.int(-1, 1) - getDefense(this.state));
+    attackPlayer(monster, random, damageMultiplier = 1, attackName = '攻撃') {
+        const damage = Math.max(1, Math.round(monster.attack * damageMultiplier) + random.int(-1, 1) - getDefense(this.state));
         this.state.player.hp = Math.max(0, this.state.player.hp - damage);
         this.combatDamageReceived = true;
         this.combatHitCount += 1;
@@ -1061,9 +1062,48 @@ export class GameEngine {
         if (armorBreak)
             broken.push(armorBreak);
         const speedLabel = monster.actionSpeed === 'fast' ? '（連続攻撃）' : '';
-        this.state.message = `${this.state.message} ${monster.name}の攻撃${speedLabel}！ ${damage} ダメージを受けた。${broken.length ? ` ${broken.join(' ')}` : ''}`.slice(0, 480);
+        this.state.message = `${this.state.message} ${monster.name}の${attackName}${speedLabel}！ ${damage} ダメージを受けた。${broken.length ? ` ${broken.join(' ')}` : ''}`.slice(0, 480);
     }
     performMonsterAction(monster, random) {
+        if (monster.shopkeeper) {
+            const dx = this.state.player.x - monster.x;
+            const dy = this.state.player.y - monster.y;
+            const adjacent = Math.max(Math.abs(dx), Math.abs(dy)) === 1 &&
+                canStepBetween(this.state.dungeon.tiles, monster, this.state.player);
+            if (adjacent) {
+                this.attackPlayer(monster, random);
+                return;
+            }
+            // Ignore other monsters while pathfinding, then attack anything on the next tile.
+            const blocked = new Set();
+            const stairs = this.state.dungeon.stairs;
+            if (stairs && (stairs.x !== this.state.player.x || stairs.y !== this.state.player.y))
+                blocked.add(pointKey(stairs));
+            blocked.add(pointKey(this.state.player));
+            const step = nextPathStep(this.state.dungeon.tiles, monster, this.state.player, blocked);
+            if (!step) return;
+            const blocker = this.state.monsters.find((other) =>
+                other.id !== monster.id && other.hp > 0 && monsterCovers(other, step));
+            if (blocker) {
+                const damage = Math.max(1, monster.attack + random.int(-1, 1) - blocker.defense);
+                blocker.hp -= damage;
+                if (blocker.hp <= 0) {
+                    this.state.monsters = this.state.monsters.filter((entry) => entry.id !== blocker.id);
+                    for (const survivor of this.state.monsters) {
+                        if (survivor.retaliationTargetId === blocker.id)
+                            delete survivor.retaliationTargetId;
+                    }
+                    this.state.message = `${this.state.message} 石翼の番商が進路を塞ぐ${blocker.name}を撃破！`.slice(0, 480);
+                }
+                else {
+                    this.state.message = `${this.state.message} 石翼の番商が${blocker.name}を攻撃！ ${damage}ダメージ。`.slice(0, 480);
+                }
+                return;
+            }
+            monster.x = step.x;
+            monster.y = step.y;
+            return;
+        }
         if (monster.hunterVariant) {
             const prey = this.state.monsters
                 .filter((other) => other.id !== monster.id && other.hp > 0 && !other.boss && !other.shopkeeper && !other.hunterVariant)
@@ -1099,6 +1139,8 @@ export class GameEngine {
                     else {
                         this.state.message = `${this.state.message} ${monster.name}が${prey.name}を襲う！ ${damage}ダメージ。`.slice(0, 480);
                     }
+                    // A hunter's strike is single-target; do not then attack the player.
+                    return;
                 }
                 else {
                     const blocked = collectBlockedMonsterCells(this.state.monsters, monster.id);
@@ -1169,7 +1211,15 @@ export class GameEngine {
                 this.attackPlayer(monster, random);
                 return;
             }
-            if (distanceToFootprint(monster, this.state.player, 2) > 14)
+            const bossDistance = distanceToFootprint(monster, this.state.player, 2);
+            if (bossDistance >= 3 && bossDistance <= 6 && random.chance(0.38)) {
+                this.state.bossAreaEffect = {
+                    x: this.state.player.x, y: this.state.player.y, radius: 1, turn: this.state.turn + 1,
+                };
+                this.attackPlayer(monster, random, 0.72, '範囲攻撃');
+                return;
+            }
+            if (bossDistance > 14)
                 return;
             const blocked = collectBlockedMonsterCells(this.state.monsters, monster.id);
             blocked.add(pointKey(this.state.player));

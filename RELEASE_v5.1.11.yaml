@@ -1,0 +1,21 @@
+release:
+  project: 層渡りの旅録
+  version: 5.1.11
+  previous_version: 5.1.10
+  type: patch
+  title: ダンジョン難易度と戦闘・回復バランス調整
+  invariants:
+    starter_equipment: none
+    starter_inventory: []
+    save_schema: 12
+  changes:
+    - soften_first_floor_monster_stats_in_all_campaigns
+    - suppress_rare_monsters_on_first_floor
+    - smooth_expert_final_enemy_tier_from_floor_25
+    - prevent_magic_eater_collateral_player_attacks
+    - make_shopkeeper_clear_blocking_monsters_during_pursuit
+    - strengthen_shopkeeper_attack
+    - add_boss_area_attack_with_warning_visual
+    - increase_purchase_price_of_top_tier_equipment
+    - convert_consumable_and_passive_hp_recovery_to_max_hp_percent
+    - add_v5_1_11_regression_tests

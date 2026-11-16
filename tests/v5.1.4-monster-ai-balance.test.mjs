@@ -79,3 +79,31 @@ test('monster level growth is capped at level 99', () => {
   assert.equal(monster.attack, 8);
   assert.equal(monster.defense, 3);
 });
+
+test('magic-eater attacking an adjacent monster cannot also hit the adjacent player', () => {
+  const state = createNewGame(0x12345678, 'intermediate');
+  state.dungeon.tiles = Array.from({ length: 40 }, () => Array(40).fill(1));
+  state.dungeon.stairs = null;
+  state.player.x = 5;
+  state.player.y = 6;
+  const hunter = {
+    id: 'adjacent-hunter', kind: 'slime', name: '魔喰いのスライム',
+    x: 5, y: 5, hp: 80, maxHp: 80, attack: 8, defense: 2,
+    exp: 30, boss: false, hunterVariant: true, hunterLevel: 4,
+    actionSpeed: 'normal', actionProgress: 0,
+  };
+  const prey = {
+    id: 'adjacent-prey', kind: 'bat', name: '洞窟コウモリ',
+    x: 6, y: 5, hp: 30, maxHp: 30, attack: 3, defense: 0,
+    exp: 10, boss: false, hunterVariant: false,
+  };
+  state.monsters = [hunter, prey];
+  const engine = new GameEngine(state);
+  const playerHpBefore = state.player.hp;
+  const preyHpBefore = prey.hp;
+
+  engine.performMonsterAction(hunter, { int: (min) => min });
+
+  assert.equal(state.player.hp, playerHpBefore);
+  assert.ok(prey.hp < preyHpBefore);
+});

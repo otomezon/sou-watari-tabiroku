@@ -55,6 +55,9 @@ export class RenderManager {
             if (this.onScreen(stairs))
                 this.drawStairs(stairs.x, stairs.y, state.turn);
         }
+        if (state.bossAreaEffect && state.bossAreaEffect.turn === state.turn) {
+            this.drawBossAreaEffect(state.bossAreaEffect, originX, originY);
+        }
         if (state.shop && !state.shop.hostile) {
             for (const good of state.shop.goods) {
                 if (good.sold || good.stolen)
@@ -215,6 +218,24 @@ export class RenderManager {
         return tiles[y - 1]?.[x] === 1 || tiles[y + 1]?.[x] === 1 || tiles[y]?.[x - 1] === 1 || tiles[y]?.[x + 1] === 1;
     }
     currentTiles = null;
+    drawBossAreaEffect(effect, originX, originY) {
+        const ctx = this.context;
+        const radius = Math.max(0, Math.min(2, effect.radius ?? 1));
+        for (let y = effect.y - radius; y <= effect.y + radius; y += 1) {
+            for (let x = effect.x - radius; x <= effect.x + radius; x += 1) {
+                const screenX = (x - originX) * TILE;
+                const screenY = (y - originY) * TILE;
+                if (screenX < -TILE || screenY < -TILE || screenX >= WIDTH || screenY >= HEIGHT) continue;
+                ctx.fillStyle = x === effect.x && y === effect.y ? 'rgba(226, 70, 64, .48)' : 'rgba(205, 62, 62, .25)';
+                ctx.fillRect(screenX + 2, screenY + 2, TILE - 4, TILE - 4);
+                ctx.strokeStyle = 'rgba(255, 166, 128, .95)';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(screenX + 3, screenY + 3, TILE - 6, TILE - 6);
+                ctx.fillStyle = 'rgba(255, 220, 180, .80)';
+                ctx.fillRect(screenX + 15, screenY + 15, 6, 6);
+            }
+        }
+    }
     drawStairs(x, y, turn) {
         const ctx = this.context;
         ctx.fillStyle = 'rgba(215,181,109,.14)';

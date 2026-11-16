@@ -78,9 +78,9 @@ test('5.1.10 app, manifest, cache and release metadata stay aligned without chan
     read('assets/main.js'), read('manifest.webmanifest'), read('sw.js'),
     read('assets/engine.js'), read('assets/storage.js'), read('RELEASE_v5.1.10.yaml'),
   ]);
-  assert.match(main, /APP_VERSION = '5.1.10'/);
-  assert.match(manifest, /"version": "5.1.10"/);
-  assert.match(sw, /sou-watari-tabiroku-v5-1-10/);
+  assert.match(main, /APP_VERSION = '5.1.11'/);
+  assert.match(manifest, /"version": "5.1.11"/);
+  assert.match(sw, /sou-watari-tabiroku-v5-1-11/);
   assert.match(engine, /schemaVersion: 12/);
   assert.match(storage, /state\.schemaVersion !== 12/);
   assert.match(release, /type: patch/);
@@ -89,5 +89,7 @@ test('5.1.10 app, manifest, cache and release metadata stay aligned without chan
 test('opening difficulty guard and original rare encounter eligibility are explicit', async () => {
   const engine = await read('assets/engine.js');
   assert.match(engine, /state\.floor <= 2 \? 0\.95 : 1/);
+  assert.match(engine, /const floorOneSoften = state\.floor === 1 \? 0\.80 : 1/);
   assert.match(engine, /const canSpawnRare = state\.modeId !== 'tutorial'/);
+  assert.match(engine, /state\.floor > 1 && state\.modeId !== 'beginner'/);
 });
