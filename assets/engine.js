@@ -1093,7 +1093,8 @@ export class GameEngine {
     performElementalAreaAttack(monster, random, breath) {
         const center = { x: this.state.player.x, y: this.state.player.y };
         const radius = 1;
-        const damageBase = Math.max(1, Math.round(monster.attack * 0.60));
+        const breathAttack = monster.attack;
+        const damageBase = Math.max(1, Math.round(breathAttack * 0.60));
         this.state.elementalAreaEffect = {
             x: center.x, y: center.y, radius, element: breath.element, turn: this.state.turn + 1,
         };
@@ -1129,7 +1130,7 @@ export class GameEngine {
         }
 
         this.state.message = `${monster.name}が${breath.name}を放った。${monsterMessages.length ? ` ${monsterMessages.join('、')}。` : ''}`;
-        this.attackPlayer(monster, random, 0.60, breath.name);
+        this.attackPlayer(monster, random, 0.60, breath.name, breathAttack);
     }
     performMonsterAction(monster, random) {
         if (monster.shopkeeper) {
