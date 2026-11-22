@@ -145,14 +145,14 @@ test('attack sound failures and already-closed audio contexts never invalidate c
   assert.match(main, /if \(!player \|\| !step \|\| !Number\.isInteger\(step\.x\)/);
 });
 
-test('v5.2.2 historical patch metadata remains intact under the current v5.2.7 app', async () => {
+test('v5.2.2 historical patch metadata remains intact under the current v5.2.8 app', async () => {
   const [main, manifest, sw, release, engine] = await Promise.all([
     read('assets/main.js'), read('manifest.webmanifest'), read('sw.js'),
     read('RELEASE_v5.2.2.yaml'), read('assets/engine.js'),
   ]);
-  assert.match(main, /APP_VERSION = '5\.2\.7'/);
+  assert.match(main, /APP_VERSION = '5\.2\.8'/);
   assert.match(manifest, /"version": "5\.2.7"/);
-  assert.match(sw, /sou-watari-tabiroku-v5-2-7/);
+  assert.match(sw, /sou-watari-tabiroku-v5-2-8/);
   assert.match(engine, /schemaVersion: 12/);
   assert.match(main, /floorBalanceVersion \?\? 0\) < 7/);
   assert.match(release, /type: patch/);
