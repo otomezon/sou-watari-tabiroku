@@ -16,8 +16,8 @@ function openState(modeId, seed) {
   state.dungeon.stairs = { x: 18, y: 18 };
   state.player.x = 8;
   state.player.y = 5;
-  state.player.maxHp = 10000;
-  state.player.hp = 10000;
+  state.player.maxHp = 9000;
+  state.player.hp = 9000;
   state.monsters = [];
   return state;
 }
@@ -113,8 +113,8 @@ test('repeated player attacks and enemy turns keep every campaign save-valid', (
   const directionEntries = Object.entries(DIRECTION_DELTA);
   for (const modeId of MODE_ORDER) {
     const state = createNewGame(0x522204 + MODE_ORDER.indexOf(modeId), modeId);
-    state.player.maxHp = 10000;
-    state.player.hp = 10000;
+    state.player.maxHp = 9000;
+    state.player.hp = 9000;
     const engine = new GameEngine(state);
     let attacks = 0;
 
