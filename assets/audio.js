@@ -39,23 +39,53 @@ export class SoundManager {
         return { ...this.settings };
     }
     async unlock() {
-        if (typeof window === 'undefined' || !('AudioContext' in window))
+        if (typeof window === 'undefined')
             return;
-        if (!this.context) {
-            this.context = new AudioContext();
-            this.master = this.context.createGain();
-            this.master.gain.value = 0.78;
-            this.master.connect(this.context.destination);
-            this.bgmGain = this.context.createGain();
-            this.bgmGain.gain.value = this.settings.muteBgm ? 0 : this.settings.bgmVolume * 0.34;
-            this.bgmGain.connect(this.master);
-            this.sfxGain = this.context.createGain();
-            this.sfxGain.gain.value = this.settings.muteSfx ? 0 : this.settings.sfxVolume * 0.62;
-            this.sfxGain.connect(this.master);
+        const AudioContextConstructor = window.AudioContext ?? window.webkitAudioContext;
+        if (!AudioContextConstructor)
+            return;
+        if (!this.context || this.context.state === 'closed') {
+            try {
+                this.context = new AudioContextConstructor();
+                this.master = this.context.createGain();
+                this.master.gain.value = 0.78;
+                this.master.connect(this.context.destination);
+                this.bgmGain = this.context.createGain();
+                this.bgmGain.gain.value = this.settings.muteBgm ? 0 : this.settings.bgmVolume * 0.34;
+                this.bgmGain.connect(this.master);
+                this.sfxGain = this.context.createGain();
+                this.sfxGain.gain.value = this.settings.muteSfx ? 0 : this.settings.sfxVolume * 0.62;
+                this.sfxGain.connect(this.master);
+                this.buffers.clear();
+                this.loading.clear();
+                this.eventBuffers.clear();
+                this.eventLoading.clear();
+                this.source = null;
+                this.sourceGain = null;
+                this.activeTrack = null;
+                this.pendingTrack = null;
+                this.trackRequest += 1;
+            }
+            catch (error) {
+                this.context = null;
+                this.master = null;
+                this.bgmGain = null;
+                this.sfxGain = null;
+                console.warn('Audio could not be initialized; gameplay will continue silently.', error);
+                return;
+            }
         }
-        if (this.context.state === 'suspended')
-            await this.context.resume();
-        // Preload mandatory event cues after the first user gesture so they are ready at the moment they are needed.
+        if (this.context.state === 'suspended') {
+            try {
+                await this.context.resume();
+            }
+            catch (error) {
+                // A device/autoplay restriction must never prevent an attack or movement.
+                console.warn('Audio resume failed; gameplay will continue.', error);
+            }
+        }
+        if (!this.context || this.context.state === 'closed')
+            return;
         void this.loadEventCue('gameover').catch((error) => console.warn('Game-over cue preload failed.', error));
     }
     /** Starts the mode-specific exploration loop or the shared boss theme. */
@@ -155,7 +185,7 @@ export class SoundManager {
         this.trackRequest += 1;
         this.pendingTrack = null;
         this.activeTrack = null;
-        if (!this.context || !this.source || !this.sourceGain)
+        if (!this.context || this.context.state === 'closed' || !this.source || !this.sourceGain)
             return;
         const source = this.source;
         const gain = this.sourceGain;
@@ -195,7 +225,8 @@ export class SoundManager {
         this.effectSequence([effect]);
     }
     effectSequence(effects) {
-        if (!this.context || !this.sfxGain || this.settings.muteSfx || this.settings.sfxVolume <= 0)
+        if (!this.context || this.context.state === 'closed' || !this.sfxGain ||
+            this.settings.muteSfx || this.settings.sfxVolume <= 0)
             return;
         const now = this.context.currentTime;
         let offset = 0;
@@ -283,20 +314,30 @@ export class SoundManager {
             }
         }
     }
-    playTransientTone(fromHz,toHz,wave,startAt,duration,peak) {
-        if(!this.context||!this.sfxGain)return;
-        const oscillator=this.context.createOscillator();
-        const envelope=this.context.createGain();
-        oscillator.type=wave;
-        oscillator.frequency.setValueAtTime(fromHz,startAt);
-        if(toHz>0)oscillator.frequency.exponentialRampToValueAtTime(toHz,startAt+duration);
-        envelope.gain.setValueAtTime(0.0001,startAt);
-        envelope.gain.exponentialRampToValueAtTime(peak,startAt+0.006);
-        envelope.gain.exponentialRampToValueAtTime(0.0001,startAt+duration);
-        oscillator.connect(envelope).connect(this.sfxGain);
-        oscillator.start(startAt);
-        oscillator.stop(startAt+duration+0.012);
-        oscillator.onended=()=>{oscillator.disconnect();envelope.disconnect();};
+    playTransientTone(fromHz, toHz, wave, startAt, duration, peak) {
+        if (!this.context || this.context.state === 'closed' || !this.sfxGain)
+            return;
+        let oscillator;
+        let envelope;
+        try {
+            oscillator = this.context.createOscillator();
+            envelope = this.context.createGain();
+            oscillator.type = wave;
+            oscillator.frequency.setValueAtTime(fromHz, startAt);
+            if (toHz > 0)
+                oscillator.frequency.exponentialRampToValueAtTime(toHz, startAt + duration);
+            envelope.gain.setValueAtTime(0.0001, startAt);
+            envelope.gain.exponentialRampToValueAtTime(peak, startAt + 0.006);
+            envelope.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+            oscillator.connect(envelope).connect(this.sfxGain);
+            oscillator.start(startAt);
+            oscillator.stop(startAt + duration + 0.012);
+            oscillator.onended = () => { oscillator.disconnect(); envelope.disconnect(); };
+        }
+        catch (error) {
+            try { oscillator?.disconnect(); envelope?.disconnect(); } catch { /* audio device already closed */ }
+            console.warn('Short sound effect was skipped.', error);
+        }
     }
     playAttackEffect(startAt) {
         this.playTransientTone(760,245,'sawtooth',startAt,0.135,0.18);
@@ -309,27 +350,36 @@ export class SoundManager {
         this.playTransientTone(286, 126, 'square', startAt + 0.006, 0.115, 0.105);
     }
     playFanfareTone(frequency, startAt, duration, peak, waveform = 'sawtooth', cutoff = 2600, attack = 0.012) {
-        if (!this.context || !this.sfxGain)
+        if (!this.context || this.context.state === 'closed' || !this.sfxGain)
             return;
-        const oscillator = this.context.createOscillator();
-        const filter = this.context.createBiquadFilter();
-        const envelope = this.context.createGain();
-        oscillator.type = waveform;
-        oscillator.frequency.setValueAtTime(frequency, startAt);
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(cutoff, startAt);
-        filter.Q.setValueAtTime(0.72, startAt);
-        envelope.gain.setValueAtTime(0.0001, startAt);
-        envelope.gain.exponentialRampToValueAtTime(peak, startAt + attack);
-        envelope.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
-        oscillator.connect(filter).connect(envelope).connect(this.sfxGain);
-        oscillator.start(startAt);
-        oscillator.stop(startAt + duration + 0.025);
-        oscillator.onended = () => {
-            oscillator.disconnect();
-            filter.disconnect();
-            envelope.disconnect();
-        };
+        let oscillator;
+        let filter;
+        let envelope;
+        try {
+            oscillator = this.context.createOscillator();
+            filter = this.context.createBiquadFilter();
+            envelope = this.context.createGain();
+            oscillator.type = waveform;
+            oscillator.frequency.setValueAtTime(frequency, startAt);
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(cutoff, startAt);
+            filter.Q.setValueAtTime(0.72, startAt);
+            envelope.gain.setValueAtTime(0.0001, startAt);
+            envelope.gain.exponentialRampToValueAtTime(peak, startAt + attack);
+            envelope.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+            oscillator.connect(filter).connect(envelope).connect(this.sfxGain);
+            oscillator.start(startAt);
+            oscillator.stop(startAt + duration + 0.025);
+            oscillator.onended = () => {
+                oscillator.disconnect();
+                filter.disconnect();
+                envelope.disconnect();
+            };
+        }
+        catch (error) {
+            try { oscillator?.disconnect(); filter?.disconnect(); envelope?.disconnect(); } catch { /* audio device already closed */ }
+            console.warn('Fanfare tone was skipped.', error);
+        }
     }
     playLevelUpFanfare(requestedStart, transposeSemitones = 0, monsterTimbre = false) {
         if (!this.context || !this.sfxGain || this.settings.muteSfx || this.settings.sfxVolume <= 0)
