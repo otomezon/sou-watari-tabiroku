@@ -1505,13 +1505,13 @@ export class GameEngine {
         if (monster.hunterVariant) {
             // 魔喰いは最も危険なレア個体。高確率で上位品質の装備・換金品を落とす。
             let drop = null;
-            if (lootRoll < 0.45)
+            if (lootRoll < 0.28)
                 drop = createItem(this.state.floor, random, random.pick(['weapon', 'shield', 'armor']), this.state.modeId, 'premium');
-            else if (lootRoll < 0.45 + rareValuableDropChances.hunter)
+            else if (lootRoll < 0.28 + rareValuableDropChances.hunter)
                 drop = createItem(this.state.floor, random, 'valuable', this.state.modeId, 'premium');
-            else if (lootRoll < 0.45 + rareValuableDropChances.hunter + 0.10)
+            else if (lootRoll < 0.28 + rareValuableDropChances.hunter + 0.06)
                 drop = createItem(this.state.floor, random, 'potion', this.state.modeId, 'premium');
-            else if (lootRoll < 0.45 + rareValuableDropChances.hunter + 0.10 + 0.05)
+            else if (lootRoll < 0.28 + rareValuableDropChances.hunter + 0.06 + 0.03)
                 drop = createItem(this.state.floor, random, 'food', this.state.modeId, 'premium');
             if (drop) {
                 this.state.groundItems.push({ ...findItemDropPoint(this.state, monster), item: drop });
@@ -1521,13 +1521,13 @@ export class GameEngine {
         else if (monster.rareVariant) {
             // 剛腕・俊敏も通常個体より豪華なプレミアム戦利品を持つ。
             let drop = null;
-            if (lootRoll < 0.19)
+            if (lootRoll < 0.12)
                 drop = createItem(this.state.floor, random, random.pick(['weapon', 'shield', 'armor']), this.state.modeId, 'premium');
-            else if (lootRoll < 0.19 + rareValuableDropChances.otherRare)
+            else if (lootRoll < 0.12 + rareValuableDropChances.otherRare)
                 drop = createItem(this.state.floor, random, 'valuable', this.state.modeId, 'premium');
-            else if (lootRoll < 0.19 + rareValuableDropChances.otherRare + 0.04)
+            else if (lootRoll < 0.12 + rareValuableDropChances.otherRare + 0.025)
                 drop = createItem(this.state.floor, random, 'potion', this.state.modeId, 'premium');
-            else if (lootRoll < 0.19 + rareValuableDropChances.otherRare + 0.04 + 0.05)
+            else if (lootRoll < 0.12 + rareValuableDropChances.otherRare + 0.025 + 0.03)
                 drop = createItem(this.state.floor, random, 'food', this.state.modeId, 'premium');
             if (drop) {
                 this.state.groundItems.push({ ...findItemDropPoint(this.state, monster), item: drop });
