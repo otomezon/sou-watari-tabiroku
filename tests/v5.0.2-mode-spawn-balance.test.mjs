@@ -11,8 +11,8 @@ test('tutorial disables shop and all rare monster variants', async () => {
   assert.match(engine, /canSpawnRareMonster\(state\.modeId\)/);
   assert.match(engine, /canSpawnMagicEater\(state\.modeId\)/);
   assert.match(engine, /rarityRoll < 0\.012/);
-  assert.match(engine, /rarityRoll < 0\.037/);
-  assert.match(engine, /rarityRoll < 0\.062/);
+  assert.match(engine, /rarityRoll < 0\.032/);
+  assert.match(engine, /rarityRoll < 0\.052/);
 });
 
 test('beginner excludes only 魔喰い while keeping the other rare variants', async () => {
@@ -32,7 +32,7 @@ test('current app metadata is aligned while the historical v5.0.2 release record
     read('assets/storage.js'), read('RELEASE_v5.0.2.yaml'),
   ]);
   assert.match(main, /APP_VERSION = '5\.1\.20'/);
-  assert.match(manifest, /"version": "5.1.20"/);
+  assert.match(manifest, /"version": "5.1.21"/);
   assert.match(sw, /sou-watari-tabiroku-v5-1-20/);
   assert.match(storage, /state\.schemaVersion !== 12/);
   assert.match(release, /version: 5\.0\.2/);
