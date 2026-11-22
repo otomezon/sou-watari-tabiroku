@@ -13,7 +13,10 @@ test('expert final tier enters at floor 25 and ramps across floors 25–29', () 
   const ramp = [25, 26, 27, 28, 29].map((floor) => getMonsterTierProgress('expert', floor, 30));
   assert.ok(ramp.every((value, index) => index === 0 || value > ramp[index - 1]));
   assert.equal(ramp.at(-1), 1);
-  assert.equal(getMonsterTierProgress('advanced', 20, 25), 19 / 23);
+  assert.equal(getMonsterTierProgress('advanced', 20, 25), Math.pow(19 / 23, 1.35));
+  const advancedRamp = [19, 20, 21, 22, 23, 24].map((floor) => getMonsterTierProgress('advanced', floor, 25));
+  assert.ok(advancedRamp.every((value, index) => index === 0 || value > advancedRamp[index - 1]));
+  assert.equal(advancedRamp.at(-1), 1);
 });
 
 test('all campaigns receive a small monotonic stat ramp on every ordinary floor', () => {

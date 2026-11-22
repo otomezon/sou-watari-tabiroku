@@ -9,6 +9,9 @@ import {
   getFloorMonsterCalibration,
   getLegacyFloorMonsterCalibration,
   getLegacyV3FloorMonsterCalibration,
+  getLegacyV4FloorMonsterCalibration,
+  getLegacyV5FloorMonsterCalibration,
+  getFloorEncounterPowerTarget,
   FLOOR_MONSTER_HP_MULTIPLIER,
   FLOOR_MONSTER_ATTACK_MULTIPLIER,
   FLOOR_MONSTER_DEFENSE_MULTIPLIER,
@@ -30,7 +33,7 @@ test('expected player level uses a balanced 50% monster-clear rate', () => {
     getExpectedPlayerLevel('intermediate', 15),
     getExpectedPlayerLevel('advanced', 25),
     getExpectedPlayerLevel('expert', 30),
-  ], [3, 8, 14, 23, 30]);
+  ], [3, 8, 14, 22, 30]);
   for (const mode of MODE_ORDER) {
     assert.equal(getExpectedPlayerLevel(mode, 1), 1);
   }
@@ -44,17 +47,11 @@ test('floor monster calibration stays within the refined, difficulty-specific ra
       const maximumAdjustment = mode === 'expert' ? 1.35 : 1.18;
       assert.ok(adjustment >= 0.65 && adjustment <= maximumAdjustment, `${mode} F${floor}: ${adjustment}`);
       assert.ok(Number.isFinite(getLegacyV3FloorMonsterCalibration(mode, floor)));
+      assert.ok(Number.isFinite(getLegacyV4FloorMonsterCalibration(mode, floor)));
+      assert.ok(Number.isFinite(getLegacyV5FloorMonsterCalibration(mode, floor)));
       assert.ok(Number.isFinite(getLegacyFloorMonsterCalibration(mode, floor, 0.70)));
     }
   }
-});
-
-const FLOOR_POWER_TARGETS = Object.freeze({
-  tutorial: 0.54,
-  beginner: 0.62,
-  intermediate: 0.70,
-  advanced: 0.70,
-  expert: 0.82,
 });
 
 function expectedUnequippedPlayerPower(level) {
@@ -130,9 +127,9 @@ test('ordinary enemies stay challenging but a typical no-gear duel remains survi
           }
           const averageMonsterPower = ordinary.reduce((sum, monster) => sum + monsterCombatPower(monster), 0) / ordinary.length;
           const ratio = averageMonsterPower / playerPower;
-          const target = FLOOR_POWER_TARGETS[modeId];
-          // Expert floors 1–5 deliberately ease into upper-tier families; small floor samples can skew lower.
-          const lowerTolerance = modeId === 'expert' ? 0.35 : 0.24;
+          const target = getFloorEncounterPowerTarget(modeId, floor);
+          // Small random floor samples can skew below the weighted average target.
+          const lowerTolerance = 0.24;
           assert.ok(ratio >= target - lowerTolerance && ratio <= target + 0.20,
             `${modeId} F${floor}: un-geared monster power ratio ${ratio.toFixed(3)}, target ${target}, calibration ${getFloorMonsterCalibration(modeId, floor).toFixed(3)}, average power ${averageMonsterPower.toFixed(1)}, player power ${playerPower.toFixed(1)}`);
 
@@ -174,9 +171,9 @@ test('ordinary enemies stay challenging but a typical no-gear duel remains survi
   }
 });
 
-test('new regular monsters carry balance version 5 and legacy unscaled monsters migrate once', () => {
+test('new regular monsters carry balance version 6 and legacy unscaled monsters migrate once', () => {
   const state = createNewGame(0x5162026, 'beginner');
-  assert.ok(state.monsters.every((monster) => monster.floorBalanceVersion === 5));
+  assert.ok(state.monsters.every((monster) => monster.floorBalanceVersion === 6));
   state.monsters = [{
     id: 'legacy-monster', kind: 'slime', name: '旧バランスの魔物',
     x: state.player.x + 2, y: state.player.y, hp: 30, maxHp: 60,
@@ -185,14 +182,14 @@ test('new regular monsters carry balance version 5 and legacy unscaled monsters 
   const expectedAdjustment = getFloorMonsterCalibration('beginner', 1);
   new GameEngine(state);
   const migrated = state.monsters[0];
-  assert.equal(migrated.floorBalanceVersion, 5);
+  assert.equal(migrated.floorBalanceVersion, 6);
   assert.equal(migrated.maxHp, Math.round(60 * expectedAdjustment * FLOOR_MONSTER_HP_MULTIPLIER));
   assert.ok(Math.abs(migrated.hp / migrated.maxHp - 0.5) < 0.02);
   assert.equal(migrated.attack, Math.round(10 * expectedAdjustment * FLOOR_MONSTER_ATTACK_MULTIPLIER));
   assert.equal(migrated.defense, Math.min(getExpectedMonsterDefenseCap('beginner', 1), Math.round(4 * expectedAdjustment * FLOOR_MONSTER_DEFENSE_MULTIPLIER)));
 });
 
-test('version-1, version-2, and version-3 floor monsters migrate proportionally to v5', () => {
+test('version-1, version-2, and version-3 floor monsters migrate proportionally to v6', () => {
   for (const legacy of [
     { version: 1, defeatRate: 0.55, seed: 0x5162029 },
     { version: 2, defeatRate: 0.70, seed: 0x5162030 },
@@ -218,7 +215,7 @@ test('version-1, version-2, and version-3 floor monsters migrate proportionally 
     new GameEngine(state);
     const migrated = state.monsters[0];
     const ratio = currentAdjustment / previousAdjustment;
-    assert.equal(migrated.floorBalanceVersion, 5);
+    assert.equal(migrated.floorBalanceVersion, 6);
     assert.equal(migrated.maxHp, Math.round(80 * ratio * FLOOR_MONSTER_HP_MULTIPLIER));
     assert.ok(Math.abs(migrated.hp / migrated.maxHp - 0.5) < 0.02);
     assert.equal(migrated.attack, Math.round(20 * ratio * FLOOR_MONSTER_ATTACK_MULTIPLIER));
@@ -247,7 +244,7 @@ test('player level-up and received-hit cues share the start of the fanfare', asy
   const [main, audio] = await Promise.all([read('assets/main.js'), read('assets/audio.js')]);
   assert.match(main, /\? \['level', \.\.\.damageCues\] : \[\]/);
   assert.match(main, /needsFloorMonsterBalanceMigration/);
-  assert.match(main, /floorBalanceVersion \?\? 0\) < 5/);
+  assert.match(main, /floorBalanceVersion \?\? 0\) < 6/);
   assert.match(audio, /while \(effects\[index \+ 1\] === 'damage'\)/);
   assert.match(audio, /playDamageEffect\(fanfareStart \+ synchronizedHit \* 0\.24\)/);
 });

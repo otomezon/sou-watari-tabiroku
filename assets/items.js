@@ -27,7 +27,6 @@ const TEMPLATES = [
     { id: 'royal-armor', name: '王国騎士の鎧', kind: 'armor', defense: 6, durability: 118, description: '防御力 +6', minFloor: 8 },
     { id: 'dragon-mail', name: '竜鱗の鎧', kind: 'armor', defense: 8, durability: 140, description: '防御力 +8', minFloor: 10 },
     // Healing items
-    { id: 'rice-ball', name: 'おむすび', kind: 'food', hungerRestore: 32, description: '満腹度を40回復', minFloor: 1 },
     { id: 'potion', name: '薬草', kind: 'potion', heal: 8, hungerRestore: 3, description: 'HPを14回復・満腹度を3回復', minFloor: 1 },
     { id: 'healing-potion', name: '回復薬', kind: 'potion', heal: 15, hungerRestore: 3, description: 'HPを26回復・満腹度を3回復', minFloor: 1 },
     { id: 'greater-potion', name: '上級回復薬', kind: 'potion', heal: 25, hungerRestore: 4, description: 'HPを44回復・満腹度を4回復', minFloor: 4 },
@@ -204,7 +203,6 @@ export function itemDisplayName(item) {
 }
 export function itemIcon(kindOrItem) {
     const kind = typeof kindOrItem === 'object' ? kindOrItem?.kind : kindOrItem;
-    if (kindOrItem?.templateId === 'rice-ball') return '🍙';
     switch (kind) {
         case 'weapon': return '⚔';
         case 'shield': return '⬟';

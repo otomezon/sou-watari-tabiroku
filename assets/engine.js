@@ -125,12 +125,21 @@ export const EXPECTED_MONSTER_DEFEAT_RATE = 0.50;
 const LEGACY_V1_MONSTER_DEFEAT_RATE = 0.55;
 const LEGACY_V2_MONSTER_DEFEAT_RATE = 0.70;
 const LEGACY_V3_MONSTER_DEFEAT_RATE = 0.40;
-const FLOOR_MONSTER_BALANCE_VERSION = 5;
+const FLOOR_MONSTER_BALANCE_VERSION = 6;
 
-// Average ordinary-monster pressure rises by campaign without requiring perfect equipment drops.
-const FLOOR_ENCOUNTER_POWER_TARGET = Object.freeze({
+// Full-campaign targets are smoothly interpolated from each opening floor to the final normal floor.
+const FLOOR_ENCOUNTER_POWER_CURVE = Object.freeze({
+    tutorial: Object.freeze({ start: 0.56, end: 0.60 }),
+    beginner: Object.freeze({ start: 0.60, end: 0.63 }),
+    intermediate: Object.freeze({ start: 0.68, end: 0.74 }),
+    advanced: Object.freeze({ start: 0.67, end: 0.73 }),
+    expert: Object.freeze({ start: 0.76, end: 0.82 }),
+});
+// v5.1.21 target curve, retained only to migrate saves created by that unreleased branch.
+const LEGACY_V5_FLOOR_ENCOUNTER_POWER_TARGET = Object.freeze({
     tutorial: 0.54, beginner: 0.62, intermediate: 0.70, advanced: 0.70, expert: 0.82,
 });
+
 // Keep fights durable, but avoid scaling raw incoming damage and monster defense at the same rate.
 export const FLOOR_MONSTER_HP_MULTIPLIER = 1.08;
 export const FLOOR_MONSTER_ATTACK_MULTIPLIER = 0.92;
@@ -145,9 +154,20 @@ const LEGACY_FLOOR_ENCOUNTER_POWER_TARGET = Object.freeze({
     tutorial: 0.68, beginner: 0.78, intermediate: 0.90, advanced: 1.02, expert: 1.12,
 });
 
-/** Ease the expert opening into its full encounter target over the first five floors. */
+/** Smoothly raise the target encounter pressure across every floor of every campaign. */
 export function getFloorEncounterPowerTarget(modeId, floor) {
-    const target = FLOOR_ENCOUNTER_POWER_TARGET[modeId] ?? FLOOR_ENCOUNTER_POWER_TARGET.beginner;
+    const mode = getModeConfig(modeId);
+    const curve = FLOOR_ENCOUNTER_POWER_CURVE[modeId] ?? FLOOR_ENCOUNTER_POWER_CURVE.beginner;
+    const progress = Number.isFinite(floor)
+        ? Math.min(1, Math.max(0, (floor - 1) / Math.max(1, mode.floors - 1)))
+        : 0;
+    const eased = progress * progress * (3 - 2 * progress);
+    return curve.start + (curve.end - curve.start) * eased;
+}
+
+/** Preserve the exact v5.1.21 target curve for saves created by that branch. */
+export function getLegacyV5FloorEncounterPowerTarget(modeId, floor) {
+    const target = LEGACY_V5_FLOOR_ENCOUNTER_POWER_TARGET[modeId] ?? LEGACY_V5_FLOOR_ENCOUNTER_POWER_TARGET.beginner;
     if (modeId !== 'expert' || !Number.isFinite(floor)) return target;
     const progress = Math.min(1, Math.max(0, (floor - 1) / 4));
     return 0.72 + (target - 0.72) * progress;
@@ -195,6 +215,7 @@ function calculateFloorMonsterCalibration(
     modeId, floor, defeatRate, targets, minimum, maximum,
     hpMultiplier = 1, attackMultiplier = 1, defenseMultiplier = 1,
     expectedMonsterDefenseCap = Number.POSITIVE_INFINITY, openingRamp = false,
+    rampTargetResolver = getFloorEncounterPowerTarget,
 ) {
     const mode = getModeConfig(modeId);
     const targetFloor = Math.max(1, Math.min(mode.floors, Math.floor(Number(floor) || 1)));
@@ -231,7 +252,7 @@ function calculateFloorMonsterCalibration(
     const playerDefense = 2 + Math.floor(playerLevel / 2);
     const expectedPlayerPower = playerHp + playerAttack * 6 + playerDefense * 4;
     const targetRatio = openingRamp
-        ? getFloorEncounterPowerTarget(modeId, targetFloor)
+        ? rampTargetResolver(modeId, targetFloor)
         : (targets[modeId] ?? targets.beginner);
     const adjustment = targetRatio * expectedPlayerPower / Math.max(1, expectedMonsterPower);
     return Math.max(minimum, Math.min(maximum, adjustment));
@@ -250,9 +271,19 @@ export function getExpectedMonsterDefenseCap(modeId, floor, defeatRate = EXPECTE
 export function getFloorMonsterCalibration(modeId, floor, defeatRate = EXPECTED_MONSTER_DEFEAT_RATE) {
     const maximumAdjustment = modeId === 'expert' ? 1.35 : 1.18;
     return calculateFloorMonsterCalibration(
-        modeId, floor, defeatRate, FLOOR_ENCOUNTER_POWER_TARGET, 0.65, maximumAdjustment,
+        modeId, floor, defeatRate, FLOOR_ENCOUNTER_POWER_CURVE, 0.65, maximumAdjustment,
         FLOOR_MONSTER_HP_MULTIPLIER, FLOOR_MONSTER_ATTACK_MULTIPLIER, FLOOR_MONSTER_DEFENSE_MULTIPLIER,
         getExpectedMonsterDefenseCap(modeId, floor, defeatRate), true,
+    );
+}
+
+/** v5.1.21 calibration (v5), used for saves created by the previous PR branch. */
+export function getLegacyV5FloorMonsterCalibration(modeId, floor) {
+    const maximumAdjustment = modeId === 'expert' ? 1.35 : 1.18;
+    return calculateFloorMonsterCalibration(
+        modeId, floor, EXPECTED_MONSTER_DEFEAT_RATE, LEGACY_V5_FLOOR_ENCOUNTER_POWER_TARGET, 0.65, maximumAdjustment,
+        FLOOR_MONSTER_HP_MULTIPLIER, FLOOR_MONSTER_ATTACK_MULTIPLIER, FLOOR_MONSTER_DEFENSE_MULTIPLIER,
+        getExpectedMonsterDefenseCap(modeId, floor), true, getLegacyV5FloorEncounterPowerTarget,
     );
 }
 
@@ -260,7 +291,7 @@ export function getFloorMonsterCalibration(modeId, floor, defeatRate = EXPECTED_
 export function getLegacyV4FloorMonsterCalibration(modeId, floor) {
     const maximumAdjustment = modeId === 'expert' ? 1.35 : 1.18;
     return calculateFloorMonsterCalibration(
-        modeId, floor, EXPECTED_MONSTER_DEFEAT_RATE, FLOOR_ENCOUNTER_POWER_TARGET, 0.65, maximumAdjustment,
+        modeId, floor, EXPECTED_MONSTER_DEFEAT_RATE, LEGACY_V5_FLOOR_ENCOUNTER_POWER_TARGET, 0.65, maximumAdjustment,
         FLOOR_MONSTER_HP_MULTIPLIER, FLOOR_MONSTER_ATTACK_MULTIPLIER, FLOOR_MONSTER_DEFENSE_MULTIPLIER,
         getExpectedMonsterDefenseCap(modeId, floor), false,
     );
@@ -285,6 +316,8 @@ export function createNewGame(seed = makeSeed(), modeId = 'beginner') {
     const mode = getModeConfig(modeId);
     const player = { x: 0, y: 0, hp: 34, maxHp: 34, level: 1, exp: 0, baseAttack: 5, baseDefense: 2, hunger: MAX_HUNGER };
     const equipment = { weapon: null, shield: null, armor: null };
+    // Start with a deterministic pick from the existing floor-1 food pool; do not invent a new item.
+    const starterFood = createItem(1, new Random((seed ^ 0x6a09e667) >>> 0), 'food', modeId);
     const state = {
         schemaVersion: 12,
         modeId,
@@ -302,12 +335,7 @@ export function createNewGame(seed = makeSeed(), modeId = 'beginner') {
         groundGold: [],
         gold: 0,
         shop: null,
-        inventory: [{ item: {
-            uid: `starter-rice-ball-${seed.toString(36)}-${Date.now().toString(36)}`,
-            templateId: 'rice-ball', name: 'おむすび', kind: 'food',
-            attack: 0, defense: 0, heal: 0, hungerRestore: 32,
-            description: '満腹度を40回復',
-        }, count: 1 }],
+        inventory: [{ item: starterFood, count: 1 }],
         equipment,
         message: modeId === 'tutorial' ? 'はじまりの坑道へようこそ。十字キーで移動し、階段を探そう。' : `${mode.name}の探索が始まった。階段を探そう。`,
         defeatedMonsters: 0,
@@ -819,9 +847,11 @@ export class GameEngine {
                 : 0;
             if (previousVersion >= FLOOR_MONSTER_BALANCE_VERSION)
                 continue;
-            const previousCalibration = previousVersion >= 4
-                ? getLegacyV4FloorMonsterCalibration(this.state.modeId, this.state.floor)
-                : previousVersion >= 3
+            const previousCalibration = previousVersion >= 5
+                ? getLegacyV5FloorMonsterCalibration(this.state.modeId, this.state.floor)
+                : previousVersion >= 4
+                    ? getLegacyV4FloorMonsterCalibration(this.state.modeId, this.state.floor)
+                    : previousVersion >= 3
                     ? getLegacyV3FloorMonsterCalibration(this.state.modeId, this.state.floor)
                 : previousVersion >= 2
                     ? getLegacyFloorMonsterCalibration(this.state.modeId, this.state.floor, LEGACY_V2_MONSTER_DEFEAT_RATE)

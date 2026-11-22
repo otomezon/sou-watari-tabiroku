@@ -277,7 +277,6 @@ export class RenderManager {
     drawItem(x, y, item) {
         const ctx = this.context;
         const kind = typeof item === 'string' ? item : item?.kind;
-        const templateId = typeof item === 'object' ? item?.templateId : '';
         if (kind === 'valuable') {
             ctx.fillStyle = 'rgba(108,173,231,.22)';
             ctx.fillRect(x + 5, y + 5, 22, 22);
@@ -359,33 +358,17 @@ export class RenderManager {
         if (kind === 'food') {
             ctx.fillStyle = 'rgba(220,177,104,.23)';
             ctx.fillRect(x + 5, y + 5, 22, 22);
-            if (templateId === 'rice-ball') {
-                ctx.fillStyle = '#f4f0dd';
-                ctx.strokeStyle = '#d8d0b7';
-                ctx.lineWidth = 1.5;
-                ctx.beginPath();
-                ctx.moveTo(x + 16, y + 6);
-                ctx.lineTo(x + 26, y + 24);
-                ctx.lineTo(x + 6, y + 24);
-                ctx.closePath();
-                ctx.fill();
-                ctx.stroke();
-                ctx.fillStyle = '#315a49';
-                ctx.fillRect(x + 12, y + 19, 8, 6);
-            }
-            else {
-                ctx.fillStyle = '#bd8042';
-                ctx.beginPath();
-                ctx.ellipse(x + 16, y + 18, 11, 7, -0.08, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#f2cf89';
-                ctx.beginPath();
-                ctx.ellipse(x + 15, y + 15, 8, 4, -0.08, Math.PI, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#f7e0a6';
-                ctx.fillRect(x + 11, y + 15, 3, 2);
-                ctx.fillRect(x + 18, y + 13, 3, 2);
-            }
+            ctx.fillStyle = '#bd8042';
+            ctx.beginPath();
+            ctx.ellipse(x + 16, y + 18, 11, 7, -0.08, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#f2cf89';
+            ctx.beginPath();
+            ctx.ellipse(x + 15, y + 15, 8, 4, -0.08, Math.PI, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#f7e0a6';
+            ctx.fillRect(x + 11, y + 15, 3, 2);
+            ctx.fillRect(x + 18, y + 13, 3, 2);
             return;
         }
         // A potion has a rounded flask, narrow neck and stopper, unlike the food silhouettes above.
