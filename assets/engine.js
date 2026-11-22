@@ -125,7 +125,7 @@ export const EXPECTED_MONSTER_DEFEAT_RATE = 0.50;
 const LEGACY_V1_MONSTER_DEFEAT_RATE = 0.55;
 const LEGACY_V2_MONSTER_DEFEAT_RATE = 0.70;
 const LEGACY_V3_MONSTER_DEFEAT_RATE = 0.40;
-const FLOOR_MONSTER_BALANCE_VERSION = 4;
+const FLOOR_MONSTER_BALANCE_VERSION = 5;
 
 // Average ordinary-monster pressure rises by campaign without requiring perfect equipment drops.
 const FLOOR_ENCOUNTER_POWER_TARGET = Object.freeze({
@@ -144,6 +144,14 @@ const LEGACY_V3_FLOOR_ENCOUNTER_POWER_TARGET = Object.freeze({
 const LEGACY_FLOOR_ENCOUNTER_POWER_TARGET = Object.freeze({
     tutorial: 0.68, beginner: 0.78, intermediate: 0.90, advanced: 1.02, expert: 1.12,
 });
+
+/** Ease the expert opening into its full encounter target over the first five floors. */
+export function getFloorEncounterPowerTarget(modeId, floor) {
+    const target = FLOOR_ENCOUNTER_POWER_TARGET[modeId] ?? FLOOR_ENCOUNTER_POWER_TARGET.beginner;
+    if (modeId !== 'expert' || !Number.isFinite(floor)) return target;
+    const progress = Math.min(1, Math.max(0, (floor - 1) / 4));
+    return 0.72 + (target - 0.72) * progress;
+}
 
 /** Estimate player level at floor entry from prior-floor EXP and expected kills. */
 export function getExpectedPlayerLevel(modeId, floor, defeatRate = EXPECTED_MONSTER_DEFEAT_RATE) {
@@ -186,7 +194,7 @@ export function getExpectedPlayerLevel(modeId, floor, defeatRate = EXPECTED_MONS
 function calculateFloorMonsterCalibration(
     modeId, floor, defeatRate, targets, minimum, maximum,
     hpMultiplier = 1, attackMultiplier = 1, defenseMultiplier = 1,
-    expectedMonsterDefenseCap = Number.POSITIVE_INFINITY,
+    expectedMonsterDefenseCap = Number.POSITIVE_INFINITY, openingRamp = false,
 ) {
     const mode = getModeConfig(modeId);
     const targetFloor = Math.max(1, Math.min(mode.floors, Math.floor(Number(floor) || 1)));
@@ -222,7 +230,9 @@ function calculateFloorMonsterCalibration(
     const playerAttack = 5 + (playerLevel - 1);
     const playerDefense = 2 + Math.floor(playerLevel / 2);
     const expectedPlayerPower = playerHp + playerAttack * 6 + playerDefense * 4;
-    const targetRatio = targets[modeId] ?? targets.beginner;
+    const targetRatio = openingRamp
+        ? getFloorEncounterPowerTarget(modeId, targetFloor)
+        : (targets[modeId] ?? targets.beginner);
     const adjustment = targetRatio * expectedPlayerPower / Math.max(1, expectedMonsterPower);
     return Math.max(minimum, Math.min(maximum, adjustment));
 }
@@ -242,7 +252,17 @@ export function getFloorMonsterCalibration(modeId, floor, defeatRate = EXPECTED_
     return calculateFloorMonsterCalibration(
         modeId, floor, defeatRate, FLOOR_ENCOUNTER_POWER_TARGET, 0.65, maximumAdjustment,
         FLOOR_MONSTER_HP_MULTIPLIER, FLOOR_MONSTER_ATTACK_MULTIPLIER, FLOOR_MONSTER_DEFENSE_MULTIPLIER,
-        getExpectedMonsterDefenseCap(modeId, floor, defeatRate),
+        getExpectedMonsterDefenseCap(modeId, floor, defeatRate), true,
+    );
+}
+
+/** v5.1.20 calibration (v4), used as the exact baseline when migrating saved monsters. */
+export function getLegacyV4FloorMonsterCalibration(modeId, floor) {
+    const maximumAdjustment = modeId === 'expert' ? 1.35 : 1.18;
+    return calculateFloorMonsterCalibration(
+        modeId, floor, EXPECTED_MONSTER_DEFEAT_RATE, FLOOR_ENCOUNTER_POWER_TARGET, 0.65, maximumAdjustment,
+        FLOOR_MONSTER_HP_MULTIPLIER, FLOOR_MONSTER_ATTACK_MULTIPLIER, FLOOR_MONSTER_DEFENSE_MULTIPLIER,
+        getExpectedMonsterDefenseCap(modeId, floor), false,
     );
 }
 
@@ -282,7 +302,12 @@ export function createNewGame(seed = makeSeed(), modeId = 'beginner') {
         groundGold: [],
         gold: 0,
         shop: null,
-        inventory: [],
+        inventory: [{ item: {
+            uid: `starter-rice-ball-${seed.toString(36)}-${Date.now().toString(36)}`,
+            templateId: 'rice-ball', name: 'おむすび', kind: 'food',
+            attack: 0, defense: 0, heal: 0, hungerRestore: 32,
+            description: '満腹度を40回復',
+        }, count: 1 }],
         equipment,
         message: modeId === 'tutorial' ? 'はじまりの坑道へようこそ。十字キーで移動し、階段を探そう。' : `${mode.name}の探索が始まった。階段を探そう。`,
         defeatedMonsters: 0,
@@ -488,6 +513,29 @@ function nextFootprintPathStep(tiles, from, target, blocked, size = 2) {
 function insideBounds(point, bounds) {
     return point.x >= bounds.x && point.y >= bounds.y && point.x < bounds.x + bounds.width && point.y < bounds.y + bounds.height;
 }
+function getLineCells(from, to) {
+    const cells = [];
+    let x = from.x;
+    let y = from.y;
+    const dx = Math.abs(to.x - from.x);
+    const sx = from.x < to.x ? 1 : -1;
+    const dy = -Math.abs(to.y - from.y);
+    const sy = from.y < to.y ? 1 : -1;
+    let error = dx + dy;
+    while (x !== to.x || y !== to.y) {
+        const doubledError = 2 * error;
+        if (doubledError >= dy) {
+            error += dy;
+            x += sx;
+        }
+        if (doubledError <= dx) {
+            error += dx;
+            y += sy;
+        }
+        cells.push({ x, y });
+    }
+    return cells;
+}
 function hasLineOfSight(tiles, from, to) {
     const steps = Math.max(Math.abs(to.x - from.x), Math.abs(to.y - from.y));
     for (let index = 1; index < steps; index += 1) {
@@ -570,7 +618,7 @@ function createRegularMonster(state, point, random, index, progress, template, t
         monster.defense += hunterScale.defense;
         monster.exp = Math.ceil(monster.exp * 2.8);
     }
-    else if (canSpawnRare && rarityRoll < 0.037) {
+    else if (canSpawnRare && rarityRoll < 0.032) {
         monster.actionSpeed = 'slow';
         monster.rareVariant = true;
         monster.name = `剛腕の${template.name}`;
@@ -580,7 +628,7 @@ function createRegularMonster(state, point, random, index, progress, template, t
         monster.defense += 2;
         monster.exp = Math.ceil(monster.exp * 2.5);
     }
-    else if (canSpawnRare && rarityRoll < 0.062) {
+    else if (canSpawnRare && rarityRoll < 0.052) {
         monster.actionSpeed = 'fast';
         monster.rareVariant = true;
         monster.name = `俊敏な${template.name}`;
@@ -589,6 +637,13 @@ function createRegularMonster(state, point, random, index, progress, template, t
         monster.attack = getFastVariantAttack(monster.attack);
         monster.defense += 1;
         monster.exp = Math.ceil(monster.exp * 2.3);
+    }
+    else if (canSpawnRare && rarityRoll < 0.062) {
+        monster.rareVariant = true;
+        monster.reflectDamageRate = 0.22;
+        monster.name = `反響する${template.name}`;
+        monster.defense += 2;
+        monster.exp = Math.ceil(monster.exp * 2.35);
     }
     return monster;
 }
@@ -710,7 +765,7 @@ function populateFloor(state, runRandom) {
         const tutorialHints = {
             1: '十字キーで移動。敵のいる方向へ進むと攻撃します。',
             2: 'アイテムに乗ると自動で拾います。持ち物から使用できます。',
-            3: '武器・盾・防具は装備画面から交換できます。初期装備は装備済みです。装備には耐久値があります。',
+            3: '武器・盾・防具は持ち物から装備できます。装備には耐久値があります。',
             4: '満腹度は行動で減少します。食料で回復し、0になる前に補給しましょう。',
             5: '階段の上で「降りる」を押すと次の階へ進みます。最深部にはボスがいます。',
         };
@@ -764,8 +819,10 @@ export class GameEngine {
                 : 0;
             if (previousVersion >= FLOOR_MONSTER_BALANCE_VERSION)
                 continue;
-            const previousCalibration = previousVersion >= 3
-                ? getLegacyV3FloorMonsterCalibration(this.state.modeId, this.state.floor)
+            const previousCalibration = previousVersion >= 4
+                ? getLegacyV4FloorMonsterCalibration(this.state.modeId, this.state.floor)
+                : previousVersion >= 3
+                    ? getLegacyV3FloorMonsterCalibration(this.state.modeId, this.state.floor)
                 : previousVersion >= 2
                     ? getLegacyFloorMonsterCalibration(this.state.modeId, this.state.floor, LEGACY_V2_MONSTER_DEFEAT_RATE)
                     : previousVersion >= 1
@@ -1236,6 +1293,11 @@ export class GameEngine {
         const damage = Math.max(1, getAttack(this.state) + random.int(-1, 2) - monster.defense);
         monster.hp -= damage;
         this.state.message = `${monster.name}に ${damage} ダメージ！`;
+        if (monster.hp > 0 && Number.isFinite(monster.reflectDamageRate) && monster.reflectDamageRate > 0) {
+            const reflectedDamage = Math.max(1, Math.round(damage * monster.reflectDamageRate));
+            this.state.player.hp = Math.max(0, this.state.player.hp - reflectedDamage);
+            this.state.message += ` 反響する力が ${reflectedDamage} ダメージを返した！`;
+        }
         const weaponBreak = this.wearEquipment('weapon');
         if (weaponBreak)
             this.state.message += ` ${weaponBreak}`;
@@ -1369,25 +1431,20 @@ export class GameEngine {
     }
     performElementalAreaAttack(monster, random, breath) {
         const center = { x: this.state.player.x, y: this.state.player.y };
-        const areaWidth = 1;
-        const areaHeight = 5;
-        const left = center.x - Math.floor(areaWidth / 2);
-        const top = center.y - Math.floor(areaHeight / 2);
-        const right = left + areaWidth - 1;
-        const bottom = top + areaHeight - 1;
+        const cells = getLineCells(monster, center);
+        const hitCells = new Set(cells.map(pointKey));
         const breathAttack = monster.attack;
         const damageBase = Math.max(1, Math.round(breathAttack * 0.60));
         this.state.elementalAreaEffect = {
-            x: center.x, y: center.y, width: areaWidth, height: areaHeight,
+            x: center.x, y: center.y, cells,
             element: breath.element, turn: this.state.turn + 1,
         };
 
-        // A one-tile-wide, five-tile-tall column catches only aligned footprints.
+        // The breath travels outward from the monster; range and the warning use the same tiles.
         // A defeated target feeds the dragon as before.
         const caughtMonsters = this.state.monsters.filter((target) =>
             target.id !== monster.id && target.hp > 0 && !target.boss && !target.shopkeeper &&
-            monsterFootprintCells(target).some((cell) =>
-                cell.x >= left && cell.x <= right && cell.y >= top && cell.y <= bottom),
+            monsterFootprintCells(target).some((cell) => hitCells.has(pointKey(cell))),
         );
         const monsterMessages = [];
         for (const target of caughtMonsters) {
@@ -1427,9 +1484,6 @@ export class GameEngine {
             }
             // Ignore other monsters while pathfinding, then attack anything on the next tile.
             const blocked = new Set();
-            const stairs = this.state.dungeon.stairs;
-            if (stairs && (stairs.x !== this.state.player.x || stairs.y !== this.state.player.y))
-                blocked.add(pointKey(stairs));
             blocked.add(pointKey(this.state.player));
             const step = nextPathStep(this.state.dungeon.tiles, monster, this.state.player, blocked);
             if (!step) return;
@@ -1496,8 +1550,6 @@ export class GameEngine {
                 else {
                     const blocked = collectBlockedMonsterCells(this.state.monsters, monster.id);
                     blocked.add(pointKey(this.state.player));
-                    if (this.state.dungeon.stairs)
-                        blocked.add(pointKey(this.state.dungeon.stairs));
                     const step = nextPathStep(this.state.dungeon.tiles, monster, prey, blocked);
                     if (step) {
                         monster.x = step.x;
@@ -1546,8 +1598,6 @@ export class GameEngine {
                 else {
                     const blocked = collectBlockedMonsterCells(this.state.monsters, monster.id);
                     blocked.add(pointKey(this.state.player));
-                    if (this.state.dungeon.stairs)
-                        blocked.add(pointKey(this.state.dungeon.stairs));
                     const step = nextPathStep(this.state.dungeon.tiles, monster, target, blocked);
                     if (step) {
                         monster.x = step.x;
@@ -1596,8 +1646,6 @@ export class GameEngine {
                 return;
             const blocked = collectBlockedMonsterCells(this.state.monsters, monster.id);
             blocked.add(pointKey(this.state.player));
-            if (this.state.dungeon.stairs)
-                blocked.add(pointKey(this.state.dungeon.stairs));
             const step = nextFootprintPathStep(this.state.dungeon.tiles, monster, this.state.player, blocked, bossSize);
             if (step) {
                 monster.x = step.x;
@@ -1624,13 +1672,6 @@ export class GameEngine {
         if (distance > 14)
             return;
         const blocked = collectBlockedMonsterCells(this.state.monsters, monster.id);
-        const stairs = this.state.dungeon.stairs;
-        // Stairs are reserved for the player. A chasing monster must never path onto them.
-        // If the player is currently standing on the stairs, keep the target reachable so
-        // enemies can still close in and attack from an adjacent tile, but never occupy it.
-        if (stairs && (stairs.x !== this.state.player.x || stairs.y !== this.state.player.y)) {
-            blocked.add(pointKey(stairs));
-        }
         const step = nextPathStep(this.state.dungeon.tiles, monster, this.state.player, blocked);
         if (step) {
             monster.x = step.x;
@@ -1648,6 +1689,11 @@ export class GameEngine {
         }
         if (item.durability === undefined)
             item.durability = item.maxDurability;
+        if (slot === 'weapon') {
+            item.durabilityWearCounter = (Number(item.durabilityWearCounter) || 0) + 1;
+            if (item.durabilityWearCounter < 2) return null;
+            item.durabilityWearCounter = 0;
+        }
         item.durability = Math.max(0, itemDurability(item) - 1);
         if (item.durability > 0)
             return null;
