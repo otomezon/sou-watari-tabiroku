@@ -10,9 +10,7 @@ release:
     item_catalog_templates_unchanged: true
     boss_base_profiles_unchanged: true
   changes:
-    - add_one_regular_enemy_to_each_floor_in_all_campaigns
-    - tune_advanced_regular_enemy_hp_attack_for_single_duel_survivability
-    - raise_intermediate_and_deep_campaign_enemy_power_targets_and_caps
+    - keep_original_enemy_counts_and_raise_all_campaign_enemy_stat_targets_slightly
     - reduce_floor_item_spawn_and_normal_enemy_item_drop_rates
     - reduce_rare_monster_premium_reward_rates
     - use_weighted_monster_routes_to_prevent_crowd_path_oscillation
