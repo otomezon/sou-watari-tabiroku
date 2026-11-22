@@ -86,7 +86,7 @@ test('5.2.0 app, manifest, cache and release metadata stay aligned without chang
   assert.match(sw, /sou-watari-tabiroku-v5-2-0/);
   assert.match(engine, /schemaVersion: 12/);
   assert.match(storage, /state\.schemaVersion !== 12/);
-  assert.match(release, /type: patch/);
+  assert.match(release, /type: minor/);
 });
 
 test('opening wave taper, stat curve and first-floor rare eligibility are explicit', async () => {
