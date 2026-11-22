@@ -480,82 +480,93 @@ function collectBlockedMonsterCells(monsters, excludeId) {
 
 const CHASE_DIRECTIONS = ['up', 'right', 'down', 'left', 'up-right', 'down-right', 'down-left', 'up-left'];
 
-/** Terrain-only distances let a monster recognize a queue in front of it instead of routing far away. */
-function getTerrainDistanceMap(tiles, target) {
-    const distances = new Map();
-    if (!isWalkable(tiles, target)) return distances;
-    const queue = [target];
-    distances.set(pointKey(target), 0);
-    for (let head = 0; head < queue.length; head += 1) {
-        const current = queue[head];
-        const nextDistance = distances.get(pointKey(current)) + 1;
-        for (const direction of CHASE_DIRECTIONS) {
-            const delta = DIRECTION_DELTA[direction];
-            const next = { x: current.x + delta.x, y: current.y + delta.y };
-            const key = pointKey(next);
-            if (distances.has(key) || !canStepBetween(tiles, current, next)) continue;
-            distances.set(key, nextDistance);
-            queue.push(next);
-        }
+/** Adjacent tiles from which a single-cell target can be attacked. */
+function getTargetApproachCells(tiles, target) {
+    const targetKey = pointKey(target);
+    const candidates = new Map();
+    for (const direction of CHASE_DIRECTIONS) {
+        const delta = DIRECTION_DELTA[direction];
+        const point = { x: target.x + delta.x, y: target.y + delta.y };
+        const key = pointKey(point);
+        if (key === targetKey || !canStepBetween(tiles, point, target)) continue;
+        candidates.set(key, point);
     }
-    return distances;
+    return [...candidates.values()];
 }
 
 /**
- * Follow the shortest terrain route while respecting occupied cells.
- * If another monster is standing on the route, only make a small local sidestep;
- * otherwise wait for the monster ahead to move. This prevents the crowd from
- * treating one another as a reason to wander to the far side of the dungeon.
+ * Move toward a stable, currently free attack position around the target.
+ * Other monsters are treated as occupied cells; if they block every approach,
+ * wait in the queue rather than switching sides and oscillating.
  */
-function nextCrowdAwarePathStep(state, monster, target) {
+function nextCrowdAwarePathStep(state, monster, target, targetId = 'player') {
     const tiles = state.dungeon.tiles;
-    const distances = getTerrainDistanceMap(tiles, target);
     const originKey = pointKey(monster);
-    const currentDistance = distances.get(originKey);
-    if (!Number.isFinite(currentDistance) || currentDistance <= 1) return null;
-
+    const targetAnchor = `${targetId}:${pointKey(target)}`;
     const blocked = collectBlockedMonsterCells(state.monsters, monster.id);
-    // A monster target is the destination, not an obstacle; all other monsters remain occupied.
-    const targetMonster = state.monsters.find((other) =>
-        other.id !== monster.id && other.hp > 0 && monsterCovers(other, target));
-    if (targetMonster) {
-        for (const cell of monsterFootprintCells(targetMonster))
-            blocked.delete(pointKey(cell));
-    }
-    // Monsters chase prey around the player but must never step into the player's tile.
-    if (target.x !== state.player.x || target.y !== state.player.y)
-        blocked.add(pointKey(state.player));
+    blocked.add(pointKey(state.player));
 
-    // Prefer the true shortest route whenever its next cell is free.
-    const direct = nextPathStep(tiles, monster, target, new Set());
-    if (direct && !blocked.has(pointKey(direct))) {
-        delete monster.crowdPreviousPosition;
-        return direct;
+    const approachCells = getTargetApproachCells(tiles, target)
+        .filter((point) => !blocked.has(pointKey(point)));
+    if (!approachCells.length) {
+        monster.crowdTargetAnchor = targetAnchor;
+        delete monster.crowdTargetKey;
+        return null;
     }
 
-    const candidates = [];
-    for (const direction of CHASE_DIRECTIONS) {
-        const delta = DIRECTION_DELTA[direction];
-        const next = { x: monster.x + delta.x, y: monster.y + delta.y };
-        const key = pointKey(next);
-        const distance = distances.get(key);
-        if (!Number.isFinite(distance) || distance > currentDistance + 2 ||
-            blocked.has(key) || !canStepBetween(tiles, monster, next)) continue;
-        if (key === monster.crowdPreviousPosition) continue;
-        if (delta.x !== 0 && delta.y !== 0) {
-            const sideX = pointKey({ x: monster.x + delta.x, y: monster.y });
-            const sideY = pointKey({ x: monster.x, y: monster.y + delta.y });
-            if (blocked.has(sideX) && blocked.has(sideY)) continue;
+    const previousPosition = monster.crowdPreviousPosition;
+    const pathBlocked = new Set(blocked);
+    if (previousPosition && previousPosition !== originKey)
+        pathBlocked.add(previousPosition);
+
+    const canReach = (point) => {
+        const key = pointKey(point);
+        if (blocked.has(key)) return null;
+        const step = nextPathStep(tiles, monster, point, pathBlocked);
+        if (!step || pointKey(step) === previousPosition) return null;
+        return step;
+    };
+
+    // Keep the same attack slot while it remains available. This is the main
+    // anti-jitter rule when several monsters approach the same player.
+    if (monster.crowdTargetAnchor === targetAnchor && monster.crowdTargetKey) {
+        const preferred = approachCells.find((point) => pointKey(point) === monster.crowdTargetKey);
+        if (preferred) {
+            const step = canReach(preferred);
+            if (step) {
+                monster.crowdPreviousPosition = originKey;
+                return step;
+            }
         }
-        candidates.push({ point: next, distance });
     }
-    candidates.sort((a, b) => a.distance - b.distance ||
-        Math.max(Math.abs(a.point.x - target.x), Math.abs(a.point.y - target.y)) -
-        Math.max(Math.abs(b.point.x - target.x), Math.abs(b.point.y - target.y)));
-    const best = candidates[0];
-    if (!best) return null;
-    monster.crowdPreviousPosition = originKey;
-    return best.point;
+
+    const distanceMapCache = new Map();
+    const ranked = approachCells.map((point) => {
+        const key = pointKey(point);
+        let distances = distanceMapCache.get(key);
+        if (!distances) {
+            distances = getTerrainDistanceMap(tiles, point);
+            distanceMapCache.set(key, distances);
+        }
+        return { point, terrainDistance: distances.get(originKey) ?? Number.POSITIVE_INFINITY };
+    }).sort((a, b) => a.terrainDistance - b.terrainDistance ||
+        a.point.y - b.point.y || a.point.x - b.point.x);
+
+    for (const candidate of ranked) {
+        if (!Number.isFinite(candidate.terrainDistance)) continue;
+        const step = canReach(candidate.point);
+        if (!step) continue;
+        monster.crowdTargetAnchor = targetAnchor;
+        monster.crowdTargetKey = pointKey(candidate.point);
+        monster.crowdPreviousPosition = originKey;
+        return step;
+    }
+
+    // No reachable attack slot: remain behind the blocking monster instead of
+    // walking backward or repeatedly switching to another side of the room.
+    monster.crowdTargetAnchor = targetAnchor;
+    delete monster.crowdTargetKey;
+    return null;
 }
 function canOccupyFootprint(tiles, position, size, blocked) {
     for (let y = 0; y < size; y += 1) {
@@ -910,7 +921,6 @@ export class GameEngine {
         this.state = state;
         this.ensureBossArena();
         this.ensureFloorMonsterBalance();
-        this.relocateStairOccupants();
     }
 
     /** One-time stat migration for normal monsters already present in older saves. */
@@ -1051,37 +1061,6 @@ export class GameEngine {
             return point ? { ...gold, x: point.x, y: point.y } : gold;
         });
         this.state.message = `最深部の大広間に到達した。${boss.name}が立ちはだかる！`;
-    }
-    /** Safety net for legacy or malformed saves: monsters must never occupy stairs. */
-    relocateStairOccupants() {
-        const stairs = this.state.dungeon.stairs;
-        if (!stairs)
-            return;
-        const key = pointKey(stairs);
-        const occupied = new Set(this.state.monsters.filter((m) => pointKey(m) !== key).map(pointKey));
-        occupied.add(pointKey(this.state.player));
-        for (const monster of this.state.monsters) {
-            if (pointKey(monster) !== key)
-                continue;
-            const candidates = [];
-            for (let y = 1; y < this.state.dungeon.height - 1; y += 1) {
-                for (let x = 1; x < this.state.dungeon.width - 1; x += 1) {
-                    const point = { x, y };
-                    if (isWalkable(this.state.dungeon.tiles, point) && pointKey(point) !== key && !occupied.has(pointKey(point)))
-                        candidates.push(point);
-                }
-            }
-            candidates.sort((a, b) => (Math.abs(a.x - stairs.x) + Math.abs(a.y - stairs.y)) - (Math.abs(b.x - stairs.x) + Math.abs(b.y - stairs.y)));
-            const replacement = candidates[0];
-            if (replacement) {
-                monster.x = replacement.x;
-                monster.y = replacement.y;
-                occupied.add(pointKey(replacement));
-            }
-            else
-                monster.hp = 0;
-        }
-        this.state.monsters = this.state.monsters.filter((monster) => monster.hp > 0);
     }
     move(direction) {
         if (this.state.status !== 'playing')
@@ -1662,7 +1641,7 @@ export class GameEngine {
                     return;
                 }
                 else {
-                    const step = nextCrowdAwarePathStep(this.state, monster, prey);
+                    const step = nextCrowdAwarePathStep(this.state, monster, prey, prey.id);
                     if (step) {
                         monster.x = step.x;
                         monster.y = step.y;
@@ -1708,7 +1687,7 @@ export class GameEngine {
                     }
                 }
                 else {
-                    const step = nextCrowdAwarePathStep(this.state, monster, target);
+                    const step = nextCrowdAwarePathStep(this.state, monster, target, target.id);
                     if (step) {
                         monster.x = step.x;
                         monster.y = step.y;
@@ -1781,7 +1760,7 @@ export class GameEngine {
         }
         if (distance > 14)
             return;
-        const step = nextCrowdAwarePathStep(this.state, monster, this.state.player);
+        const step = nextCrowdAwarePathStep(this.state, monster, this.state.player, 'player');
         if (step) {
             monster.x = step.x;
             monster.y = step.y;
