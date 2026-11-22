@@ -18,12 +18,12 @@ test('a rear monster sidesteps a monster blocking the direct approach, then atta
   const blocker = {
     id: 'front-monster', kind: 'slime', name: '前方のスライム',
     x: 7, y: 5, hp: 80, maxHp: 80, attack: 4, defense: 0, exp: 5,
-    boss: false, floorBalanceVersion: 6,
+    boss: false, floorBalanceVersion: 7,
   };
   const pursuer = {
     id: 'rear-monster', kind: 'bat', name: '後方のコウモリ',
     x: 6, y: 5, hp: 80, maxHp: 80, attack: 4, defense: 0, exp: 5,
-    boss: false, floorBalanceVersion: 6,
+    boss: false, floorBalanceVersion: 7,
   };
   state.monsters = [blocker, pursuer];
   const engine = new GameEngine(state);
@@ -51,12 +51,12 @@ test('a monster boxed in by walls and an ally waits rather than wandering away f
   const blocker = {
     id: 'corridor-blocker', kind: 'slime', name: '通路のスライム',
     x: 6, y: 5, hp: 80, maxHp: 80, attack: 4, defense: 0, exp: 5,
-    boss: false, floorBalanceVersion: 6,
+    boss: false, floorBalanceVersion: 7,
   };
   const pursuer = {
     id: 'corridor-pursuer', kind: 'bat', name: '後方のコウモリ',
     x: 5, y: 5, hp: 80, maxHp: 80, attack: 4, defense: 0, exp: 5,
-    boss: false, floorBalanceVersion: 6,
+    boss: false, floorBalanceVersion: 7,
   };
   state.monsters = [blocker, pursuer];
   const engine = new GameEngine(state);

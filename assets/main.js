@@ -6,7 +6,7 @@ import { getShopSellPrice, remainingShopGoods, unpaidShopGoods } from "./shop.js
 import { RenderManager } from "./renderer.js";
 import { DEFAULT_AUDIO_SETTINGS, SaveManager } from "./storage.js";
 import { DUNGEON_MODES, MODE_ORDER, getModeConfig } from "./modes.js";
-const APP_VERSION = '5.2.1';
+const APP_VERSION = '5.2.2';
 const ACTION_DELAY_MS = 65;
 const GAME_OVER_RESULT_DELAY_MS = 950;
 const wait = (milliseconds) => new Promise((resolve) => window.setTimeout(resolve, milliseconds));
@@ -149,7 +149,7 @@ class GameApp {
             const previousBossBalanceVersion = loaded.monsters?.find((monster) => monster.boss)?.bossBalanceVersion ?? 0;
             const needsFloorMonsterBalanceMigration = loaded.status === 'playing' &&
                 loaded.monsters?.some((monster) => !monster.boss && !monster.shopkeeper &&
-                    (monster.floorBalanceVersion ?? 0) < 6);
+                    (monster.floorBalanceVersion ?? 0) < 7);
             this.state = loaded;
             this.engine = new GameEngine(loaded);
             const currentBossBalanceVersion = loaded.monsters?.find((monster) => monster.boss)?.bossBalanceVersion ?? 0;
@@ -176,9 +176,17 @@ class GameApp {
     handleDirection(direction) {
         const player = this.state?.player;
         const step = DIRECTION_DELTA[direction];
-        const targetX = (player?.x ?? 0) + step.x;
-        const targetY = (player?.y ?? 0) + step.y;
-        const attacks = Boolean(player && this.state?.monsters.some((monster) => {
+        if (!player || !step || !Number.isInteger(step.x) || !Number.isInteger(step.y)) {
+            if (this.state?.status === 'playing') {
+                this.state.message = '移動方向を認識できなかった。もう一度入力してください。';
+                this.refresh();
+            }
+            return;
+        }
+        const targetX = player.x + step.x;
+        const targetY = player.y + step.y;
+        const attacks = Boolean(this.state?.monsters.some((monster) => {
+            if (!monster || monster.hp <= 0) return false;
             const size = monster.boss ? Math.max(1, Math.min(4, monster.bossSize ?? 2)) : 1;
             return targetX >= monster.x && targetY >= monster.y &&
                 targetX < monster.x + size && targetY < monster.y + size;
@@ -218,10 +226,16 @@ class GameApp {
                     ...(leveledUp ? [] : damageCues),
                     ...resultCues,
                 ];
-                if (cues.length)
-                    this.sound.effectSequence(cues);
-                else
-                    this.sound.effect(defaultEffect);
+                try {
+                    if (cues.length)
+                        this.sound.effectSequence(cues);
+                    else
+                        this.sound.effect(defaultEffect);
+                }
+                catch (error) {
+                    // Audio/device errors are non-fatal and must never invalidate a successful attack.
+                    console.warn('Sound playback failed after the game action.', error);
+                }
                 if (postActionStatus !== 'playing') {
                     if (postActionStatus === 'gameover')
                         await wait(GAME_OVER_RESULT_DELAY_MS);

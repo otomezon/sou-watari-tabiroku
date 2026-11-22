@@ -17,6 +17,8 @@ on:
       - 'tests/v5.1.16-campaign-levels-hunger-audio-breath.test.mjs'
       - 'tests/v5.2.0-difficulty-starter-food.test.mjs'
       - 'tests/v5.2.1-gameplay-polish.test.mjs'
+      - 'tests/v5.2.2-difficulty-loot-ai-attack.test.mjs'
+      - 'tests/v5.2.2-combat-state-integrity.test.mjs'
       - 'tests/v5.0.2-mode-spawn-balance.test.mjs'
       - '.github/workflows/test-early-game-balance.yml'
       - 'manifest.webmanifest'
@@ -37,4 +39,4 @@ jobs:
         with:
           node-version: '22'
       - name: Test game balance and monster AI
-        run: node --experimental-default-type=module --test tests/v5.0.2-mode-spawn-balance.test.mjs tests/v5.1.2-early-game-balance.test.mjs tests/v5.1.4-monster-ai-balance.test.mjs tests/v5.1.5-endgame-economy.test.mjs tests/v5.1.8-late-game-economy.test.mjs tests/v5.1.9-rare-kill-regression.test.mjs tests/v5.1.10-hunter-defeat-growth.test.mjs tests/v5.1.11-balance-hunter-shopkeeper-boss-recovery.test.mjs tests/v5.1.12-full-campaign-balance.test.mjs tests/v5.1.13-dragon-breath-fixed-healing.test.mjs tests/v5.1.16-campaign-levels-hunger-audio-breath.test.mjs tests/v5.2.0-difficulty-starter-food.test.mjs tests/v5.2.1-gameplay-polish.test.mjs
+        run: node --experimental-default-type=module --test tests/v5.0.2-mode-spawn-balance.test.mjs tests/v5.1.2-early-game-balance.test.mjs tests/v5.1.4-monster-ai-balance.test.mjs tests/v5.1.5-endgame-economy.test.mjs tests/v5.1.8-late-game-economy.test.mjs tests/v5.1.9-rare-kill-regression.test.mjs tests/v5.1.10-hunter-defeat-growth.test.mjs tests/v5.1.11-balance-hunter-shopkeeper-boss-recovery.test.mjs tests/v5.1.12-full-campaign-balance.test.mjs tests/v5.1.13-dragon-breath-fixed-healing.test.mjs tests/v5.1.16-campaign-levels-hunger-audio-breath.test.mjs tests/v5.2.0-difficulty-starter-food.test.mjs tests/v5.2.1-gameplay-polish.test.mjs tests/v5.2.2-difficulty-loot-ai-attack.test.mjs tests/v5.2.2-combat-state-integrity.test.mjs

@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import {
   createNewGame, GameEngine, getFloorEncounterPowerTarget,
   getFloorMonsterCalibration, getLegacyV4FloorMonsterCalibration, getLegacyV5FloorMonsterCalibration,
+  getLegacyV6FloorMonsterCalibration,
 } from '../assets/engine.js';
 import { getItemRecovery } from '../assets/balance.mjs';
 import { MODE_ORDER, getModeConfig } from '../assets/modes.js';
@@ -13,11 +14,11 @@ const root = new URL('../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
 
 const EXPECTED_CURVES = Object.freeze({
-  tutorial: [0.56, 0.60],
-  beginner: [0.60, 0.63],
-  intermediate: [0.68, 0.74],
+  tutorial: [0.58, 0.62],
+  beginner: [0.62, 0.65],
+  intermediate: [0.70, 0.76],
   advanced: [0.67, 0.73],
-  expert: [0.76, 0.82],
+  expert: [0.78, 0.84],
 });
 
 test('all five campaigns ramp encounter pressure smoothly from the first floor to the final floor', () => {
@@ -36,7 +37,9 @@ test('all five campaigns ramp encounter pressure smoothly from the first floor t
       `${modeId}: every campaign should have a real floor-to-floor ramp`);
     for (let floor = 1; floor <= floors; floor += 1) {
       const scale = getFloorMonsterCalibration(modeId, floor);
-      const maximumAdjustment = modeId === 'expert' ? 1.35 : 1.18;
+      const maximumAdjustment = ({
+        tutorial: 1.19, beginner: 1.19, intermediate: 1.19, advanced: 1.19, expert: 1.38,
+      })[modeId];
       assert.ok(Number.isFinite(scale) && scale >= 0.65 && scale <= maximumAdjustment,
         `${modeId} F${floor}: invalid calibration ${scale}`);
     }
@@ -76,14 +79,16 @@ test('the existing starter food is consumed through the normal food system', () 
   assert.equal(state.inventory.length, 0);
 });
 
-test('v4 and v5 enemy saves migrate to v6 without applying stat multipliers twice', () => {
-  for (const version of [4, 5]) {
+test('v4, v5 and v6 enemy saves migrate to v7 without applying stat multipliers twice', () => {
+  for (const version of [4, 5, 6]) {
     const state = createNewGame(0x52002028 + version, 'expert');
     state.floor = 2;
     state.dungeon.stairs = null;
     const previousCalibration = version === 4
       ? getLegacyV4FloorMonsterCalibration('expert', state.floor)
-      : getLegacyV5FloorMonsterCalibration('expert', state.floor);
+      : version === 5
+        ? getLegacyV5FloorMonsterCalibration('expert', state.floor)
+        : getLegacyV6FloorMonsterCalibration('expert', state.floor);
     const currentCalibration = getFloorMonsterCalibration('expert', state.floor);
     const oldMonster = {
       id: `legacy-v${version}`, kind: 'slime', name: `v${version}保存敵`,
@@ -95,7 +100,7 @@ test('v4 and v5 enemy saves migrate to v6 without applying stat multipliers twic
     new GameEngine(state);
 
     const ratio = currentCalibration / previousCalibration;
-    assert.equal(oldMonster.floorBalanceVersion, 6);
+    assert.equal(oldMonster.floorBalanceVersion, 7);
     assert.equal(oldMonster.maxHp, Math.round(80 * ratio));
     assert.equal(oldMonster.hp, Math.round(oldMonster.maxHp * 0.5));
     assert.equal(oldMonster.attack, Math.max(1, Math.round(20 * ratio)));
@@ -107,8 +112,9 @@ test('the new encounter curve keeps the intended difficulty order from tutorial 
   const finalFloor = MODE_ORDER.map((mode) =>
     getFloorEncounterPowerTarget(mode, getModeConfig(mode).floors));
 
-  assert.deepEqual(firstFloor, [0.56, 0.60, 0.68, 0.67, 0.76]);
-  assert.deepEqual(finalFloor, [0.60, 0.63, 0.74, 0.73, 0.82]);
+  assert.deepEqual(firstFloor, [0.58, 0.62, 0.70, 0.67, 0.78]);
+  assert.deepEqual(finalFloor, [0.62, 0.65, 0.76, 0.73, 0.84]);
+
   const expectedOpeningCounts = MODE_ORDER.map((mode) => {
     const config = getModeConfig(mode);
     return (config.minMonsters + config.maxMonsters) / 2 - 1;
@@ -119,7 +125,10 @@ test('the new encounter curve keeps the intended difficulty order from tutorial 
   });
   const openingPressure = firstFloor.map((target, index) => target * expectedOpeningCounts[index]);
   const finalPressure = finalFloor.map((target, index) => target * expectedFinalCounts[index]);
+
   assert.ok(openingPressure.every((value, index) => index === 0 || value > openingPressure[index - 1]));
   assert.ok(finalPressure.every((value, index) => index === 0 || value > finalPressure[index - 1]));
-  assert.ok(firstFloor[3] < firstFloor[2], 'advanced uses slightly lower per-monster pressure to offset its higher spawn count');
+  assert.ok(firstFloor[3] < firstFloor[2],
+    'advanced keeps a slightly lower per-monster target because its original enemy-count range is larger');
+  assert.ok(firstFloor[4] > firstFloor[3], 'expert keeps the highest per-monster target');
 });

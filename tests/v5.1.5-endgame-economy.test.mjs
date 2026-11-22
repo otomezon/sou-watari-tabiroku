@@ -44,14 +44,14 @@ test('the two hardest expert tier monsters keep their attack but avoid combined 
 });
 
 test('valuable and gold drop rates are trimmed in the late campaigns without changing rare spawn eligibility', () => {
-  assert.equal(DUNGEON_MODES.intermediate.enemyDropValuable, 0.0065);
-  assert.equal(DUNGEON_MODES.advanced.enemyDropValuable, 0.007);
-  assert.equal(DUNGEON_MODES.expert.enemyDropValuable, 0.0075);
+  assert.equal(DUNGEON_MODES.intermediate.enemyDropValuable, 0.0035);
+  assert.equal(DUNGEON_MODES.advanced.enemyDropValuable, 0.004);
+  assert.equal(DUNGEON_MODES.expert.enemyDropValuable, 0.0045);
   assert.equal(DUNGEON_MODES.intermediate.enemyDropGold, 0.23);
   assert.equal(DUNGEON_MODES.advanced.enemyDropGold, 0.24);
   assert.equal(DUNGEON_MODES.expert.enemyDropGold, 0.25);
-  assert.equal(RARE_VALUABLE_DROP_CHANCES.hunter, 0.12);
-  assert.equal(RARE_VALUABLE_DROP_CHANCES.otherRare, 0.04);
+  assert.equal(RARE_VALUABLE_DROP_CHANCES.hunter, 0.08);
+  assert.equal(RARE_VALUABLE_DROP_CHANCES.otherRare, 0.025);
   assert.equal(RARE_GOLD_DROP_CHANCE_MULTIPLIER, 1.5);
   assert.equal(RARE_GOLD_AMOUNT_MULTIPLIER, 1.5);
 });

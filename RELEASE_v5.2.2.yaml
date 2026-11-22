@@ -1,0 +1,28 @@
+release:
+  project: 層渡りの旅録
+  version: 5.2.2
+  previous_version: 5.2.1
+  type: patch
+  title: 難易度・戦利品・敵AI・攻撃安定性の再調整
+  invariants:
+    save_schema: 12
+    enemy_balance_version: 7
+    item_catalog_templates_unchanged: true
+    boss_base_profiles_unchanged: true
+  changes:
+    - keep_original_enemy_counts_preserve_advanced_target_and_modestly_raise_other_campaign_targets
+    - reduce_floor_item_spawn_and_normal_enemy_item_drop_rates
+    - reduce_rare_monster_premium_reward_rates
+    - use_weighted_monster_routes_to_prevent_crowd_path_oscillation
+    - validate_attack_direction_targets_and_combat_stats
+    - allow_monsters_to_occupy_stair_tiles_in_valid_saves
+    - recreate_closed_audio_context_and_isolate_sound_failures
+    - migrate_existing_enemy_balance_v6_saves_to_v7_once
+  tests:
+    - all_campaign_difficulty_curve_and_stat_caps
+    - floor_loot_and_enemy_item_drop_rates_all_modes
+    - crowd_ai_strictly_progressing_route_around_blocker
+    - malformed_attack_direction_and_combat_stats
+    - closed_audio_context_and_nonfatal_attack_sound_errors
+    - stair_occupancy_and_repeated_combat_save_integrity
+    - old_enemy_balance_save_migration

@@ -45,23 +45,23 @@ function defeatRareMonster({ hunterVariant, lootRoll }) {
 }
 
 test('defeating a late-game hunter can roll its potion drop without a ReferenceError', () => {
-  const state = defeatRareMonster({ hunterVariant: true, lootRoll: 0.60 });
+  const state = defeatRareMonster({ hunterVariant: true, lootRoll: 0.39 });
   assert.equal(state.monsters.length, 0);
   assert.equal(state.groundItems.length, 1);
   assert.equal(state.groundItems[0].item.kind, 'potion');
 });
 
 test('defeating a late-game hunter can roll its food drop at the cumulative threshold', () => {
-  const state = defeatRareMonster({ hunterVariant: true, lootRoll: 0.69 });
+  const state = defeatRareMonster({ hunterVariant: true, lootRoll: 0.43 });
   assert.equal(state.monsters.length, 0);
   assert.equal(state.groundItems.length, 1);
   assert.equal(state.groundItems[0].item.kind, 'food');
 });
 
 test('defeating a late-game non-hunter rare monster can roll potion and food drops', () => {
-  const potionState = defeatRareMonster({ hunterVariant: false, lootRoll: 0.25 });
+  const potionState = defeatRareMonster({ hunterVariant: false, lootRoll: 0.16 });
   assert.equal(potionState.groundItems[0].item.kind, 'potion');
 
-  const foodState = defeatRareMonster({ hunterVariant: false, lootRoll: 0.29 });
+  const foodState = defeatRareMonster({ hunterVariant: false, lootRoll: 0.19 });
   assert.equal(foodState.groundItems[0].item.kind, 'food');
 });
