@@ -1,0 +1,19 @@
+release:
+  project: 層渡りの旅録
+  version: 5.2.2
+  previous_version: 5.2.1
+  type: patch
+  title: 戦闘AI・攻撃時のセーブ整合性・報酬バランス修正
+  invariants:
+    save_schema: 12
+    enemy_balance_version: 6
+    item_catalog_templates_unchanged: true
+    boss_base_profiles_unchanged: true
+  changes:
+    - target_stable_free_player_adjacent_attack_slots_for_crowd_aware_monsters
+    - wait_in_corridors_when_all_attack_slots_are_blocked
+    - allow_non_overlapping_monsters_to_occupy_stair_tiles_in_validated_saves
+    - increase_regular_monster_count_by_one_per_campaign
+    - reduce_floor_cache_and_monster_item_drop_rates
+    - prevent_premium_loot_from_selecting_future_floor_templates
+    - add_multiturn_attack_save_integrity_regression_tests
