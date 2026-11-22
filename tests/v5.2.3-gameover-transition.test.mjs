@@ -31,9 +31,10 @@ test('game-over dissolves the dungeon and crossfades the result over the blood t
   assert.match(styles, /\.result-screen\.is-gameover-transitioned/);
   assert.match(styles, /@keyframes gameover-result-crossfade/);
   assert.match(styles, /@keyframes gameover-blood-reveal/);
-  assert.match(styles, /feTurbulence/);
   assert.match(styles, /@keyframes gameover-blood-clear/);
   assert.match(html, /class="gameover-blood-art" viewBox="0 0 390 844"/);
+  assert.match(html, /<filter id="blood-edge"/);
+  assert.match(html, /<feTurbulence/);
   assert.match(html, /<path class="blood-wet"/);
   assert.doesNotMatch(html, /<span><\/span><span><\/span>/);
 
