@@ -129,11 +129,11 @@ const FLOOR_MONSTER_BALANCE_VERSION = 7;
 
 // Full-campaign targets are smoothly interpolated from each opening floor to the final normal floor.
 const FLOOR_ENCOUNTER_POWER_CURVE = Object.freeze({
-    tutorial: Object.freeze({ start: 0.56, end: 0.60 }),
-    beginner: Object.freeze({ start: 0.60, end: 0.63 }),
-    intermediate: Object.freeze({ start: 0.70, end: 0.78 }),
-    advanced: Object.freeze({ start: 0.74, end: 0.84 }),
-    expert: Object.freeze({ start: 0.98, end: 1.10 }),
+    tutorial: Object.freeze({ start: 0.59, end: 0.63 }),
+    beginner: Object.freeze({ start: 0.63, end: 0.66 }),
+    intermediate: Object.freeze({ start: 0.71, end: 0.77 }),
+    advanced: Object.freeze({ start: 0.70, end: 0.76 }),
+    expert: Object.freeze({ start: 0.79, end: 0.85 }),
 });
 // v5.2.1 calibration is retained verbatim for one-time migration of existing v6 saves.
 const LEGACY_V6_FLOOR_ENCOUNTER_POWER_CURVE = Object.freeze({
@@ -275,30 +275,12 @@ export function getExpectedMonsterDefenseCap(modeId, floor, defeatRate = EXPECTE
     return Math.max(1, expectedPlayerAttack - minimumNoGearDamage);
 }
 
-/** Upper campaign regular enemies trade some individual bulk for the larger floor count. */
-function getCurrentFloorMonsterStatMultipliers(modeId) {
-    if (modeId === 'advanced')
-        return { hp: 1.02, attack: 0.86, defense: FLOOR_MONSTER_DEFENSE_MULTIPLIER };
-    return {
-        hp: FLOOR_MONSTER_HP_MULTIPLIER,
-        attack: FLOOR_MONSTER_ATTACK_MULTIPLIER,
-        defense: FLOOR_MONSTER_DEFENSE_MULTIPLIER,
-    };
-}
-
 /** Balance durable monsters against a 50% progression estimate while limiting burst damage. */
 export function getFloorMonsterCalibration(modeId, floor, defeatRate = EXPECTED_MONSTER_DEFEAT_RATE) {
-    const statMultipliers = getCurrentFloorMonsterStatMultipliers(modeId);
-    const maximumAdjustment = ({
-        tutorial: 1.18,
-        beginner: 1.18,
-        intermediate: 1.24,
-        advanced: 1.28,
-        expert: 1.62,
-    })[modeId] ?? 1.32;
+    const maximumAdjustment = modeId === 'expert' ? 1.40 : 1.23;
     return calculateFloorMonsterCalibration(
         modeId, floor, defeatRate, FLOOR_ENCOUNTER_POWER_CURVE, 0.65, maximumAdjustment,
-        statMultipliers.hp, statMultipliers.attack, statMultipliers.defense,
+        FLOOR_MONSTER_HP_MULTIPLIER, FLOOR_MONSTER_ATTACK_MULTIPLIER, FLOOR_MONSTER_DEFENSE_MULTIPLIER,
         getExpectedMonsterDefenseCap(modeId, floor, defeatRate), true,
     );
 }
@@ -743,21 +725,20 @@ export function findItemDropPoint(state, monster) {
 }
 function createRegularMonster(state, point, random, index, progress, template, tierEntryScale = 1, rareSpawnChanceOverride = undefined) {
     const mode = getModeConfig(state.modeId);
-    const statMultipliers = getCurrentFloorMonsterStatMultipliers(state.modeId);
     const statScale = mode.difficultyScale * (1.00 + progress * 0.40) *
         getFloorStatAdjustment(state.modeId, state.floor, mode.floors) *
         getRegularMonsterDepthScale(state.modeId, state.floor) *
         getFloorMonsterCalibration(state.modeId, state.floor) * tierEntryScale;
     const hp = Math.max(1, Math.round(
         (template.hp + Math.floor(state.floor * 0.35) + random.int(0, 2)) *
-        statScale * statMultipliers.hp,
+        statScale * FLOOR_MONSTER_HP_MULTIPLIER,
     ));
     const monster = {
         id: `f${state.floor}-m${index}-${random.int(1000, 9999)}`,
         kind: template.kind, name: template.name, x: point.x, y: point.y,
         hp, maxHp: hp,
         attack: Math.max(1, Math.round(
-            (template.attack + Math.floor(state.floor * 0.18)) * statScale * statMultipliers.attack,
+            (template.attack + Math.floor(state.floor * 0.18)) * statScale * FLOOR_MONSTER_ATTACK_MULTIPLIER,
         )),
         defense: Math.min(getExpectedMonsterDefenseCap(state.modeId, state.floor), Math.max(0, Math.round(
             (template.defense + Math.floor((state.floor - 1) / 7)) * statScale * FLOOR_MONSTER_DEFENSE_MULTIPLIER,
