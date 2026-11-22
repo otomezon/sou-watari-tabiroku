@@ -15,7 +15,8 @@ export function getRegularMonsterDepthScale(modeId, floor) {
 export function getMonsterTierProgress(modeId, floor, totalFloors) {
     const denominator = Math.max(1, totalFloors - 2);
     const progress = Math.min(1, Math.max(0, (floor - 1) / denominator));
-    return modeId === 'expert' ? Math.pow(progress, 1.15) : progress;
+    const tierRampExponent = modeId === 'expert' ? 1.15 : modeId === 'advanced' ? 1.35 : 1;
+    return Math.pow(progress, tierRampExponent);
 }
 
 /** Small, campaign-wide pressure ramp applied to every ordinary floor. */
