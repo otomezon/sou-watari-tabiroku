@@ -179,6 +179,10 @@ export class SoundManager {
             this.playHunterLevelUpFanfare();
             return;
         }
+        if (effect === 'monster-level') {
+            this.playMonsterLevelUpFanfare();
+            return;
+        }
         if (effect === 'gameover') {
             void this.playEventCue(effect);
             return;
@@ -204,6 +208,9 @@ export class SoundManager {
                 offset += 3.05;
             } else if (effect === 'hunter-level') {
                 this.playHunterLevelUpFanfare(now + offset);
+                offset += 3.05;
+            } else if (effect === 'monster-level') {
+                this.playMonsterLevelUpFanfare(now + offset);
                 offset += 3.05;
             } else if (effect === 'gameover') {
                 void this.playEventCue(effect, now + offset);
@@ -319,7 +326,7 @@ export class SoundManager {
             envelope.disconnect();
         };
     }
-    playLevelUpFanfare(requestedStart, transposeSemitones = 0) {
+    playLevelUpFanfare(requestedStart, transposeSemitones = 0, monsterTimbre = false) {
         if (!this.context || !this.sfxGain || this.settings.muteSfx || this.settings.sfxVolume <= 0)
             return;
         const start = Math.max(this.context.currentTime + 0.018, requestedStart ?? this.context.currentTime + 0.018);
@@ -333,7 +340,8 @@ export class SoundManager {
             [1.98, 739.99, 0.15], [2.15, 880.00, 0.15], [2.33, 1174.66, 0.58],
         ];
         for (const [time, frequency, duration] of melody)
-            this.playFanfareTone(pitch(frequency), start + time, duration, 0.092, 'sawtooth', 2850, 0.012);
+            this.playFanfareTone(pitch(frequency), start + time, duration, monsterTimbre ? 0.072 : 0.092,
+                monsterTimbre ? 'triangle' : 'sawtooth', monsterTimbre ? 1750 : 2850, monsterTimbre ? 0.028 : 0.012);
 
         // Soft string-like triads give each phrase a clear harmonic home.
         const chords = [
@@ -354,6 +362,10 @@ export class SoundManager {
     /** Same level-up phrase transposed down a whole tone into C major. */
     playHunterLevelUpFanfare(requestedStart) {
         this.playLevelUpFanfare(requestedStart, -2);
+    }
+    /** Monster growth uses a lower fifth and a softer, rounded timbre to separate it from the player's fanfare. */
+    playMonsterLevelUpFanfare(requestedStart) {
+        this.playLevelUpFanfare(requestedStart, -7, true);
     }
     playEffect(effect, startAt) {
         if (!this.context || !this.sfxGain)
