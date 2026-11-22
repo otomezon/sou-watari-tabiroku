@@ -480,6 +480,27 @@ function collectBlockedMonsterCells(monsters, excludeId) {
 
 const CHASE_DIRECTIONS = ['up', 'right', 'down', 'left', 'up-right', 'down-right', 'down-left', 'up-left'];
 
+/** Terrain-only distances used to choose the nearest free attack slot. */
+function getTerrainDistanceMap(tiles, target) {
+    const distances = new Map();
+    if (!isWalkable(tiles, target)) return distances;
+    const queue = [target];
+    distances.set(pointKey(target), 0);
+    for (let head = 0; head < queue.length; head += 1) {
+        const current = queue[head];
+        const nextDistance = distances.get(pointKey(current)) + 1;
+        for (const direction of CHASE_DIRECTIONS) {
+            const delta = DIRECTION_DELTA[direction];
+            const next = { x: current.x + delta.x, y: current.y + delta.y };
+            const key = pointKey(next);
+            if (distances.has(key) || !canStepBetween(tiles, current, next)) continue;
+            distances.set(key, nextDistance);
+            queue.push(next);
+        }
+    }
+    return distances;
+}
+
 /** Adjacent tiles from which a single-cell target can be attacked. */
 function getTargetApproachCells(tiles, target) {
     const targetKey = pointKey(target);
