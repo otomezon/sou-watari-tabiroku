@@ -202,7 +202,9 @@ export function itemMaxDurability(item) {
 export function itemDisplayName(item) {
     return `${item.name}${itemEnhancement(item) > 0 ? ` +${itemEnhancement(item)}` : ''}`;
 }
-export function itemIcon(kind) {
+export function itemIcon(kindOrItem) {
+    const kind = typeof kindOrItem === 'object' ? kindOrItem?.kind : kindOrItem;
+    if (kindOrItem?.templateId === 'rice-ball') return '🍙';
     switch (kind) {
         case 'weapon': return '⚔';
         case 'shield': return '⬟';
