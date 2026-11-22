@@ -10,7 +10,7 @@ release:
     item_catalog_templates_unchanged: true
     boss_base_profiles_unchanged: true
   changes:
-    - keep_original_enemy_counts_and_raise_all_campaign_enemy_stat_targets_slightly
+    - keep_original_enemy_counts_preserve_advanced_target_and_modestly_raise_other_campaign_targets
     - reduce_floor_item_spawn_and_normal_enemy_item_drop_rates
     - reduce_rare_monster_premium_reward_rates
     - use_weighted_monster_routes_to_prevent_crowd_path_oscillation
