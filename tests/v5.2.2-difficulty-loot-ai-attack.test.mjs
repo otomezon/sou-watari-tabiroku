@@ -12,11 +12,11 @@ const read = (path) => readFile(new URL(path, root), 'utf8');
 test('difficulty targets and enemy stat ceilings rise in a clear campaign order', async () => {
   const engineSource = await read('assets/engine.js');
   const expected = {
-    tutorial: [0.59, 0.63, 1.23],
-    beginner: [0.63, 0.66, 1.23],
-    intermediate: [0.71, 0.77, 1.23],
-    advanced: [0.70, 0.76, 1.23],
-    expert: [0.79, 0.85, 1.40],
+    tutorial: [0.58, 0.62, 1.21],
+    beginner: [0.62, 0.65, 1.21],
+    intermediate: [0.70, 0.76, 1.21],
+    advanced: [0.68, 0.74, 1.21],
+    expert: [0.78, 0.84, 1.38],
   };
   const caps = MODE_ORDER.map((mode) => expected[mode][2]);
   assert.ok(caps.every((cap, index) => index === 0 || cap >= caps[index - 1]));
@@ -34,7 +34,7 @@ test('difficulty targets and enemy stat ceilings rise in a clear campaign order'
   }
   assert.match(engineSource, /FLOOR_MONSTER_BALANCE_VERSION = 7/);
 
-  assert.match(engineSource, /const maximumAdjustment = modeId === 'expert' \? 1\.40 : 1\.23/);
+  assert.match(engineSource, /const maximumAdjustment = modeId === 'expert' \? 1\.38 : 1\.21/);
 });
 
 test('floor caches and ordinary enemy item drops are less frequent in every campaign', async () => {
