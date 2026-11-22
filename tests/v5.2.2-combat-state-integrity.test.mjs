@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createNewGame, GameEngine } from '../assets/engine.js';
 import { validateGameState } from '../assets/storage.js';
-import { DIRECTION_DELTA, nextPathStep } from '../assets/dungeon.js';
+import { DIRECTION_DELTA, isReachable, isWalkable, nextPathStep } from '../assets/dungeon.js';
 import { MODE_ORDER } from '../assets/modes.js';
 
 const MIN_RANDOM = { int: (min) => min, chance: () => false };
@@ -144,6 +144,17 @@ test('repeated player attacks and enemy turns keep every campaign save-valid', (
           schemaVersion: state.schemaVersion, status: state.status, messageLength: state.message?.length,
           player: { x: state.player.x, y: state.player.y, hp: state.player.hp, level: state.player.level },
           start: state.dungeon.start, stairs: state.dungeon.stairs,
+          dimensions: { width: state.dungeon.width, height: state.dungeon.height },
+          movementValidation: {
+            playerWalkable: isWalkable(state.dungeon.tiles, state.player),
+            startWalkable: isWalkable(state.dungeon.tiles, state.dungeon.start),
+            playerReachable: isReachable(state.dungeon.tiles, state.dungeon.start, state.player),
+            stairsWalkable: state.dungeon.stairs ? isWalkable(state.dungeon.tiles, state.dungeon.stairs) : null,
+            stairsReachable: state.dungeon.stairs ? isReachable(state.dungeon.tiles, state.dungeon.start, state.dungeon.stairs) : null,
+          },
+          playerStats: { exp: state.player.exp, hunger: state.player.hunger, baseAttack: state.player.baseAttack, baseDefense: state.player.baseDefense },
+          counters: { turn: state.turn, fed: state.fedTurnCounter, starvation: state.starvationTurnCounter, hungerDecay: state.hungerDecayCounter, gold: state.gold },
+
           shopPresent: state.shop !== null,
           monsterPositions: state.monsters.map(({ id, x, y, hp, maxHp, attack, defense }) => ({ id, x, y, hp, maxHp, attack, defense })),
           groundItems: state.groundItems.map(({ x, y, item }) => ({ x, y, kind: item?.kind })),
