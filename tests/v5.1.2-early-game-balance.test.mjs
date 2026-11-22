@@ -77,7 +77,7 @@ test('5.2.10 app, manifest, cache and release metadata stay aligned without chan
     read('assets/main.js'), read('manifest.webmanifest'), read('sw.js'),
     read('assets/engine.js'), read('assets/storage.js'), read('RELEASE_v5.2.10.yaml'),
   ]);
-  assert.match(main, /APP_VERSION = '5.2.9'/);
+  assert.match(main, /APP_VERSION = '5.2.10'/);
   assert.match(manifest, /"version": "5.2.10"/);
   assert.match(sw, /sou-watari-tabiroku-v5-2-10/);
   assert.match(engine, /schemaVersion: 12/);
