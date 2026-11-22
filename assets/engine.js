@@ -125,10 +125,18 @@ export const EXPECTED_MONSTER_DEFEAT_RATE = 0.50;
 const LEGACY_V1_MONSTER_DEFEAT_RATE = 0.55;
 const LEGACY_V2_MONSTER_DEFEAT_RATE = 0.70;
 const LEGACY_V3_MONSTER_DEFEAT_RATE = 0.40;
-const FLOOR_MONSTER_BALANCE_VERSION = 6;
+const FLOOR_MONSTER_BALANCE_VERSION = 7;
 
 // Full-campaign targets are smoothly interpolated from each opening floor to the final normal floor.
 const FLOOR_ENCOUNTER_POWER_CURVE = Object.freeze({
+    tutorial: Object.freeze({ start: 0.62, end: 0.68 }),
+    beginner: Object.freeze({ start: 0.72, end: 0.80 }),
+    intermediate: Object.freeze({ start: 0.80, end: 0.90 }),
+    advanced: Object.freeze({ start: 0.88, end: 0.98 }),
+    expert: Object.freeze({ start: 0.98, end: 1.10 }),
+});
+// v5.2.1 calibration is retained verbatim for one-time migration of existing v6 saves.
+const LEGACY_V6_FLOOR_ENCOUNTER_POWER_CURVE = Object.freeze({
     tutorial: Object.freeze({ start: 0.56, end: 0.60 }),
     beginner: Object.freeze({ start: 0.60, end: 0.63 }),
     intermediate: Object.freeze({ start: 0.68, end: 0.74 }),
@@ -274,6 +282,27 @@ export function getFloorMonsterCalibration(modeId, floor, defeatRate = EXPECTED_
         modeId, floor, defeatRate, FLOOR_ENCOUNTER_POWER_CURVE, 0.65, maximumAdjustment,
         FLOOR_MONSTER_HP_MULTIPLIER, FLOOR_MONSTER_ATTACK_MULTIPLIER, FLOOR_MONSTER_DEFENSE_MULTIPLIER,
         getExpectedMonsterDefenseCap(modeId, floor, defeatRate), true,
+    );
+}
+
+/** Resolve the exact v5.2.1 (v6) curve when migrating existing enemies. */
+function getLegacyV6FloorEncounterPowerTarget(modeId, floor) {
+    const mode = getModeConfig(modeId);
+    const curve = LEGACY_V6_FLOOR_ENCOUNTER_POWER_CURVE[modeId] ?? LEGACY_V6_FLOOR_ENCOUNTER_POWER_CURVE.beginner;
+    const progress = Number.isFinite(floor)
+        ? Math.min(1, Math.max(0, (floor - 1) / Math.max(1, mode.floors - 1)))
+        : 0;
+    const eased = progress * progress * (3 - 2 * progress);
+    return curve.start + (curve.end - curve.start) * eased;
+}
+
+/** v5.2.1 calibration (v6), used as the exact baseline when migrating saved monsters. */
+export function getLegacyV6FloorMonsterCalibration(modeId, floor) {
+    const maximumAdjustment = modeId === 'expert' ? 1.35 : 1.18;
+    return calculateFloorMonsterCalibration(
+        modeId, floor, EXPECTED_MONSTER_DEFEAT_RATE, LEGACY_V6_FLOOR_ENCOUNTER_POWER_CURVE, 0.65, maximumAdjustment,
+        FLOOR_MONSTER_HP_MULTIPLIER, FLOOR_MONSTER_ATTACK_MULTIPLIER, FLOOR_MONSTER_DEFENSE_MULTIPLIER,
+        getExpectedMonsterDefenseCap(modeId, floor), true, getLegacyV6FloorEncounterPowerTarget,
     );
 }
 
@@ -479,59 +508,62 @@ function collectBlockedMonsterCells(monsters, excludeId) {
 }
 
 const CHASE_DIRECTIONS = ['up', 'right', 'down', 'left', 'up-right', 'down-right', 'down-left', 'up-left'];
-
-/** Terrain-only distances let a monster recognize a queue in front of it instead of routing far away. */
-function getTerrainDistanceMap(tiles, target) {
-    const distances = new Map();
-    if (!isWalkable(tiles, target)) return distances;
-    const queue = [target];
-    distances.set(pointKey(target), 0);
-    for (let head = 0; head < queue.length; head += 1) {
-        const current = queue[head];
-        const nextDistance = distances.get(pointKey(current)) + 1;
-        for (const direction of CHASE_DIRECTIONS) {
-            const delta = DIRECTION_DELTA[direction];
-            const next = { x: current.x + delta.x, y: current.y + delta.y };
-            const key = pointKey(next);
-            if (distances.has(key) || !canStepBetween(tiles, current, next)) continue;
-            distances.set(key, nextDistance);
-            queue.push(next);
-        }
-    }
-    return distances;
-}
+const OCCUPIED_ROUTE_PENALTY = 3;
 
 /**
- * Follow the shortest terrain route while respecting occupied cells.
- * If another monster is standing on the route, only make a small local sidestep;
- * otherwise wait for the monster ahead to move. This prevents the crowd from
- * treating one another as a reason to wander to the far side of the dungeon.
+ * Build a weighted distance field toward a target. Occupied enemy tiles are expensive,
+ * not impassable: followers can recognize that a queue is temporary while still
+ * preferring a stable route around it.
  */
-function nextCrowdAwarePathStep(state, monster, target) {
+function getCrowdDistanceMap(state, target, moverId) {
     const tiles = state.dungeon.tiles;
-    const distances = getTerrainDistanceMap(tiles, target);
-    const originKey = pointKey(monster);
-    const currentDistance = distances.get(originKey);
-    if (!Number.isFinite(currentDistance) || currentDistance <= 1) return null;
-
-    const blocked = collectBlockedMonsterCells(state.monsters, monster.id);
-    // A monster target is the destination, not an obstacle; all other monsters remain occupied.
+    const blocked = collectBlockedMonsterCells(state.monsters, moverId);
+    const targetKey = pointKey(target);
     const targetMonster = state.monsters.find((other) =>
-        other.id !== monster.id && other.hp > 0 && monsterCovers(other, target));
+        other.id !== moverId && other.hp > 0 && monsterCovers(other, target));
     if (targetMonster) {
         for (const cell of monsterFootprintCells(targetMonster))
             blocked.delete(pointKey(cell));
     }
-    // Monsters chase prey around the player but must never step into the player's tile.
     if (target.x !== state.player.x || target.y !== state.player.y)
         blocked.add(pointKey(state.player));
 
-    // Prefer the true shortest route whenever its next cell is free.
-    const direct = nextPathStep(tiles, monster, target, new Set());
-    if (direct && !blocked.has(pointKey(direct))) {
-        delete monster.crowdPreviousPosition;
-        return direct;
+    const distances = new Map([[targetKey, 0]]);
+    const pending = [{ point: { x: target.x, y: target.y }, distance: 0 }];
+    while (pending.length) {
+        pending.sort((a, b) => b.distance - a.distance);
+        const current = pending.pop();
+        const currentKey = pointKey(current.point);
+        if (current.distance !== distances.get(currentKey))
+            continue;
+        const stepCost = 1 + (currentKey !== targetKey && blocked.has(currentKey)
+            ? OCCUPIED_ROUTE_PENALTY : 0);
+        for (const direction of CHASE_DIRECTIONS) {
+            const delta = DIRECTION_DELTA[direction];
+            const next = { x: current.point.x + delta.x, y: current.point.y + delta.y };
+            if (!canStepBetween(tiles, current.point, next))
+                continue;
+            const key = pointKey(next);
+            const candidateDistance = current.distance + stepCost;
+            if (candidateDistance >= (distances.get(key) ?? Number.POSITIVE_INFINITY))
+                continue;
+            distances.set(key, candidateDistance);
+            pending.push({ point: next, distance: candidateDistance });
+        }
     }
+    return { distances, blocked };
+}
+
+/**
+ * Each actual move must strictly reduce the weighted route cost. This rules out
+ * the old one-cell forward/backward oscillation; when a queue cannot be bypassed,
+ * the monster waits until its blocker moves.
+ */
+function nextCrowdAwarePathStep(state, monster, target) {
+    const { distances, blocked } = getCrowdDistanceMap(state, target, monster.id);
+    const currentDistance = distances.get(pointKey(monster));
+    if (!Number.isFinite(currentDistance) || currentDistance <= 1)
+        return null;
 
     const candidates = [];
     for (const direction of CHASE_DIRECTIONS) {
@@ -539,23 +571,22 @@ function nextCrowdAwarePathStep(state, monster, target) {
         const next = { x: monster.x + delta.x, y: monster.y + delta.y };
         const key = pointKey(next);
         const distance = distances.get(key);
-        if (!Number.isFinite(distance) || distance > currentDistance + 2 ||
-            blocked.has(key) || !canStepBetween(tiles, monster, next)) continue;
-        if (key === monster.crowdPreviousPosition) continue;
+        if (!Number.isFinite(distance) || distance >= currentDistance ||
+            blocked.has(key) || !canStepBetween(state.dungeon.tiles, monster, next))
+            continue;
         if (delta.x !== 0 && delta.y !== 0) {
             const sideX = pointKey({ x: monster.x + delta.x, y: monster.y });
             const sideY = pointKey({ x: monster.x, y: monster.y + delta.y });
-            if (blocked.has(sideX) && blocked.has(sideY)) continue;
+            if (blocked.has(sideX) && blocked.has(sideY))
+                continue;
         }
         candidates.push({ point: next, distance });
     }
     candidates.sort((a, b) => a.distance - b.distance ||
         Math.max(Math.abs(a.point.x - target.x), Math.abs(a.point.y - target.y)) -
         Math.max(Math.abs(b.point.x - target.x), Math.abs(b.point.y - target.y)));
-    const best = candidates[0];
-    if (!best) return null;
-    monster.crowdPreviousPosition = originKey;
-    return best.point;
+    delete monster.crowdPreviousPosition;
+    return candidates[0]?.point ?? null;
 }
 function canOccupyFootprint(tiles, position, size, blocked) {
     for (let y = 0; y < size; y += 1) {
@@ -881,16 +912,29 @@ function populateFloor(state, runRandom) {
     }
 }
 export function getAttack(state) {
-    const weapon = state.equipment.weapon;
-    const weaponBonus = weapon && itemDurability(weapon) > 0 ? weapon.attack + itemEnhancement(weapon) : 0;
-    return state.player.baseAttack + weaponBonus;
+    const baseAttack = Number.isFinite(state?.player?.baseAttack) ? Math.max(0, state.player.baseAttack) : 5;
+    const weapon = state?.equipment?.weapon;
+    const weaponDurability = itemDurability(weapon);
+    const weaponAttack = Number.isFinite(weapon?.attack) ? Math.max(0, weapon.attack) : 0;
+    const enhancement = Number.isFinite(itemEnhancement(weapon)) ? Math.max(0, itemEnhancement(weapon)) : 0;
+    const weaponBonus = weapon && weaponDurability > 0 ? weaponAttack + enhancement : 0;
+    return Math.max(1, baseAttack + weaponBonus);
 }
 export function getDefense(state) {
-    const shield = state.equipment.shield;
-    const armor = state.equipment.armor;
-    const shieldBonus = shield && itemDurability(shield) > 0 ? shield.defense + itemEnhancement(shield) : 0;
-    const armorBonus = armor && itemDurability(armor) > 0 ? armor.defense + itemEnhancement(armor) : 0;
-    return state.player.baseDefense + shieldBonus + armorBonus;
+    const baseDefense = Number.isFinite(state?.player?.baseDefense) ? Math.max(0, state.player.baseDefense) : 2;
+    const shield = state?.equipment?.shield;
+    const armor = state?.equipment?.armor;
+    const shieldDurability = itemDurability(shield);
+    const armorDurability = itemDurability(armor);
+    const shieldBonus = shield && shieldDurability > 0
+        ? (Number.isFinite(shield.defense) ? Math.max(0, shield.defense) : 0) +
+            (Number.isFinite(itemEnhancement(shield)) ? Math.max(0, itemEnhancement(shield)) : 0)
+        : 0;
+    const armorBonus = armor && armorDurability > 0
+        ? (Number.isFinite(armor.defense) ? Math.max(0, armor.defense) : 0) +
+            (Number.isFinite(itemEnhancement(armor)) ? Math.max(0, itemEnhancement(armor)) : 0)
+        : 0;
+    return Math.max(0, baseDefense + shieldBonus + armorBonus);
 }
 export function canDescend(state) {
     const stairs = state.dungeon.stairs;
@@ -927,9 +971,11 @@ export class GameEngine {
                 : 0;
             if (previousVersion >= FLOOR_MONSTER_BALANCE_VERSION)
                 continue;
-            const previousCalibration = previousVersion >= 5
-                ? getLegacyV5FloorMonsterCalibration(this.state.modeId, this.state.floor)
-                : previousVersion >= 4
+            const previousCalibration = previousVersion >= 6
+                ? getLegacyV6FloorMonsterCalibration(this.state.modeId, this.state.floor)
+                : previousVersion >= 5
+                    ? getLegacyV5FloorMonsterCalibration(this.state.modeId, this.state.floor)
+                    : previousVersion >= 4
                     ? getLegacyV4FloorMonsterCalibration(this.state.modeId, this.state.floor)
                     : previousVersion >= 3
                     ? getLegacyV3FloorMonsterCalibration(this.state.modeId, this.state.floor)
@@ -1085,14 +1131,20 @@ export class GameEngine {
     }
     move(direction) {
         if (this.state.status !== 'playing')
-            return;
+            return false;
         const delta = DIRECTION_DELTA[direction];
+        if (!delta || !Number.isInteger(delta.x) || !Number.isInteger(delta.y) ||
+            (delta.x === 0 && delta.y === 0)) {
+            this.state.message = '移動方向を認識できなかった。もう一度入力してください。';
+            return false;
+        }
         const next = { x: this.state.player.x + delta.x, y: this.state.player.y + delta.y };
         if (!canStepBetween(this.state.dungeon.tiles, this.state.player, next)) {
             this.state.message = '壁がある。別の道を探そう。';
-            return;
+            return false;
         }
-        const target = this.state.monsters.find((monster) => monsterCovers(monster, next));
+        const target = this.state.monsters.find((monster) =>
+            monster && monster.hp > 0 && monsterCovers(monster, next));
         if (target) {
             const random = this.actionRandom();
             this.attackMonster(target, random);
@@ -1404,8 +1456,19 @@ export class GameEngine {
         }
     }
     attackMonster(monster, random) {
-        const damage = Math.max(1, getAttack(this.state) + random.int(-1, 2) - monster.defense);
-        monster.hp -= damage;
+        const target = monster && this.state.monsters.find((entry) =>
+            entry === monster || (monster.id && entry.id === monster.id));
+        if (!target || !Number.isFinite(target.hp) || target.hp <= 0 ||
+            !random || typeof random.int !== 'function') {
+            this.state.message = '攻撃対象の情報を確認できなかった。もう一度試してください。';
+            return false;
+        }
+        monster = target;
+        const attackPower = getAttack(this.state);
+        const attackVariance = random.int(-1, 2);
+        const defense = Number.isFinite(monster.defense) ? Math.max(0, monster.defense) : 0;
+        const damage = Math.max(1, attackPower + (Number.isFinite(attackVariance) ? attackVariance : 0) - defense);
+        monster.hp = Math.max(0, monster.hp - damage);
         this.state.message = `${monster.name}に ${damage} ダメージ！`;
         if (monster.hp > 0 && Number.isFinite(monster.reflectDamageRate) && monster.reflectDamageRate > 0) {
             const reflectedDamage = Math.max(1, Math.round(damage * monster.reflectDamageRate));
