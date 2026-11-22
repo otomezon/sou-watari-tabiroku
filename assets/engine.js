@@ -1868,6 +1868,7 @@ export class GameEngine {
             this.state.message += ` レベルアップ！ Lv.${this.state.player.level}になった。`;
     }
     handleGameOver() {
+        const finalBlowMessage = String(this.state.message ?? '').slice(0, 260);
         this.state.player.hp = 0;
         this.state.player.level = 1;
         this.state.player.exp = 0;
@@ -1880,7 +1881,7 @@ export class GameEngine {
         this.state.shop = null;
         this.state.equipment = { weapon: null, shield: null, armor: null };
         this.state.status = 'gameover';
-        this.state.message = '力尽きた……。持ち物と装備をすべて失った。';
+        this.state.message = `${finalBlowMessage} 力尽きた……。持ち物と装備をすべて失った。`.trim();
         this.state.updatedAt = Date.now();
     }
 }
