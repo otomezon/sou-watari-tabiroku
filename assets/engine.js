@@ -533,14 +533,7 @@ function nextCrowdAwarePathStep(state, monster, target, targetId = 'player') {
         return null;
     }
 
-    const previousPosition = monster.crowdPreviousPosition;
-    const routeBlocked = new Set(blocked);
-    if (previousPosition && previousPosition !== originKey)
-        routeBlocked.add(previousPosition);
-    const findStep = (point) => {
-        const step = nextPathStep(tiles, monster, point, routeBlocked);
-        return step && pointKey(step) !== previousPosition ? step : null;
-    };
+    const findStep = (point) => nextPathStep(tiles, monster, point, blocked);
 
     // Keep the chosen attack slot while it remains free and reachable.
     if (monster.crowdTargetAnchor === targetAnchor && monster.crowdTargetKey) {
@@ -548,7 +541,6 @@ function nextCrowdAwarePathStep(state, monster, target, targetId = 'player') {
         if (preferred) {
             const step = findStep(preferred);
             if (step) {
-                monster.crowdPreviousPosition = originKey;
                 return step;
             }
         }
@@ -566,7 +558,6 @@ function nextCrowdAwarePathStep(state, monster, target, targetId = 'player') {
         if (!step) continue;
         monster.crowdTargetAnchor = targetAnchor;
         monster.crowdTargetKey = pointKey(candidate.point);
-        monster.crowdPreviousPosition = originKey;
         return step;
     }
 
