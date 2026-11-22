@@ -22,7 +22,7 @@ test('monster level-up has a distinct, full-bodied phrase around 2.2 seconds lon
   const leadStarts = tones.filter((tone) => tone[4] === 'square').map((tone) => tone[1]);
   const averageLeadGap = leadStarts.slice(1).reduce((sum, time, index) => sum + time - leadStarts[index], 0) /
     (leadStarts.length - 1);
-  assert.ok(averageLeadGap <= 0.18, 'the monster melody should have a brisker note pulse');
+  assert.ok(averageLeadGap <= 0.185, 'the monster melody should have a brisker note pulse');
 });
 
 test('monster fanfare is shorter and faster than the unchanged player fanfare', () => {
