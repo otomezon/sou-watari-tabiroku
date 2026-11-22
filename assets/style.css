@@ -991,38 +991,86 @@ main {
 }
 
 
-/* v5.2.3: let the dungeon fade away before the game-over result appears. */
+/* v5.2.6: overlapping dissolve, organic blood seep, and a gradual result reveal. */
 .game-screen.is-dying {
   pointer-events: none;
   transform-origin: center center;
-  animation: game-over-fade-out .86s cubic-bezier(.36, 0, .65, 1) both;
+  animation: game-over-dungeon-dissolve 1.22s cubic-bezier(.42, 0, .58, 1) both;
 }
-@keyframes game-over-fade-out {
+@keyframes game-over-dungeon-dissolve {
   0% {
     opacity: 1;
     filter: grayscale(0) brightness(1);
-    transform: translateY(0);
+    transform: scale(1) translateY(0);
   }
-  38% {
-    opacity: .9;
-    filter: grayscale(.58) brightness(.72);
-    transform: translateY(2px);
+  32% {
+    opacity: .88;
+    filter: grayscale(.34) brightness(.66);
+    transform: scale(.995) translateY(2px);
+  }
+  72% {
+    opacity: .35;
+    filter: grayscale(.86) brightness(.3);
+    transform: scale(.982) translateY(7px);
   }
   100% {
     opacity: 0;
-    filter: grayscale(1) brightness(.16);
-    transform: translateY(9px) scale(.985);
+    filter: grayscale(1) brightness(.12);
+    transform: scale(.972) translateY(12px);
   }
 }
-/* v5.2.5: blood flows over the dying dungeon during the transition, not after it. */
+
+/* Keep the result in the same visual plane so it can crossfade over the dungeon. */
+.result-screen.is-gameover-transitioned {
+  position: fixed;
+  z-index: 24;
+  inset: 0;
+  width: min(100%, 520px);
+  min-height: 100svh;
+  margin: 0 auto;
+  padding: max(34px, env(safe-area-inset-top)) 20px max(34px, env(safe-area-inset-bottom));
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 42%, rgba(65, 20, 27, .94), rgba(22, 25, 29, .985) 64%),
+    #141b20;
+  box-shadow: 0 0 80px rgba(0, 0, 0, .38);
+}
+.result-screen.is-gameover-entering {
+  animation: gameover-result-crossfade .82s cubic-bezier(.2, .72, .24, 1) both;
+}
+@keyframes gameover-result-crossfade {
+  0% {
+    opacity: 0;
+    filter: blur(9px);
+    transform: translateY(18px) scale(.984);
+  }
+  38% {
+    opacity: .42;
+    filter: blur(4px);
+    transform: translateY(8px) scale(.992);
+  }
+  74% {
+    opacity: .9;
+    filter: blur(.8px);
+    transform: translateY(2px) scale(.999);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* The blood is an irregular, translucent stain with branching drips, not parallel bars. */
 .gameover-transition-blood {
   position: fixed;
-  z-index: 10000;
+  z-index: 36;
   inset: 0;
   display: none;
   overflow: hidden;
   pointer-events: none;
   isolation: isolate;
+  opacity: 1;
 }
 .gameover-transition-blood.is-active {
   display: block;
@@ -1032,65 +1080,53 @@ main {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse at 50% 44%, rgba(86, 0, 12, .12) 8%, rgba(70, 0, 10, .36) 68%, rgba(36, 0, 6, .66) 100%),
-    linear-gradient(180deg, rgba(94, 0, 14, .22), rgba(25, 0, 5, .22));
+    radial-gradient(ellipse at 50% 0%, rgba(115, 5, 22, .46), transparent 58%),
+    radial-gradient(ellipse at 0% 38%, rgba(80, 0, 15, .54), transparent 47%),
+    radial-gradient(ellipse at 100% 46%, rgba(80, 0, 15, .5), transparent 48%),
+    linear-gradient(180deg, rgba(31, 0, 8, .18), rgba(17, 0, 5, .08) 56%, rgba(0, 0, 0, .18));
   opacity: 0;
-  animation: gameover-blood-wash .9s ease-out both;
+  animation: gameover-blood-wash 1.18s ease-out both;
 }
-.gameover-transition-blood span {
+.gameover-blood-art {
   position: absolute;
-  top: -5vh;
-  left: var(--blood-x, 50%);
-  width: var(--blood-width, 6px);
-  height: var(--blood-height, 60vh);
-  border-radius: 0 0 45% 45%;
-  transform: scaleY(.02);
-  transform-origin: top center;
-  opacity: 0;
-  background: linear-gradient(90deg,
-    rgba(64, 0, 9, .3) 0%,
-    rgba(120, 3, 18, .88) 20%,
-    rgba(158, 12, 30, .96) 52%,
-    rgba(83, 0, 12, .86) 84%,
-    rgba(45, 0, 7, .48) 100%);
-  box-shadow: 0 0 10px rgba(119, 0, 18, .34), inset 1px 0 rgba(255, 90, 100, .16);
-  animation: gameover-blood-flow .82s var(--blood-delay, 0s) cubic-bezier(.24, .62, .32, 1) both;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  clip-path: inset(0 0 100% 0);
+  animation: gameover-blood-reveal 1.2s cubic-bezier(.24, .68, .25, 1) both;
 }
-.gameover-transition-blood span::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -7px;
-  width: calc(var(--blood-width, 6px) + 7px);
-  height: 13px;
-  transform: translateX(-50%);
-  border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(151, 8, 27, .98) 0 42%, rgba(76, 0, 12, .72) 72%, transparent 100%);
-  filter: drop-shadow(0 1px 3px rgba(44, 0, 7, .6));
+.blood-wet { fill: url(#blood-depth); }
+.blood-shadow { fill: #270007; }
+.blood-gloss { fill: url(#blood-glint); opacity: .82; }
+.blood-drop { fill: #6e0719; filter: drop-shadow(0 2px 3px rgba(20, 0, 5, .45)); }
+.gameover-transition-blood.is-fading {
+  animation: gameover-blood-clear .76s ease-out forwards;
 }
-.gameover-transition-blood span:nth-child(1) { --blood-x: 4%; --blood-width: 5px; --blood-height: 48vh; --blood-delay: .02s; }
-.gameover-transition-blood span:nth-child(2) { --blood-x: 17%; --blood-width: 9px; --blood-height: 76vh; --blood-delay: .07s; }
-.gameover-transition-blood span:nth-child(3) { --blood-x: 33%; --blood-width: 4px; --blood-height: 58vh; --blood-delay: .04s; }
-.gameover-transition-blood span:nth-child(4) { --blood-x: 51%; --blood-width: 8px; --blood-height: 86vh; --blood-delay: .01s; }
-.gameover-transition-blood span:nth-child(5) { --blood-x: 68%; --blood-width: 5px; --blood-height: 53vh; --blood-delay: .09s; }
-.gameover-transition-blood span:nth-child(6) { --blood-x: 84%; --blood-width: 9px; --blood-height: 72vh; --blood-delay: .05s; }
-.gameover-transition-blood span:nth-child(7) { --blood-x: 96%; --blood-width: 4px; --blood-height: 45vh; --blood-delay: .08s; }
-@keyframes gameover-blood-flow {
-  0% { transform: scaleY(.02); opacity: 0; }
-  15% { opacity: .98; }
-  58% { transform: scaleY(.72); opacity: .94; }
-  100% { transform: scaleY(1) translateY(5vh); opacity: .86; }
+@keyframes gameover-blood-reveal {
+  0% { clip-path: inset(0 0 100% 0); }
+  22% { clip-path: inset(0 0 67% 0); }
+  68% { clip-path: inset(0 0 18% 0); }
+  100% { clip-path: inset(0 0 0 0); }
 }
 @keyframes gameover-blood-wash {
   0% { opacity: 0; }
-  18% { opacity: 1; }
-  100% { opacity: .82; }
+  20% { opacity: .94; }
+  100% { opacity: .78; }
+}
+@keyframes gameover-blood-clear {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   .game-screen.is-dying,
+  .result-screen.is-gameover-entering,
   .gameover-transition-blood::before,
-  .gameover-transition-blood span {
+  .gameover-blood-art,
+  .gameover-transition-blood.is-fading {
     animation-duration: .01ms !important;
     animation-delay: 0ms !important;
   }
+  .gameover-blood-art { clip-path: inset(0) !important; }
 }

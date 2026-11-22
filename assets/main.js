@@ -6,9 +6,10 @@ import { getShopSellPrice, remainingShopGoods, unpaidShopGoods } from "./shop.js
 import { RenderManager } from "./renderer.js";
 import { DEFAULT_AUDIO_SETTINGS, SaveManager } from "./storage.js";
 import { DUNGEON_MODES, MODE_ORDER, getModeConfig } from "./modes.js";
-const APP_VERSION = '5.2.5';
+const APP_VERSION = '5.2.6';
 const ACTION_DELAY_MS = 65;
-const GAME_OVER_RESULT_DELAY_MS = 900;
+const GAME_OVER_CROSSFADE_START_MS = 460;
+const GAME_OVER_CROSSFADE_MS = 760;
 const wait = (milliseconds) => new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 const byId = (id) => {
     const element = document.getElementById(id);
@@ -82,6 +83,8 @@ class GameApp {
             else if (this.state?.status === 'playing')
                 void this.resumeAudio();
         });
+        window.addEventListener('pagehide', () => this.sound.shutdown(), { once: true });
+        window.addEventListener('beforeunload', () => this.sound.shutdown(), { once: true });
     }
     registerServiceWorker() {
         if (!('serviceWorker' in navigator))
@@ -238,14 +241,24 @@ class GameApp {
                 }
                 if (postActionStatus !== 'playing') {
                     if (postActionStatus === 'gameover') {
+                        const gameScreen = byId('game-screen');
+                        const resultScreen = byId('result-screen');
                         const transitionBlood = byId('gameover-transition-blood');
-                        byId('game-screen').classList.add('is-dying');
+                        gameScreen.classList.add('is-dying');
                         transitionBlood.classList.add('is-active');
-                        await wait(GAME_OVER_RESULT_DELAY_MS);
-                        transitionBlood.classList.remove('is-active');
+                        await wait(GAME_OVER_CROSSFADE_START_MS);
+                        this.sound.stopBgm();
+                        this.showResult({ transition: true });
+                        transitionBlood.classList.add('is-fading');
+                        await wait(GAME_OVER_CROSSFADE_MS);
+                        gameScreen.classList.add('hidden');
+                        gameScreen.classList.remove('is-dying');
+                        transitionBlood.classList.remove('is-active', 'is-fading');
+                        resultScreen.classList.remove('is-gameover-entering');
+                    } else {
+                        this.sound.stopBgm();
+                        this.showResult();
                     }
-                    this.sound.stopBgm();
-                    this.showResult();
                 }
                 await this.persist();
             }
@@ -315,7 +328,8 @@ class GameApp {
         this.sound.stopBgm();
         byId('app').classList.remove('is-playing');
         byId('game-screen').classList.remove('is-dying');
-        byId('gameover-transition-blood').classList.remove('is-active');
+        byId('gameover-transition-blood').classList.remove('is-active', 'is-fading');
+        byId('result-screen').classList.remove('is-gameover-transitioned', 'is-gameover-entering');
         byId('title-screen').classList.remove('hidden');
         byId('game-screen').classList.add('hidden');
         byId('result-screen').classList.add('hidden');
@@ -327,21 +341,30 @@ class GameApp {
         this.closeModal();
         byId('app').classList.add('is-playing');
         byId('game-screen').classList.remove('is-dying');
-        byId('gameover-transition-blood').classList.remove('is-active');
+        byId('gameover-transition-blood').classList.remove('is-active', 'is-fading');
+        byId('result-screen').classList.remove('is-gameover-transitioned', 'is-gameover-entering');
         byId('title-screen').classList.add('hidden');
         byId('result-screen').classList.add('hidden');
         byId('game-screen').classList.remove('hidden');
     }
-    showResult() {
+    showResult({ transition = false } = {}) {
         if (!this.state)
             return;
-        byId('gameover-transition-blood').classList.remove('is-active');
+        const resultScreen = byId('result-screen');
+        if (transition) {
+            resultScreen.classList.add('is-gameover-transitioned', 'is-gameover-entering');
+        } else {
+            byId('gameover-transition-blood').classList.remove('is-active', 'is-fading');
+            resultScreen.classList.remove('is-gameover-transitioned', 'is-gameover-entering');
+            byId('game-screen').classList.add('hidden');
+        }
         this.closeModal();
         const cleared = this.state.status === 'clear';
         const mode = getModeConfig(this.state.modeId);
         byId('app').classList.remove('is-playing');
         byId('title-screen').classList.add('hidden');
-        byId('game-screen').classList.add('hidden');
+        if (!transition)
+            byId('game-screen').classList.add('hidden');
         byId('result-screen').classList.remove('hidden');
         byId('result-symbol').textContent = cleared ? '✧' : '✦';
         byId('result-eyebrow').textContent = cleared ? 'DUNGEON CONQUERED' : 'AN ADVENTURE ENDS';

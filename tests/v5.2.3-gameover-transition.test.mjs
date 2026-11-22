@@ -5,30 +5,42 @@ import { readFile } from 'node:fs/promises';
 const root = new URL('../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
 
-test('blood flows over the dying dungeon and ends exactly at the result-screen switch', async () => {
-  const [main, styles, html] = await Promise.all([
+test('game-over dissolves the dungeon and crossfades the result over the blood transition', async () => {
+  const [main, styles, html, audio] = await Promise.all([
     read('assets/main.js'),
     read('assets/style.css'),
     read('index.html'),
+    read('assets/audio.js'),
   ]);
 
-  assert.match(main, /const GAME_OVER_RESULT_DELAY_MS = 900/);
-  assert.match(main, /byId\('game-screen'\)\.classList\.add\('is-dying'\)/);
+  assert.match(main, /const GAME_OVER_CROSSFADE_START_MS = 460/);
+  assert.match(main, /const GAME_OVER_CROSSFADE_MS = 760/);
   const bloodStart = main.indexOf("transitionBlood.classList.add('is-active')");
-  const waitForBlood = main.indexOf('await wait(GAME_OVER_RESULT_DELAY_MS)', bloodStart);
-  const bloodEnd = main.indexOf("transitionBlood.classList.remove('is-active')", waitForBlood);
-  const resultSwitch = main.indexOf('this.showResult();', waitForBlood);
-  assert.ok(bloodStart >= 0 && waitForBlood > bloodStart, 'blood must start before the transition wait');
-  assert.ok(bloodEnd > waitForBlood && resultSwitch > bloodEnd, 'blood must remain active during the wait and clear before the result screen');
-  assert.doesNotMatch(main, /classList\.toggle\('is-gameover-arrival'/);
+  const firstWait = main.indexOf('await wait(GAME_OVER_CROSSFADE_START_MS)', bloodStart);
+  const resultReveal = main.indexOf('this.showResult({ transition: true })', firstWait);
+  const bloodFade = main.indexOf("transitionBlood.classList.add('is-fading')", resultReveal);
+  const secondWait = main.indexOf('await wait(GAME_OVER_CROSSFADE_MS)', bloodFade);
+  const hideDungeon = main.indexOf("gameScreen.classList.add('hidden')", secondWait);
+  assert.ok(bloodStart >= 0 && firstWait > bloodStart, 'blood must begin with the dungeon dissolve');
+  assert.ok(resultReveal > firstWait && bloodFade > resultReveal, 'result screen must begin while blood is still visible');
+  assert.ok(secondWait > bloodFade && hideDungeon > secondWait, 'dungeon must remain beneath the result until the crossfade is complete');
+  assert.match(main, /showResult\(\{ transition = false \} = \{\}\)/);
+  assert.match(main, /resultScreen.classList.add\('is-gameover-transitioned', 'is-gameover-entering'\)/);
 
-  assert.match(styles, /\.game-screen\.is-dying\s*\{/);
-  assert.match(styles, /@keyframes game-over-fade-out/);
-  assert.match(styles, /\.gameover-transition-blood\.is-active\s*\{/);
-  assert.match(styles, /@keyframes gameover-blood-flow/);
-  assert.match(styles, /@keyframes gameover-blood-wash/);
-  assert.doesNotMatch(styles, /@keyframes gameover-result-arrive/);
-  assert.match(html, /id="gameover-transition-blood" class="gameover-transition-blood" aria-hidden="true"/);
-  assert.doesNotMatch(html, /class="gameover-blood"/);
-  assert.match(html, /<span><\/span><span><\/span><span><\/span><span><\/span><span><\/span><span><\/span><span><\/span>/);
+  assert.match(styles, /@keyframes game-over-dungeon-dissolve/);
+  assert.match(styles, /\.result-screen\.is-gameover-transitioned/);
+  assert.match(styles, /@keyframes gameover-result-crossfade/);
+  assert.match(styles, /@keyframes gameover-blood-reveal/);
+  assert.match(styles, /@keyframes gameover-blood-clear/);
+  assert.match(html, /class="gameover-blood-art" viewBox="0 0 390 844"/);
+  assert.match(html, /<filter id="blood-edge"/);
+  assert.match(html, /<feTurbulence/);
+  assert.match(html, /<path class="blood-wet"/);
+  assert.doesNotMatch(html, /<span><\/span><span><\/span>/);
+
+  assert.match(main, /window\.addEventListener\('pagehide', \(\) => this\.sound\.shutdown\(\)/);
+  assert.match(main, /window\.addEventListener\('beforeunload', \(\) => this\.sound\.shutdown\(\)/);
+  assert.match(audio, /shutdown\(\)\s*\{/);
+  assert.match(audio, /this\.master\.gain\.setValueAtTime\(0, now\)/);
+  assert.match(audio, /void context\.close\(\)\.catch\(\(\) => undefined\)/);
 });

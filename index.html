@@ -119,7 +119,48 @@
         </section>
       </main>
       <div id="gameover-transition-blood" class="gameover-transition-blood" aria-hidden="true">
-        <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+        <svg class="gameover-blood-art" viewBox="0 0 390 844" preserveAspectRatio="none" focusable="false">
+          <defs>
+            <linearGradient id="blood-depth" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#260008" stop-opacity=".96"/>
+              <stop offset=".28" stop-color="#690817" stop-opacity=".94"/>
+              <stop offset=".72" stop-color="#9d142a" stop-opacity=".88"/>
+              <stop offset="1" stop-color="#4a000d" stop-opacity=".76"/>
+            </linearGradient>
+            <linearGradient id="blood-glint" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#ff6470" stop-opacity="0"/>
+              <stop offset=".48" stop-color="#ff9aa0" stop-opacity=".27"/>
+              <stop offset="1" stop-color="#ff6470" stop-opacity="0"/>
+            </linearGradient>
+            <filter id="blood-edge" x="-12%" y="-8%" width="124%" height="116%">
+              <feTurbulence type="fractalNoise" baseFrequency=".022 .065" numOctaves="2" seed="17" result="noise"/>
+              <feDisplacementMap in="SourceGraphic" in2="noise" scale="8" xChannelSelector="R" yChannelSelector="G"/>
+            </filter>
+            <filter id="blood-soft-shadow" x="-35%" y="-20%" width="170%" height="150%">
+              <feGaussianBlur stdDeviation="5"/>
+            </filter>
+          </defs>
+          <g class="blood-spread" filter="url(#blood-edge)">
+            <path class="blood-shadow" d="M0 0H390V128C377 128 370 151 357 147C340 143 344 174 327 180C311 186 305 161 292 168C275 177 282 205 264 204C246 204 249 168 232 164C214 160 209 190 192 187C174 184 177 143 159 139C139 135 137 176 118 174C99 172 103 139 83 140C64 141 65 169 47 166C29 163 33 131 17 130L0 144Z" transform="translate(0 5)" opacity=".55" filter="url(#blood-soft-shadow)"/>
+            <path class="blood-wet" d="M0 0H390V112C378 121 371 141 357 138C342 135 346 165 329 171C313 177 307 154 294 160C277 168 281 191 264 191C246 191 250 158 233 153C215 148 210 178 193 176C175 174 178 134 159 129C139 124 137 164 119 163C101 162 104 132 84 133C66 134 65 157 48 155C30 153 34 124 18 123L0 137Z"/>
+            <path class="blood-wet" d="M34 112C48 126 42 151 49 176C57 205 43 226 49 254C54 278 43 304 34 314C24 303 28 278 23 255C17 225 29 205 23 179C17 153 26 130 18 119Z"/>
+            <path class="blood-wet" d="M103 145C116 157 107 180 115 204C125 232 111 259 119 289C126 318 114 344 103 355C94 344 98 318 92 290C86 260 98 232 91 207C84 182 96 158 89 148Z"/>
+            <path class="blood-wet" d="M176 127C188 142 181 170 190 198C200 229 184 258 192 294C199 325 187 357 175 369C166 356 171 326 164 295C157 259 171 229 163 200C155 170 169 143 160 133Z"/>
+            <path class="blood-wet" d="M252 155C265 168 256 194 265 221C276 252 260 279 268 309C275 336 264 359 252 369C242 359 247 335 240 309C233 278 246 252 238 224C230 196 245 169 236 160Z"/>
+            <path class="blood-wet" d="M331 126C345 140 336 165 345 190C354 217 343 243 351 270C358 295 349 316 338 326C329 315 333 294 326 270C319 242 332 217 324 191C316 165 329 139 319 130Z"/>
+            <path class="blood-wet" d="M390 0V205C377 216 373 242 381 261C387 278 380 304 366 316C359 297 363 278 357 259C348 231 362 205 350 184C339 163 354 142 345 121L390 96Z"/>
+            <path class="blood-gloss" d="M8 22C22 43 13 77 18 112L13 118C7 88 14 53 3 35Z"/>
+            <path class="blood-gloss" d="M99 160C109 186 102 213 108 244L103 249C97 220 103 190 94 169Z"/>
+            <path class="blood-gloss" d="M171 146C182 174 176 205 182 236L177 244C170 211 176 178 166 154Z"/>
+            <path class="blood-gloss" d="M246 171C258 197 250 225 257 253L252 261C245 230 252 201 241 179Z"/>
+            <path class="blood-gloss" d="M326 145C338 170 331 196 337 222L332 230C325 200 332 174 321 152Z"/>
+            <circle class="blood-drop" cx="34" cy="322" r="8"/>
+            <circle class="blood-drop" cx="104" cy="363" r="6"/>
+            <circle class="blood-drop" cx="175" cy="377" r="9"/>
+            <circle class="blood-drop" cx="252" cy="378" r="6"/>
+            <circle class="blood-drop" cx="338" cy="336" r="8"/>
+          </g>
+        </svg>
       </div>
       <footer class="app-footer">© 層渡りの旅録 <span>—</span> SAVE LOCALLY</footer>
     </div>
