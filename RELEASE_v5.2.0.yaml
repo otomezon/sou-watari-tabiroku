@@ -13,7 +13,7 @@ release:
     no_new_food_templates: true
   changes:
     - smoothly_ramp_per_monster_encounter_target_across_every_floor
-    - set_campaign_targets_tutorial_56_to_60_beginner_60_to_63_intermediate_68_to_74_advanced_67_to_73_expert_76_to_84
+    - set_campaign_targets_tutorial_56_to_60_beginner_60_to_63_intermediate_68_to_74_advanced_67_to_73_expert_76_to_82
     - compensate_advanced_per_monster_pressure_for_higher_spawn_density
     - retain_standard_calibration_upper_bound_1_18_and_expert_1_35
     - preserve_separate_hp_attack_defense_multipliers
