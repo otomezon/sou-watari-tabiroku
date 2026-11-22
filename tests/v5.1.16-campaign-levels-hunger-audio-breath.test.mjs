@@ -47,17 +47,11 @@ test('floor monster calibration stays within the refined, difficulty-specific ra
       const maximumAdjustment = 1.45;
       assert.ok(adjustment >= 0.65 && adjustment <= maximumAdjustment, `${mode} F${floor}: ${adjustment}`);
       assert.ok(Number.isFinite(getLegacyV3FloorMonsterCalibration(mode, floor)));
+      assert.ok(Number.isFinite(getLegacyV4FloorMonsterCalibration(mode, floor)));
+      assert.ok(Number.isFinite(getLegacyV5FloorMonsterCalibration(mode, floor)));
       assert.ok(Number.isFinite(getLegacyFloorMonsterCalibration(mode, floor, 0.70)));
     }
   }
-});
-
-const FLOOR_POWER_TARGETS = Object.freeze({
-  tutorial: 0.54,
-  beginner: 0.62,
-  intermediate: 0.70,
-  advanced: 0.70,
-  expert: 0.82,
 });
 
 function expectedUnequippedPlayerPower(level) {
@@ -133,9 +127,9 @@ test('ordinary enemies stay challenging but a typical no-gear duel remains survi
           }
           const averageMonsterPower = ordinary.reduce((sum, monster) => sum + monsterCombatPower(monster), 0) / ordinary.length;
           const ratio = averageMonsterPower / playerPower;
-          const target = FLOOR_POWER_TARGETS[modeId];
-          // Expert floors 1–5 deliberately ease into upper-tier families; small floor samples can skew lower.
-          const lowerTolerance = modeId === 'expert' ? 0.35 : 0.24;
+          const target = getFloorEncounterPowerTarget(modeId, floor);
+          // Small random floor samples can skew below the weighted average target.
+          const lowerTolerance = 0.24;
           assert.ok(ratio >= target - lowerTolerance && ratio <= target + 0.20,
             `${modeId} F${floor}: un-geared monster power ratio ${ratio.toFixed(3)}, target ${target}, calibration ${getFloorMonsterCalibration(modeId, floor).toFixed(3)}, average power ${averageMonsterPower.toFixed(1)}, player power ${playerPower.toFixed(1)}`);
 
@@ -250,7 +244,7 @@ test('player level-up and received-hit cues share the start of the fanfare', asy
   const [main, audio] = await Promise.all([read('assets/main.js'), read('assets/audio.js')]);
   assert.match(main, /\? \['level', \.\.\.damageCues\] : \[\]/);
   assert.match(main, /needsFloorMonsterBalanceMigration/);
-  assert.match(main, /floorBalanceVersion \?\? 0\) < 5/);
+  assert.match(main, /floorBalanceVersion \?\? 0\) < 6/);
   assert.match(audio, /while \(effects\[index \+ 1\] === 'damage'\)/);
   assert.match(audio, /playDamageEffect\(fanfareStart \+ synchronizedHit \* 0\.24\)/);
 });
