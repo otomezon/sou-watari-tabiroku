@@ -6,7 +6,7 @@ import { getShopSellPrice, remainingShopGoods, unpaidShopGoods } from "./shop.js
 import { RenderManager } from "./renderer.js";
 import { DEFAULT_AUDIO_SETTINGS, SaveManager } from "./storage.js";
 import { DUNGEON_MODES, MODE_ORDER, getModeConfig } from "./modes.js";
-const APP_VERSION = '5.2.1';
+const APP_VERSION = '5.2.2';
 const ACTION_DELAY_MS = 65;
 const GAME_OVER_RESULT_DELAY_MS = 950;
 const wait = (milliseconds) => new Promise((resolve) => window.setTimeout(resolve, milliseconds));
