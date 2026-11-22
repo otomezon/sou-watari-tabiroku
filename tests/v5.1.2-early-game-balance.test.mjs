@@ -9,11 +9,11 @@ const root = new URL('../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
 
 const OPENING_RANGES = {
-  tutorial: { floor1: [2, 4], floor2: [2, 4] },
-  beginner: { floor1: [3, 6], floor2: [3, 6] },
-  intermediate: { floor1: [4, 7], floor2: [4, 7] },
-  advanced: { floor1: [4, 8], floor2: [4, 8] },
-  expert: { floor1: [5, 9], floor2: [5, 9] },
+  tutorial: { floor1: [3, 5], floor2: [3, 5] },
+  beginner: { floor1: [4, 7], floor2: [4, 7] },
+  intermediate: { floor1: [5, 8], floor2: [5, 8] },
+  advanced: { floor1: [5, 9], floor2: [5, 9] },
+  expert: { floor1: [6, 10], floor2: [6, 10] },
 };
 
 function assertSafeOpening(state, range) {
@@ -76,14 +76,14 @@ for (const modeId of MODE_ORDER) {
   });
 }
 
-test('5.2.1 app, manifest, cache and release metadata stay aligned without changing save schema', async () => {
+test('5.2.2 app, manifest, cache and release metadata stay aligned without changing save schema', async () => {
   const [main, manifest, sw, engine, storage, release] = await Promise.all([
     read('assets/main.js'), read('manifest.webmanifest'), read('sw.js'),
-    read('assets/engine.js'), read('assets/storage.js'), read('RELEASE_v5.2.1.yaml'),
+    read('assets/engine.js'), read('assets/storage.js'), read('RELEASE_v5.2.2.yaml'),
   ]);
-  assert.match(main, /APP_VERSION = '5.2.1'/);
-  assert.match(manifest, /"version": "5.2.1"/);
-  assert.match(sw, /sou-watari-tabiroku-v5-2-1/);
+  assert.match(main, /APP_VERSION = '5.2.2'/);
+  assert.match(manifest, /"version": "5.2.2"/);
+  assert.match(sw, /sou-watari-tabiroku-v5-2-2/);
   assert.match(engine, /schemaVersion: 12/);
   assert.match(storage, /state\.schemaVersion !== 12/);
   assert.match(release, /type: patch/);
