@@ -989,3 +989,47 @@ main {
   position: relative;
   top: 1px;
 }
+
+
+/* v5.2.3: let the dungeon fade away before the game-over result appears. */
+.game-screen.is-dying {
+  pointer-events: none;
+  transform-origin: center center;
+  animation: game-over-fade-out 1.08s cubic-bezier(.36, 0, .65, 1) both;
+}
+@keyframes game-over-fade-out {
+  0% {
+    opacity: 1;
+    filter: grayscale(0) brightness(1);
+    transform: translateY(0);
+  }
+  38% {
+    opacity: .9;
+    filter: grayscale(.58) brightness(.72);
+    transform: translateY(2px);
+  }
+  100% {
+    opacity: 0;
+    filter: grayscale(1) brightness(.16);
+    transform: translateY(9px) scale(.985);
+  }
+}
+.result-screen.is-gameover-arrival {
+  animation: gameover-result-arrive .68s cubic-bezier(.2, .75, .25, 1) both;
+}
+@keyframes gameover-result-arrive {
+  0% {
+    opacity: 0;
+    filter: blur(2px);
+    transform: translateY(14px);
+  }
+  70% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
