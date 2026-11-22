@@ -45,15 +45,11 @@ for (const modeId of MODE_ORDER) {
     assertSafeOpening(state, OPENING_RANGES[modeId].floor2);
   });
 
-  test(`${modeId}: opening supplies use one existing food item and no free equipment`, () => {
+  test(`${modeId}: new adventures begin with no items or free equipment`, () => {
     const state = createNewGame(0x12345678, modeId);
-    assert.equal(state.equipment.weapon, null);
-    assert.equal(state.equipment.shield, null);
-    assert.equal(state.equipment.armor, null);
-    assert.equal(state.inventory.length, 1);
-    assert.equal(state.inventory[0].item.kind, 'food');
-    assert.notEqual(state.inventory[0].item.templateId, 'rice-ball');
-    assert.equal(state.inventory[0].count, 1);
+    assert.deepEqual(state.equipment, { weapon: null, shield: null, armor: null });
+    assert.deepEqual(state.inventory, []);
+    assert.equal(state.gold, 0);
   });
 
   test(`${modeId}: two ordinary opening kills can reach level 2`, () => {
@@ -76,14 +72,14 @@ for (const modeId of MODE_ORDER) {
   });
 }
 
-test('5.2.2 app, manifest, cache and release metadata stay aligned without changing save schema', async () => {
+test('5.2.3 app, manifest, cache and release metadata stay aligned without changing save schema', async () => {
   const [main, manifest, sw, engine, storage, release] = await Promise.all([
     read('assets/main.js'), read('manifest.webmanifest'), read('sw.js'),
-    read('assets/engine.js'), read('assets/storage.js'), read('RELEASE_v5.2.2.yaml'),
+    read('assets/engine.js'), read('assets/storage.js'), read('RELEASE_v5.2.3.yaml'),
   ]);
-  assert.match(main, /APP_VERSION = '5.2.2'/);
-  assert.match(manifest, /"version": "5.2.2"/);
-  assert.match(sw, /sou-watari-tabiroku-v5-2-2/);
+  assert.match(main, /APP_VERSION = '5.2.3'/);
+  assert.match(manifest, /"version": "5.2.3"/);
+  assert.match(sw, /sou-watari-tabiroku-v5-2-3/);
   assert.match(engine, /schemaVersion: 12/);
   assert.match(storage, /state\.schemaVersion !== 12/);
   assert.match(release, /type: patch/);

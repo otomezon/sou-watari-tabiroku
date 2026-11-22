@@ -1,0 +1,21 @@
+release:
+  project: 層渡りの旅録
+  version: 5.2.3
+  previous_version: 5.2.2
+  type: patch
+  title: 初期所持品の削除とゲームオーバー画面遷移の改善
+  invariants:
+    save_schema: 12
+    enemy_balance_version: 7
+    item_catalog_templates_unchanged: true
+    boss_base_profiles_unchanged: true
+  changes:
+    - start_new_campaigns_with_empty_inventory
+    - keep_starting_equipment_and_gold_at_zero
+    - fade_dungeon_view_to_grayscale_after_fatal_hit
+    - fade_in_gameover_result_screen
+    - preserve_combat_gameover_and_save_logic
+  tests:
+    - empty_starting_inventory_across_all_campaigns
+    - death_fade_and_result_screen_transition
+    - existing_campaign_balance_and_combat_regressions

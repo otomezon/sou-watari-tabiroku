@@ -1,17 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
 import {
   createNewGame, GameEngine, getFloorEncounterPowerTarget,
   getFloorMonsterCalibration, getLegacyV4FloorMonsterCalibration, getLegacyV5FloorMonsterCalibration,
   getLegacyV6FloorMonsterCalibration,
 } from '../assets/engine.js';
-import { getItemRecovery } from '../assets/balance.mjs';
 import { MODE_ORDER, getModeConfig } from '../assets/modes.js';
-import { itemIcon } from '../assets/items.js';
-
-const root = new URL('../', import.meta.url);
-const read = (path) => readFile(new URL(path, root), 'utf8');
 
 const EXPECTED_CURVES = Object.freeze({
   tutorial: [0.58, 0.62],
@@ -46,37 +40,15 @@ test('all five campaigns ramp encounter pressure smoothly from the first floor t
   }
 });
 
-test('new campaigns use one existing floor-one food item, never an invented rice-ball template', async () => {
-  const itemsSource = await read('assets/items.js');
-  assert.doesNotMatch(itemsSource, /id: 'rice-ball'/);
+test('new campaigns start with no carried items or equipment', () => {
   for (const modeId of MODE_ORDER) {
     for (const seed of [0x52002026, 0x6a09e667]) {
       const state = createNewGame(seed, modeId);
+      assert.deepEqual(state.inventory, []);
       assert.deepEqual(state.equipment, { weapon: null, shield: null, armor: null });
-      assert.equal(state.inventory.length, 1);
-      const stack = state.inventory[0];
-      assert.equal(stack.count, 1);
-      assert.equal(stack.item.kind, 'food');
-      assert.notEqual(stack.item.templateId, 'rice-ball');
-      assert.match(itemsSource, new RegExp(`id: '${stack.item.templateId}'`));
-      assert.ok(getItemRecovery(stack.item).hungerRestore > 0);
-      assert.equal(itemIcon(stack.item), '🍞');
+      assert.equal(state.gold, 0);
     }
   }
-});
-
-test('the existing starter food is consumed through the normal food system', () => {
-  const state = createNewGame(0x52002027, 'beginner');
-  state.monsters = [];
-  state.player.hunger = 60;
-  const item = state.inventory[0].item;
-  const uid = item.uid;
-  const expectedHunger = Math.min(120, 60 + getItemRecovery(item).hungerRestore);
-  const engine = new GameEngine(state);
-
-  assert.equal(engine.useItem(uid), true);
-  assert.equal(state.player.hunger, expectedHunger);
-  assert.equal(state.inventory.length, 0);
 });
 
 test('v4, v5 and v6 enemy saves migrate to v7 without applying stat multipliers twice', () => {
