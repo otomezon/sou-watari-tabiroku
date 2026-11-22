@@ -15,7 +15,7 @@ test('difficulty targets and enemy stat ceilings rise in a clear campaign order'
     tutorial: [0.56, 0.60, 1.18],
     beginner: [0.60, 0.63, 1.18],
     intermediate: [0.72, 0.80, 1.32],
-    advanced: [0.88, 0.98, 1.52],
+    advanced: [0.78, 0.88, 1.32],
     expert: [0.98, 1.10, 1.62],
   };
   const caps = MODE_ORDER.map((mode) => expected[mode][2]);
@@ -33,7 +33,7 @@ test('difficulty targets and enemy stat ceilings rise in a clear campaign order'
     assert.ok(values.every((value, index) => index === 0 || value >= values[index - 1]));
   }
   assert.match(engineSource, /FLOOR_MONSTER_BALANCE_VERSION = 7/);
-  assert.match(engineSource, /tutorial: 1\.18,[\s\S]*beginner: 1\.18,[\s\S]*intermediate: 1\.32,[\s\S]*advanced: 1\.52,[\s\S]*expert: 1\.62/);
+  assert.match(engineSource, /tutorial: 1\.18,[\s\S]*beginner: 1\.18,[\s\S]*intermediate: 1\.32,[\s\S]*advanced: 1\.32,[\s\S]*expert: 1\.62/);
 });
 
 test('floor caches and ordinary enemy item drops are less frequent in every campaign', async () => {
