@@ -78,7 +78,7 @@ const MAX_LIGHT_GEAR_TRADE_HP_SHARE = Object.freeze({
   beginner: 0.25,
   intermediate: 0.45,
   advanced: 0.55,
-  expert: 0.70,
+  expert: 0.76,
 });
 
 
