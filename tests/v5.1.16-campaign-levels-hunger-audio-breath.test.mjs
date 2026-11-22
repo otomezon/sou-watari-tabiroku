@@ -192,7 +192,7 @@ test('new regular monsters carry balance version 5 and legacy unscaled monsters 
   assert.equal(migrated.defense, Math.min(getExpectedMonsterDefenseCap('beginner', 1), Math.round(4 * expectedAdjustment * FLOOR_MONSTER_DEFENSE_MULTIPLIER)));
 });
 
-test('version-1, version-2, and version-3 floor monsters migrate proportionally to v4', () => {
+test('version-1, version-2, and version-3 floor monsters migrate proportionally to v5', () => {
   for (const legacy of [
     { version: 1, defeatRate: 0.55, seed: 0x5162029 },
     { version: 2, defeatRate: 0.70, seed: 0x5162030 },
@@ -254,10 +254,8 @@ test('player level-up and received-hit cues share the start of the fanfare', asy
 
 test('dragon breath renderer displays the same path cells as collision logic', async () => {
   const [engine, renderer] = await Promise.all([read('assets/engine.js'), read('assets/renderer.js')]);
-  assert.match(engine, /const areaWidth = 1;/);
-  assert.match(engine, /const areaHeight = 5;/);
-  assert.match(engine, /cell\.x >= left && cell\.x <= right && cell\.y >= top && cell\.y <= bottom/);
   assert.match(engine, /const cells = getLineCells\(monster, center\)/);
+  assert.match(engine, /hitCells\.has\(pointKey\(cell\)\)/);
   assert.match(renderer, /Array\.isArray\(effect\.cells\)/);
   assert.match(renderer, /for \(const cell of cells\)/);
 });
