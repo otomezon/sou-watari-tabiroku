@@ -830,10 +830,12 @@ export class GameEngine {
                         : 1;
             const previousScale = Math.max(0.01, previousCalibration);
             // v4 already applied the separate HP/attack/defense multipliers. Older saves did not.
-            const multiplierMigrationScale = previousVersion >= 4 ? 1 : 1;
-            const hpMigrationScale = calibration * (previousVersion >= 4 ? multiplierMigrationScale : FLOOR_MONSTER_HP_MULTIPLIER) / previousScale;
-            const attackMigrationScale = calibration * (previousVersion >= 4 ? multiplierMigrationScale : FLOOR_MONSTER_ATTACK_MULTIPLIER) / previousScale;
-            const defenseMigrationScale = calibration * (previousVersion >= 4 ? multiplierMigrationScale : FLOOR_MONSTER_DEFENSE_MULTIPLIER) / previousScale;
+            const hpMigrationMultiplier = previousVersion >= 4 ? 1 : FLOOR_MONSTER_HP_MULTIPLIER;
+            const attackMigrationMultiplier = previousVersion >= 4 ? 1 : FLOOR_MONSTER_ATTACK_MULTIPLIER;
+            const defenseMigrationMultiplier = previousVersion >= 4 ? 1 : FLOOR_MONSTER_DEFENSE_MULTIPLIER;
+            const hpMigrationScale = calibration * hpMigrationMultiplier / previousScale;
+            const attackMigrationScale = calibration * attackMigrationMultiplier / previousScale;
+            const defenseMigrationScale = calibration * defenseMigrationMultiplier / previousScale;
             const oldMaxHp = Math.max(1, Number(monster.maxHp) || 1);
             const oldHp = Math.max(0, Number(monster.hp) || 0);
             const hpRatio = Math.min(1, oldHp / oldMaxHp);
