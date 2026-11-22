@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createNewGame, GameEngine } from '../assets/engine.js';
 import { validateGameState } from '../assets/storage.js';
-import { DIRECTION_DELTA, canStepBetween } from '../assets/dungeon.js';
+import { DIRECTION_DELTA, canStepBetween, nextPathStep } from '../assets/dungeon.js';
 import { createItem, getItemSelectionFloor } from '../assets/items.js';
 import { Random } from '../assets/random.js';
 import { MODE_ORDER, getModeConfig } from '../assets/modes.js';
@@ -186,6 +186,44 @@ test('repeated attack turns across all modes keep the game state save-valid', ()
       }
 
       assert.ok(playerAttacks >= 1, `${modeId}: scripted combat should include at least one kill`);
+    }
+  }
+});
+
+test('deterministic multi-turn combat never leaves an unsaveable state', () => {
+  const directions = Object.entries(DIRECTION_DELTA);
+  const seeds = [0x5222001, 0x5222002];
+  for (const modeId of MODE_ORDER) {
+    for (const seed of seeds) {
+      const state = createNewGame(seed, modeId);
+      state.player.maxHp = 10000;
+      state.player.hp = 10000;
+      const engine = new GameEngine(state);
+      let attacks = 0;
+
+      for (let action = 0; action < 100 && state.status === 'playing'; action += 1) {
+        const target = [...state.monsters].sort((a, b) =>
+          Math.max(Math.abs(a.x - state.player.x), Math.abs(a.y - state.player.y)) -
+          Math.max(Math.abs(b.x - state.player.x), Math.abs(b.y - state.player.y)))[0];
+        const step = target
+          ? nextPathStep(state.dungeon.tiles, state.player, target, new Set())
+          : null;
+        if (!step) {
+          engine.wait();
+        }
+        else {
+          const dx = step.x - state.player.x;
+          const dy = step.y - state.player.y;
+          const direction = directions.find(([, delta]) => delta.x === dx && delta.y === dy)?.[0];
+          assert.ok(direction, `invalid path step ${dx},${dy}`);
+          const beforeDefeated = state.defeatedMonsters;
+          engine.move(direction);
+          if (state.defeatedMonsters > beforeDefeated) attacks += 1;
+        }
+        assert.equal(validateGameState(state), true,
+          `${modeId} seed=${seed.toString(16)} action=${action} floor=${state.floor}: attack left an invalid save state`);
+      }
+      assert.ok(attacks > 0, `${modeId} seed=${seed.toString(16)} should include player attacks`);
     }
   }
 });
