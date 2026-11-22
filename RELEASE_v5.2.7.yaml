@@ -14,8 +14,8 @@ release:
     enemy_spawn_counts_unchanged: true
     item_drop_rates_unchanged: true
   changes:
-    - add_distinct_bright_monster_levelup_fanfare_about_1_2_seconds
-    - shorten_consecutive_monster_levelup_cue_spacing_to_1_28_seconds
+    - add_distinct_bright_full_body_monster_levelup_fanfare_about_2_2_seconds
+    - shorten_consecutive_monster_levelup_cue_spacing_to_2_35_seconds
   tests:
     - verify_monster_cue_timbre_and_duration
     - verify_monster_queue_is_faster_than_player_queue
