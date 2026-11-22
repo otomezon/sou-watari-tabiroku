@@ -1,0 +1,22 @@
+release:
+  project: 層渡りの旅録
+  version: 5.2.5
+  previous_version: 5.2.4
+  type: patch
+  title: ゲームオーバー切り替え前の血流演出へ修正
+  invariants:
+    save_schema: 12
+    enemy_balance_version: 7
+    enemy_stats_unchanged: true
+    enemy_action_frequency_unchanged: true
+    enemy_spawn_counts_unchanged: true
+    item_drop_rates_unchanged: true
+  changes:
+    - move_blood_animation_to_fullscreen_death_transition_layer
+    - animate_blood_flow_during_dungeon_fade_out
+    - remove_extra_gameover_result_fade_in
+    - shorten_death_transition_to_900ms
+  tests:
+    - blood_layer_starts_before_transition_wait_and_ends_before_result_screen
+    - result_screen_has_no_post_switch_blood_animation
+    - existing_combat_save_enemy_ai_and_balance_regressions
