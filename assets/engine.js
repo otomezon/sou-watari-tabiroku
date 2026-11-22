@@ -291,7 +291,7 @@ export function getLegacyV5FloorMonsterCalibration(modeId, floor) {
 export function getLegacyV4FloorMonsterCalibration(modeId, floor) {
     const maximumAdjustment = modeId === 'expert' ? 1.35 : 1.18;
     return calculateFloorMonsterCalibration(
-        modeId, floor, EXPECTED_MONSTER_DEFEAT_RATE, FLOOR_ENCOUNTER_POWER_TARGET, 0.65, maximumAdjustment,
+        modeId, floor, EXPECTED_MONSTER_DEFEAT_RATE, LEGACY_V5_FLOOR_ENCOUNTER_POWER_TARGET, 0.65, maximumAdjustment,
         FLOOR_MONSTER_HP_MULTIPLIER, FLOOR_MONSTER_ATTACK_MULTIPLIER, FLOOR_MONSTER_DEFENSE_MULTIPLIER,
         getExpectedMonsterDefenseCap(modeId, floor), false,
     );
