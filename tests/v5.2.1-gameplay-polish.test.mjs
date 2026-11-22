@@ -103,7 +103,7 @@ test('game-over state retains the fatal hit message for the presentation pause',
 test('gameplay actions and game-over transition have visible pacing', async () => {
   const main = await read('assets/main.js');
   assert.match(main, /const ACTION_DELAY_MS = 65/);
-  assert.match(main, /const GAME_OVER_RESULT_DELAY_MS = 1120/);
+  assert.match(main, /const GAME_OVER_RESULT_DELAY_MS = 900/);
   assert.match(main, /await wait\(ACTION_DELAY_MS\)/);
   assert.match(main, /await wait\(GAME_OVER_RESULT_DELAY_MS\)/);
   assert.match(main, /const wait = \(milliseconds\) => new Promise/);
