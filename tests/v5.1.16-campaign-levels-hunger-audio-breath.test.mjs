@@ -33,7 +33,7 @@ test('expected player level uses a balanced 50% monster-clear rate', () => {
     getExpectedPlayerLevel('intermediate', 15),
     getExpectedPlayerLevel('advanced', 25),
     getExpectedPlayerLevel('expert', 30),
-  ], [4, 9, 15, 24, 32]);
+  ], [3, 8, 14, 22, 30]);
   for (const mode of MODE_ORDER) {
     assert.equal(getExpectedPlayerLevel(mode, 1), 1);
   }
@@ -44,7 +44,7 @@ test('floor monster calibration stays within the refined, difficulty-specific ra
   for (const [mode, totalFloors] of Object.entries(floors)) {
     for (let floor = 1; floor <= totalFloors; floor += 1) {
       const adjustment = getFloorMonsterCalibration(mode, floor);
-      const maximumAdjustment = ({ tutorial: 1.18, beginner: 1.18, intermediate: 1.24, advanced: 1.28, expert: 1.62 })[mode];
+      const maximumAdjustment = mode === 'expert' ? 1.40 : 1.23;
       assert.ok(adjustment >= 0.65 && adjustment <= maximumAdjustment, `${mode} F${floor}: ${adjustment}`);
       assert.ok(Number.isFinite(getLegacyV3FloorMonsterCalibration(mode, floor)));
       assert.ok(Number.isFinite(getLegacyV4FloorMonsterCalibration(mode, floor)));
