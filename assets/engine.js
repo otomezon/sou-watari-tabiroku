@@ -132,7 +132,7 @@ const FLOOR_ENCOUNTER_POWER_CURVE = Object.freeze({
     tutorial: Object.freeze({ start: 0.58, end: 0.62 }),
     beginner: Object.freeze({ start: 0.62, end: 0.65 }),
     intermediate: Object.freeze({ start: 0.70, end: 0.76 }),
-    advanced: Object.freeze({ start: 0.68, end: 0.74 }),
+    advanced: Object.freeze({ start: 0.67, end: 0.73 }),
     expert: Object.freeze({ start: 0.78, end: 0.84 }),
 });
 // v5.2.1 calibration is retained verbatim for one-time migration of existing v6 saves.
@@ -277,7 +277,7 @@ export function getExpectedMonsterDefenseCap(modeId, floor, defeatRate = EXPECTE
 
 /** Balance durable monsters against a 50% progression estimate while limiting burst damage. */
 export function getFloorMonsterCalibration(modeId, floor, defeatRate = EXPECTED_MONSTER_DEFEAT_RATE) {
-    const maximumAdjustment = modeId === 'expert' ? 1.38 : 1.21;
+    const maximumAdjustment = modeId === 'expert' ? 1.38 : 1.19;
     return calculateFloorMonsterCalibration(
         modeId, floor, defeatRate, FLOOR_ENCOUNTER_POWER_CURVE, 0.65, maximumAdjustment,
         FLOOR_MONSTER_HP_MULTIPLIER, FLOOR_MONSTER_ATTACK_MULTIPLIER, FLOOR_MONSTER_DEFENSE_MULTIPLIER,
