@@ -7,6 +7,9 @@ import { RenderManager } from "./renderer.js";
 import { DEFAULT_AUDIO_SETTINGS, SaveManager } from "./storage.js";
 import { DUNGEON_MODES, MODE_ORDER, getModeConfig } from "./modes.js";
 const APP_VERSION = '5.2.0';
+const ACTION_DELAY_MS = 65;
+const GAME_OVER_RESULT_DELAY_MS = 950;
+const wait = (milliseconds) => new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 const byId = (id) => {
     const element = document.getElementById(id);
     if (!element)
@@ -115,6 +118,7 @@ class GameApp {
         this.busy = true;
         try {
             await this.sound.unlock();
+            await wait(ACTION_DELAY_MS);
             this.state = createFreshRun(modeId);
             this.engine = new GameEngine(this.state);
             this.sound.startBgm(modeId, false);
@@ -191,6 +195,7 @@ class GameApp {
         try {
             await this.sound.unlock();
             action();
+            await wait(ACTION_DELAY_MS);
             this.refresh();
             const postActionStatus = this.state.status;
             if (this.state.turn !== oldTurn || postActionStatus !== oldStatus) {
@@ -218,6 +223,8 @@ class GameApp {
                 else
                     this.sound.effect(defaultEffect);
                 if (postActionStatus !== 'playing') {
+                    if (postActionStatus === 'gameover')
+                        await wait(GAME_OVER_RESULT_DELAY_MS);
                     this.sound.stopBgm();
                     this.showResult();
                 }
@@ -243,6 +250,7 @@ class GameApp {
                 this.sound.startBgm(this.state.modeId, bossFloor);
                 if (bossFloor)
                     this.sound.effect('boss');
+                await wait(ACTION_DELAY_MS);
                 this.refresh();
                 await this.persist();
             }
