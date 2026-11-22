@@ -277,7 +277,13 @@ export function getExpectedMonsterDefenseCap(modeId, floor, defeatRate = EXPECTE
 
 /** Balance durable monsters against a 50% progression estimate while limiting burst damage. */
 export function getFloorMonsterCalibration(modeId, floor, defeatRate = EXPECTED_MONSTER_DEFEAT_RATE) {
-    const maximumAdjustment = modeId === 'expert' ? 1.35 : 1.18;
+    const maximumAdjustment = ({
+        tutorial: 1.22,
+        beginner: 1.32,
+        intermediate: 1.42,
+        advanced: 1.52,
+        expert: 1.62,
+    })[modeId] ?? 1.32;
     return calculateFloorMonsterCalibration(
         modeId, floor, defeatRate, FLOOR_ENCOUNTER_POWER_CURVE, 0.65, maximumAdjustment,
         FLOOR_MONSTER_HP_MULTIPLIER, FLOOR_MONSTER_ATTACK_MULTIPLIER, FLOOR_MONSTER_DEFENSE_MULTIPLIER,
