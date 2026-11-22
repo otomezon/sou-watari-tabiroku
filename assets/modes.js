@@ -2,7 +2,7 @@ export const DUNGEON_MODES = {
     tutorial: {
         id: 'tutorial', name: 'はじまりの坑道', subtitle: 'チュートリアル · 地下5階',
         description: '移動・戦闘・アイテム・装備・満腹度の基本を学ぶ短い探索。',
-        floors: 5, difficultyScale: 0.92, maxMonsterTier: 2, minMonsters: 4, maxMonsters: 6, bossFloorMonsters: 0, bossSize: 1, bossVisualScale: 0.50, bossSupportRareChance: 0, bossFormChance: 0,
+        floors: 5, difficultyScale: 0.92, maxMonsterTier: 2, minMonsters: 3, maxMonsters: 5, bossFloorMonsters: 0, bossSize: 1, bossVisualScale: 0.50, bossSupportRareChance: 0, bossFormChance: 0,
         rareMonsterChance: 0, floorLootChance: 0.44, equipmentWeight: 0.16, foodWeight: 0.43, potionWeight: 0.41,
         enemyDropEquipment: 0.010, enemyDropPotion: 0.025, enemyDropFood: 0.026, enemyDropGold: 0.19, shopChance: 0.05, enemyDropValuable: 0.003,
         bossName: '坑道の守り手・岩喰い', bossHp: 42, bossAttack: 6, bossDefense: 1, bossExp: 78, bossAreaAttackChance: 0, bossNovaAttackChance: 0, bossEnrageThreshold: 0, bossEnrageAttackMultiplier: 1,
@@ -11,7 +11,7 @@ export const DUNGEON_MODES = {
     beginner: {
         id: 'beginner', name: '苔むす古坑', subtitle: '初級 · 地下10階',
         description: '基本を身につけた冒険者向け。装備を整えて魔物の王に挑もう。',
-        floors: 10, difficultyScale: 1.00, maxMonsterTier: 3, minMonsters: 5, maxMonsters: 8, bossFloorMonsters: 3, bossSize: 2, bossVisualScale: 0.78, bossSupportRareChance: 0.025, bossFormChance: 0,
+        floors: 10, difficultyScale: 1.00, maxMonsterTier: 3, minMonsters: 4, maxMonsters: 7, bossFloorMonsters: 3, bossSize: 2, bossVisualScale: 0.78, bossSupportRareChance: 0.025, bossFormChance: 0,
         rareMonsterChance: 0.085, floorLootChance: 0.40, equipmentWeight: 0.16, foodWeight: 0.43, potionWeight: 0.41,
         enemyDropEquipment: 0.010, enemyDropPotion: 0.022, enemyDropFood: 0.020, enemyDropGold: 0.22, shopChance: 0.07, enemyDropValuable: 0.003,
         bossName: '古坑の守護王', bossHp: 160, bossAttack: 14, bossDefense: 4, bossExp: 180, bossAreaAttackChance: 0.12, bossNovaAttackChance: 0, bossEnrageThreshold: 0, bossEnrageAttackMultiplier: 1,
@@ -20,7 +20,7 @@ export const DUNGEON_MODES = {
     intermediate: {
         id: 'intermediate', name: '蒼晶の地下聖堂', subtitle: '中級 · 地下15階',
         description: '結晶の回廊に強敵が潜む。耐久と食料の管理が重要になる。',
-        floors: 15, difficultyScale: 1.14, maxMonsterTier: 4, minMonsters: 6, maxMonsters: 9, bossFloorMonsters: 5, bossSize: 2, bossVisualScale: 1.00, bossSupportRareChance: 0.03, bossFormChance: 0.40,
+        floors: 15, difficultyScale: 1.14, maxMonsterTier: 4, minMonsters: 5, maxMonsters: 8, bossFloorMonsters: 5, bossSize: 2, bossVisualScale: 1.00, bossSupportRareChance: 0.03, bossFormChance: 0.40,
         rareMonsterChance: 0.095, floorLootChance: 0.36, equipmentWeight: 0.16, foodWeight: 0.42, potionWeight: 0.42,
         enemyDropEquipment: 0.010, enemyDropPotion: 0.021, enemyDropFood: 0.018, enemyDropGold: 0.23, shopChance: 0.08, enemyDropValuable: 0.0035,
         bossName: '蒼晶竜アズラグ', bossHp: 316, bossAttack: 25, bossDefense: 8, bossExp: 300, bossAreaAttackChance: 0.38, bossNovaAttackChance: 0, bossEnrageThreshold: 0, bossEnrageAttackMultiplier: 1,
@@ -29,7 +29,7 @@ export const DUNGEON_MODES = {
     advanced: {
         id: 'advanced', name: '灰燼の魔窟', subtitle: '上級 · 地下25階',
         description: '灼熱の灰に覆われた深層。希少個体と消耗戦を覚悟せよ。',
-        floors: 25, difficultyScale: 1.28, maxMonsterTier: 5, minMonsters: 6, maxMonsters: 10, bossFloorMonsters: 6, bossSize: 3, bossVisualScale: 1.50, bossSupportRareChance: 0.035, bossFormChance: 0.50,
+        floors: 25, difficultyScale: 1.28, maxMonsterTier: 5, minMonsters: 5, maxMonsters: 9, bossFloorMonsters: 6, bossSize: 3, bossVisualScale: 1.50, bossSupportRareChance: 0.035, bossFormChance: 0.50,
         rareMonsterChance: 0.105, floorLootChance: 0.34, equipmentWeight: 0.17, foodWeight: 0.40, potionWeight: 0.43,
         enemyDropEquipment: 0.011, enemyDropPotion: 0.020, enemyDropFood: 0.017, enemyDropGold: 0.24, shopChance: 0.09, enemyDropValuable: 0.004,
         bossName: '灰燼公ヴァルグ', bossHp: 430, bossAttack: 33, bossDefense: 10, bossExp: 520, bossAreaAttackChance: 0.42, bossNovaAttackChance: 0.12, bossEnrageThreshold: 0.40, bossEnrageAttackMultiplier: 1.15,
@@ -38,7 +38,7 @@ export const DUNGEON_MODES = {
     expert: {
         id: 'expert', name: '星喰らいの深淵', subtitle: '最上級 · 地下30階',
         description: '星の光すら届かない最深層。万全の装備と判断力が試される。',
-        floors: 30, difficultyScale: 1.35, maxMonsterTier: 6, minMonsters: 7, maxMonsters: 11, bossFloorMonsters: 7, bossSize: 4, bossVisualScale: 2.00, bossSupportRareChance: 0.04, bossFormChance: 0.60,
+        floors: 30, difficultyScale: 1.35, maxMonsterTier: 6, minMonsters: 6, maxMonsters: 10, bossFloorMonsters: 7, bossSize: 4, bossVisualScale: 2.00, bossSupportRareChance: 0.04, bossFormChance: 0.60,
         rareMonsterChance: 0.115, floorLootChance: 0.32, equipmentWeight: 0.18, foodWeight: 0.39, potionWeight: 0.43,
         enemyDropEquipment: 0.012, enemyDropPotion: 0.019, enemyDropFood: 0.016, enemyDropGold: 0.25, shopChance: 0.10, enemyDropValuable: 0.0045,
         bossName: '星喰らいゼル＝ノヴァ', bossHp: 560, bossAttack: 42, bossDefense: 12, bossExp: 760, bossAreaAttackChance: 0.45, bossNovaAttackChance: 0.20, bossEnrageThreshold: 0.45, bossEnrageAttackMultiplier: 1.22,
