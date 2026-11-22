@@ -33,6 +33,7 @@ test('difficulty targets and enemy stat ceilings rise in a clear campaign order'
     assert.ok(values.every((value, index) => index === 0 || value >= values[index - 1]));
   }
   assert.match(engineSource, /FLOOR_MONSTER_BALANCE_VERSION = 7/);
+  assert.match(engineSource, /if \(modeId === 'advanced'\)\s+return \{ hp: 1\.02, attack: 0\.86/);
   assert.match(engineSource, /tutorial: 1\.18,[\s\S]*beginner: 1\.18,[\s\S]*intermediate: 1\.24,[\s\S]*advanced: 1\.28,[\s\S]*expert: 1\.62/);
 });
 
