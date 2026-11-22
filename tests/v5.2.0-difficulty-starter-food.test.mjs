@@ -36,7 +36,8 @@ test('all five campaigns ramp encounter pressure smoothly from the first floor t
       `${modeId}: every campaign should have a real floor-to-floor ramp`);
     for (let floor = 1; floor <= floors; floor += 1) {
       const scale = getFloorMonsterCalibration(modeId, floor);
-      assert.ok(Number.isFinite(scale) && scale >= 0.65 && scale <= 1.45,
+      const maximumAdjustment = modeId === 'expert' ? 1.35 : 1.18;
+      assert.ok(Number.isFinite(scale) && scale >= 0.65 && scale <= maximumAdjustment,
         `${modeId} F${floor}: invalid calibration ${scale}`);
     }
   }
