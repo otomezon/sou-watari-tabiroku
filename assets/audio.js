@@ -241,8 +241,7 @@ export class SoundManager {
             return;
         }
         if (effect === 'hunter-level') {
-            // 魔喰いも通常モンスターと同じ専用レベルアップ音を使う。
-            this.playMonsterLevelUpFanfare();
+            this.playHunterLevelUpFanfare();
             return;
         }
         if (effect === 'monster-level') {
@@ -274,9 +273,8 @@ export class SoundManager {
                 }
                 offset += 3.05;
             } else if (effect === 'hunter-level') {
-                // 魔喰いの成長音も通常モンスターと同一の音色・長さ・間隔に統一。
-                this.playMonsterLevelUpFanfare(now + offset);
-                offset += 2.35;
+                this.playHunterLevelUpFanfare(now + offset);
+                offset += 3.05;
             } else if (effect === 'monster-level') {
                 this.playMonsterLevelUpFanfare(now + offset);
                 offset += 2.35;
@@ -445,9 +443,9 @@ export class SoundManager {
             this.playFanfareTone(pitch(frequency), start + time, 0.29, 0.065, 'sine', 720, 0.008);
         this.playFanfareTone(pitch(2349.32), start + 2.48, 0.42, 0.025, 'sine', 5200, 0.004);
     }
-    /** Backward-compatible alias: 魔喰いも通常モンスターと同じ専用ファンファーレを使う。 */
+    /** Same level-up phrase transposed down a whole tone into C major. */
     playHunterLevelUpFanfare(requestedStart) {
-        this.playMonsterLevelUpFanfare(requestedStart);
+        this.playLevelUpFanfare(requestedStart, -2);
     }
     /** Monster growth uses a distinct, bright fanfare with a brisker pulse but enough body to register. */
     playMonsterLevelUpFanfare(requestedStart) {
