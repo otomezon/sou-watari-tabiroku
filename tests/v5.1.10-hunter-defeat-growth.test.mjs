@@ -113,9 +113,9 @@ test('a level-99 winner defeats the hunter without a false level-up fanfare', ()
   assert.match(state.message, /これ以上は成長できない/);
 });
 
-test('the app plays the regular level-up fanfare for monster growth notifications', async () => {
+test('the app plays a separate, lower-pitched fanfare for monster growth notifications', async () => {
   const main = await readFile(new URL('../assets/main.js', import.meta.url), 'utf8');
   assert.match(main, /this\.engine\.getMonsterLevelUpCount\(\)/);
-  assert.match(main, /monsterLevelCues = Array\.from\(\{ length: monsterLevelUps \}, \(\) => 'level'\)/);
+  assert.match(main, /monsterLevelCues = Array\.from\(\{ length: monsterLevelUps \}, \(\) => 'monster-level'\)/);
   assert.match(main, /\.\.\.monsterLevelCues/);
 });
