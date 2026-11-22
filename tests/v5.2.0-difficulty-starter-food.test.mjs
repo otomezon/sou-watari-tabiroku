@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  createNewGame, GameEngine, getFloorEncounterPowerTarget,
+  createNewGame, getFloorEncounterPowerTarget,
   getFloorMonsterCalibration, getLegacyV4FloorMonsterCalibration, getLegacyV5FloorMonsterCalibration,
   getLegacyV6FloorMonsterCalibration,
 } from '../assets/engine.js';
