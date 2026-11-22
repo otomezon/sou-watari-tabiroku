@@ -145,16 +145,31 @@ export function isReachable(tiles, from, to) {
     }
     return false;
 }
-export function nextPathStep(tiles, from, target, blocked) {
+export function nextPathStep(tiles, from, target, blocked, preferStraight = false) {
     const key = (point) => `${point.x},${point.y}`;
     const queue = [from];
     const firstStep = new Map();
     const seen = new Set([key(from)]);
+    const directionOrder = preferStraight
+        ? [...DIRECTIONS_8].sort((a, b) => {
+            const directionScore = (direction) => {
+                const delta = DIRECTION_DELTA[direction];
+                const next = { x: from.x + delta.x, y: from.y + delta.y };
+                const crossTrack = Math.abs(
+                    (next.x - from.x) * (target.y - from.y) -
+                    (next.y - from.y) * (target.x - from.x),
+                );
+                const remaining = Math.max(Math.abs(target.x - next.x), Math.abs(target.y - next.y));
+                return crossTrack * 1000 + remaining;
+            };
+            return directionScore(a) - directionScore(b);
+        })
+        : DIRECTIONS_8;
     for (let head = 0; head < queue.length; head += 1) {
         const current = queue[head];
         if (current.x === target.x && current.y === target.y)
             return firstStep.get(key(current)) ?? null;
-        for (const direction of DIRECTIONS_8) {
+        for (const direction of directionOrder) {
             const delta = DIRECTION_DELTA[direction];
             const next = { x: current.x + delta.x, y: current.y + delta.y };
             const nextKey = key(next);
