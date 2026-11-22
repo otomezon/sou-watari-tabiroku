@@ -43,7 +43,7 @@ test('monster gold yield is reduced while rare encounters remain more rewarding'
   assert.deepEqual(RARE_VALUABLE_DROP_CHANCES, { hunter: 0.12, otherRare: 0.04 });
   assert.deepEqual(getRareValuableDropChances('beginner'), { hunter: 0.16, otherRare: 0.055 });
   assert.deepEqual(getRareValuableDropChances('expert'), { hunter: 0.12, otherRare: 0.04 });
-  assert.equal(getGoldDropChance(0.22, true, 'beginner'), 0.2904);
+  assert.equal(getGoldDropChance(0.22, true, 'beginner'), 0.3388);
   assert.equal(getGoldDropAmount(171, false, 'beginner'), 145);
   assert.equal(getGoldDropAmount(171, true, 'beginner'), 299);
 });
