@@ -31,7 +31,7 @@ test('current app metadata is aligned while the historical v5.0.2 release record
     read('assets/main.js'), read('manifest.webmanifest'), read('sw.js'),
     read('assets/storage.js'), read('RELEASE_v5.0.2.yaml'),
   ]);
-  assert.match(main, /APP_VERSION = '5\.2\.0'/);
+  assert.match(main, /APP_VERSION = '5\.2\.1'/);
   assert.match(manifest, /"version": "5.2.1"/);
   assert.match(sw, /sou-watari-tabiroku-v5-2-1/);
   assert.match(storage, /state\.schemaVersion !== 12/);
