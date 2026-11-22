@@ -1,0 +1,25 @@
+release:
+  project: 層渡りの旅録
+  version: 5.2.10
+  previous_version: 5.2.9
+  type: patch
+  title: 魔喰いのレベルアップ音を変更前に復元
+  invariants:
+    save_schema: 12
+    enemy_balance_version: 7
+    player_levelup_sound_unchanged: true
+    ordinary_monster_levelup_sound_unchanged: true
+    magic_eater_growth_rules_unchanged: true
+    enemy_stats_unchanged: true
+    enemy_action_frequency_unchanged: true
+    enemy_spawn_counts_unchanged: true
+    item_drop_rates_unchanged: true
+  changes:
+    - restore_magic_eater_hunter_level_fanfare_to_previous_transposed_player_phrase
+    - restore_magic_eater_levelup_queue_spacing_to_3_05_seconds
+    - retain_ordinary_monster_dedicated_fanfare_and_2_35_second_queue
+  tests:
+    - verify_hunter_level_route_calls_original_hunter_fanfare
+    - verify_hunter_fanfare_transposes_player_phrase_down_two_semitones
+    - verify_magic_eater_queue_spacing_is_3_05_seconds
+    - verify_ordinary_monster_fanfare_is_unchanged
