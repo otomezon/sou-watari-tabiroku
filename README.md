@@ -35,4 +35,4 @@
 通常敵のバランスバージョンをv6へ更新します。既存敵の現在HP割合を保ち、v1〜v5それぞれの旧補正から差分移行します。セーブスキーマ12とボス本体の基本性能は維持します。
 
 詳細: [PATCH_NOTES_v5.2.0.md](PATCH_NOTES_v5.2.0.md)
-前バージョンの敵バランス: [PATCH_NOTES_v5.1.20.md](PATCH_NOTES_v5.1.20.md)
+前バージョンの変更履歴: [PATCH_NOTES_v5.1.21.md](PATCH_NOTES_v5.1.21.md)
