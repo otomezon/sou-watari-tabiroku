@@ -100,12 +100,14 @@ test('game-over state retains the fatal hit message for the presentation pause',
   assert.match(state.message, /力尽きた/);
 });
 
-test('gameplay actions and game-over transition have visible pacing', async () => {
+test('gameplay actions and overlapping game-over crossfade have deliberate pacing', async () => {
   const main = await read('assets/main.js');
   assert.match(main, /const ACTION_DELAY_MS = 65/);
-  assert.match(main, /const GAME_OVER_RESULT_DELAY_MS = 900/);
+  assert.match(main, /const GAME_OVER_CROSSFADE_START_MS = 460/);
+  assert.match(main, /const GAME_OVER_CROSSFADE_MS = 760/);
   assert.match(main, /await wait\(ACTION_DELAY_MS\)/);
-  assert.match(main, /await wait\(GAME_OVER_RESULT_DELAY_MS\)/);
+  assert.match(main, /await wait\(GAME_OVER_CROSSFADE_START_MS\)/);
+  assert.match(main, /await wait\(GAME_OVER_CROSSFADE_MS\)/);
   assert.match(main, /const wait = \(milliseconds\) => new Promise/);
 });
 
