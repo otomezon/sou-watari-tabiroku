@@ -1,0 +1,24 @@
+release:
+  project: 層渡りの旅録
+  version: 5.2.8
+  previous_version: 5.2.7
+  type: patch
+  title: モンスターのレベルアップ音の長さとテンポを再調整
+  invariants:
+    save_schema: 12
+    enemy_balance_version: 7
+    player_levelup_sound_unchanged: true
+    hunter_levelup_sound_unchanged: true
+    enemy_stats_unchanged: true
+    enemy_action_frequency_unchanged: true
+    enemy_spawn_counts_unchanged: true
+    item_drop_rates_unchanged: true
+  changes:
+    - extend_monster_levelup_fanfare_to_about_2_2_seconds
+    - increase_monster_melody_tempo_relative_to_player
+    - set_consecutive_monster_levelup_spacing_to_2_35_seconds
+  tests:
+    - verify_monster_cue_timbre_and_2_2_second_duration
+    - verify_monster_tempo_is_faster_than_player
+    - verify_player_fanfare_duration_is_unchanged
+    - verify_player_and_hunter_levelup_melodies_are_unchanged
