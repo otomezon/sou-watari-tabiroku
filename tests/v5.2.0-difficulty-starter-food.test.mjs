@@ -16,7 +16,7 @@ const EXPECTED_CURVES = Object.freeze({
   tutorial: [0.60, 0.66],
   beginner: [0.64, 0.69],
   intermediate: [0.68, 0.74],
-  advanced: [0.70, 0.76],
+  advanced: [0.67, 0.73],
   expert: [0.76, 0.84],
 });
 
@@ -106,8 +106,19 @@ test('the new encounter curve keeps the intended difficulty order from tutorial 
   const finalFloor = MODE_ORDER.map((mode) =>
     getFloorEncounterPowerTarget(mode, getModeConfig(mode).floors));
 
-  assert.deepEqual(firstFloor, [0.60, 0.64, 0.68, 0.70, 0.76]);
-  assert.deepEqual(finalFloor, [0.66, 0.69, 0.74, 0.76, 0.84]);
-  assert.ok(firstFloor.every((value, index) => index === 0 || value > firstFloor[index - 1]));
-  assert.ok(finalFloor.every((value, index) => index === 0 || value > finalFloor[index - 1]));
+  assert.deepEqual(firstFloor, [0.60, 0.64, 0.68, 0.67, 0.76]);
+  assert.deepEqual(finalFloor, [0.66, 0.69, 0.74, 0.73, 0.84]);
+  const expectedOpeningCounts = MODE_ORDER.map((mode) => {
+    const config = getModeConfig(mode);
+    return (config.minMonsters + config.maxMonsters) / 2 - 1;
+  });
+  const expectedFinalCounts = MODE_ORDER.map((mode) => {
+    const config = getModeConfig(mode);
+    return (config.minMonsters + config.maxMonsters) / 2 - (mode === 'tutorial' ? 1 : 0);
+  });
+  const openingPressure = firstFloor.map((target, index) => target * expectedOpeningCounts[index]);
+  const finalPressure = finalFloor.map((target, index) => target * expectedFinalCounts[index]);
+  assert.ok(openingPressure.every((value, index) => index === 0 || value > openingPressure[index - 1]));
+  assert.ok(finalPressure.every((value, index) => index === 0 || value > finalPressure[index - 1]));
+  assert.ok(firstFloor[3] < firstFloor[2], 'advanced uses slightly lower per-monster pressure to offset its higher spawn count');
 });
