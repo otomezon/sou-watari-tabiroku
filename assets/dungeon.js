@@ -133,11 +133,11 @@ export function isReachable(tiles, from, to) {
         const current = queue[head];
         if (current.x === to.x && current.y === to.y)
             return true;
-        for (const direction of CARDINAL_DIRECTIONS) {
+        for (const direction of DIRECTIONS_8) {
             const delta = DIRECTION_DELTA[direction];
             const next = { x: current.x + delta.x, y: current.y + delta.y };
             const nextKey = key(next);
-            if (!seen.has(nextKey) && isWalkable(tiles, next)) {
+            if (!seen.has(nextKey) && canStepBetween(tiles, current, next)) {
                 seen.add(nextKey);
                 queue.push(next);
             }
