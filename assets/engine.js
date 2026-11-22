@@ -316,6 +316,8 @@ export function createNewGame(seed = makeSeed(), modeId = 'beginner') {
     const mode = getModeConfig(modeId);
     const player = { x: 0, y: 0, hp: 34, maxHp: 34, level: 1, exp: 0, baseAttack: 5, baseDefense: 2, hunger: MAX_HUNGER };
     const equipment = { weapon: null, shield: null, armor: null };
+    // Start with a deterministic pick from the existing floor-1 food pool; do not invent a new item.
+    const starterFood = createItem(1, new Random((seed ^ 0x6a09e667) >>> 0), 'food', modeId);
     const state = {
         schemaVersion: 12,
         modeId,
@@ -333,12 +335,7 @@ export function createNewGame(seed = makeSeed(), modeId = 'beginner') {
         groundGold: [],
         gold: 0,
         shop: null,
-        inventory: [{ item: {
-            uid: `starter-rice-ball-${seed.toString(36)}-${Date.now().toString(36)}`,
-            templateId: 'rice-ball', name: 'おむすび', kind: 'food',
-            attack: 0, defense: 0, heal: 0, hungerRestore: 32,
-            description: '満腹度を40回復',
-        }, count: 1 }],
+        inventory: [{ item: starterFood, count: 1 }],
         equipment,
         message: modeId === 'tutorial' ? 'はじまりの坑道へようこそ。十字キーで移動し、階段を探そう。' : `${mode.name}の探索が始まった。階段を探そう。`,
         defeatedMonsters: 0,
