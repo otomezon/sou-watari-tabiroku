@@ -275,8 +275,20 @@ export function getExpectedMonsterDefenseCap(modeId, floor, defeatRate = EXPECTE
     return Math.max(1, expectedPlayerAttack - minimumNoGearDamage);
 }
 
+/** Upper campaign regular enemies trade some individual bulk for the larger floor count. */
+function getCurrentFloorMonsterStatMultipliers(modeId) {
+    if (modeId === 'advanced')
+        return { hp: 1.02, attack: 0.86, defense: FLOOR_MONSTER_DEFENSE_MULTIPLIER };
+    return {
+        hp: FLOOR_MONSTER_HP_MULTIPLIER,
+        attack: FLOOR_MONSTER_ATTACK_MULTIPLIER,
+        defense: FLOOR_MONSTER_DEFENSE_MULTIPLIER,
+    };
+}
+
 /** Balance durable monsters against a 50% progression estimate while limiting burst damage. */
 export function getFloorMonsterCalibration(modeId, floor, defeatRate = EXPECTED_MONSTER_DEFEAT_RATE) {
+    const statMultipliers = getCurrentFloorMonsterStatMultipliers(modeId);
     const maximumAdjustment = ({
         tutorial: 1.18,
         beginner: 1.18,
@@ -286,7 +298,7 @@ export function getFloorMonsterCalibration(modeId, floor, defeatRate = EXPECTED_
     })[modeId] ?? 1.32;
     return calculateFloorMonsterCalibration(
         modeId, floor, defeatRate, FLOOR_ENCOUNTER_POWER_CURVE, 0.65, maximumAdjustment,
-        FLOOR_MONSTER_HP_MULTIPLIER, FLOOR_MONSTER_ATTACK_MULTIPLIER, FLOOR_MONSTER_DEFENSE_MULTIPLIER,
+        statMultipliers.hp, statMultipliers.attack, statMultipliers.defense,
         getExpectedMonsterDefenseCap(modeId, floor, defeatRate), true,
     );
 }
@@ -731,20 +743,21 @@ export function findItemDropPoint(state, monster) {
 }
 function createRegularMonster(state, point, random, index, progress, template, tierEntryScale = 1, rareSpawnChanceOverride = undefined) {
     const mode = getModeConfig(state.modeId);
+    const statMultipliers = getCurrentFloorMonsterStatMultipliers(state.modeId);
     const statScale = mode.difficultyScale * (1.00 + progress * 0.40) *
         getFloorStatAdjustment(state.modeId, state.floor, mode.floors) *
         getRegularMonsterDepthScale(state.modeId, state.floor) *
         getFloorMonsterCalibration(state.modeId, state.floor) * tierEntryScale;
     const hp = Math.max(1, Math.round(
         (template.hp + Math.floor(state.floor * 0.35) + random.int(0, 2)) *
-        statScale * FLOOR_MONSTER_HP_MULTIPLIER,
+        statScale * statMultipliers.hp,
     ));
     const monster = {
         id: `f${state.floor}-m${index}-${random.int(1000, 9999)}`,
         kind: template.kind, name: template.name, x: point.x, y: point.y,
         hp, maxHp: hp,
         attack: Math.max(1, Math.round(
-            (template.attack + Math.floor(state.floor * 0.18)) * statScale * FLOOR_MONSTER_ATTACK_MULTIPLIER,
+            (template.attack + Math.floor(state.floor * 0.18)) * statScale * statMultipliers.attack,
         )),
         defense: Math.min(getExpectedMonsterDefenseCap(state.modeId, state.floor), Math.max(0, Math.round(
             (template.defense + Math.floor((state.floor - 1) / 7)) * statScale * FLOOR_MONSTER_DEFENSE_MULTIPLIER,
