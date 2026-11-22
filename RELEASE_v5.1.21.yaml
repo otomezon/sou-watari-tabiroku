@@ -1,0 +1,25 @@
+release:
+  project: 層渡りの旅録
+  version: 5.1.21
+  previous_version: 5.1.20
+  type: patch
+  title: 追跡経路・ブレス・序盤支援と報酬表示の改善
+  invariants:
+    starter_equipment: none
+    starter_inventory:
+      - rice-ball
+    save_schema: 12
+    boss_base_profiles_unchanged: true
+  changes:
+    - ease_expert_opening_encounter_target_from_72_to_82_percent_over_floors_1_to_5
+    - allow_monster_pathfinding_to_use_stair_tiles
+    - originate_dragon_breath_at_monster_and_apply_damage_along_visible_line_cells
+    - add_distinct_lower_fifth_monster_level_up_fanfare
+    - add_one_usable_rice_ball_to_new_runs
+    - reduce_weapon_durability_wear_to_once_per_two_attacks
+    - add_rare_reflective_monster_variant
+    - multiply_normal_gold_drop_chance_by_0_88
+    - raise_equipment_valuable_potion_and_food_drop_chances
+    - draw_ground_items_with_kind_and_food_specific_silhouettes
+    - migrate_enemy_balance_v4_to_v5_without_double_applying_stat_multipliers
+    - preserve_hp_ratio_save_schema_12_and_boss_base_profiles
