@@ -27,12 +27,12 @@ test('a rear monster commits to one free attack slot and does not step backward 
   const front = {
     id: 'front', kind: 'slime', name: '先頭', x: 7, y: 5,
     hp: 50, maxHp: 50, attack: 4, defense: 0, exp: 1,
-    boss: false, floorBalanceVersion: 6,
+    boss: false, floorBalanceVersion: 7,
   };
   const rear = {
     id: 'rear', kind: 'bat', name: '後続', x: 6, y: 5,
     hp: 50, maxHp: 50, attack: 4, defense: 0, exp: 1,
-    boss: false, floorBalanceVersion: 6,
+    boss: false, floorBalanceVersion: 7,
   };
   state.monsters = [front, rear];
   const engine = new GameEngine(state);
@@ -58,12 +58,12 @@ test('when all attack slots and routes are occupied, a rear monster queues witho
   const front = {
     id: 'corridor-front', kind: 'slime', name: '先頭', x: 9, y: 5,
     hp: 50, maxHp: 50, attack: 4, defense: 0, exp: 1,
-    boss: false, floorBalanceVersion: 6,
+    boss: false, floorBalanceVersion: 7,
   };
   const rear = {
     id: 'corridor-rear', kind: 'bat', name: '後続', x: 8, y: 5,
     hp: 50, maxHp: 50, attack: 4, defense: 0, exp: 1,
-    boss: false, floorBalanceVersion: 6,
+    boss: false, floorBalanceVersion: 7,
   };
   state.monsters = [front, rear];
   const engine = new GameEngine(state);
@@ -79,12 +79,15 @@ test('a monster can occupy a stair tile and the resulting state remains save-val
   for (let x = 3; x <= 8; x += 1) state.dungeon.tiles[5][x] = 1;
   state.player.x = 8;
   state.player.y = 5;
+  state.shop = null;
+  state.groundItems = [];
+  state.groundGold = [];
   state.dungeon.start = { x: 3, y: 5 };
   state.dungeon.stairs = { x: 6, y: 5 };
   const pursuer = {
     id: 'stairs-pursuer', kind: 'slime', name: '階段の追跡者',
     x: 4, y: 5, hp: 30, maxHp: 30, attack: 4, defense: 0, exp: 1,
-    boss: false, floorBalanceVersion: 6,
+    boss: false, floorBalanceVersion: 7,
   };
   state.monsters = [pursuer];
   const engine = new GameEngine(state);
