@@ -45,12 +45,14 @@ for (const modeId of MODE_ORDER) {
     assertSafeOpening(state, OPENING_RANGES[modeId].floor2);
   });
 
-  test(`${modeId}: opening support is not granted as free items`, () => {
+  test(`${modeId}: opening supplies include one rice ball but no free equipment`, () => {
     const state = createNewGame(0x12345678, modeId);
     assert.equal(state.equipment.weapon, null);
     assert.equal(state.equipment.shield, null);
     assert.equal(state.equipment.armor, null);
-    assert.deepEqual(state.inventory, []);
+    assert.equal(state.inventory.length, 1);
+    assert.equal(state.inventory[0].item.templateId, 'rice-ball');
+    assert.equal(state.inventory[0].count, 1);
   });
 
   test(`${modeId}: two ordinary opening kills can reach level 2`, () => {
@@ -73,13 +75,13 @@ for (const modeId of MODE_ORDER) {
   });
 }
 
-test('5.1.20 app, manifest, cache and release metadata stay aligned without changing save schema', async () => {
+test('5.1.21 app, manifest, cache and release metadata stay aligned without changing save schema', async () => {
   const [main, manifest, sw, engine, storage, release] = await Promise.all([
     read('assets/main.js'), read('manifest.webmanifest'), read('sw.js'),
-    read('assets/engine.js'), read('assets/storage.js'), read('RELEASE_v5.1.20.yaml'),
+    read('assets/engine.js'), read('assets/storage.js'), read('RELEASE_v5.1.21.yaml'),
   ]);
-  assert.match(main, /APP_VERSION = '5.1.20'/);
-  assert.match(manifest, /"version": "5.1.20"/);
+  assert.match(main, /APP_VERSION = '5.1.21'/);
+  assert.match(manifest, /"version": "5.1.21"/);
   assert.match(sw, /sou-watari-tabiroku-v5-1-20/);
   assert.match(engine, /schemaVersion: 12/);
   assert.match(storage, /state\.schemaVersion !== 12/);
