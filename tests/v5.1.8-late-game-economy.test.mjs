@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   getRegularMonsterDepthScale, getRareHunterStatScale, getSlowVariantAttackMultiplier,
   getGoldDropChance, getGoldDropAmount, getRareValuableDropChances, RARE_VALUABLE_DROP_CHANCES,
-  RARE_GOLD_DROP_CHANCE_MULTIPLIER, RARE_GOLD_AMOUNT_MULTIPLIER,
+  RARE_GOLD_DROP_CHANCE_MULTIPLIER, NORMAL_GOLD_DROP_CHANCE_MULTIPLIER, RARE_GOLD_AMOUNT_MULTIPLIER,
 } from '../assets/balance.mjs';
 import { DUNGEON_MODES } from '../assets/modes.js';
 import { getShopBuyPrice, getShopSellPrice } from '../assets/shop.js';
@@ -27,22 +27,23 @@ test('late expert rare forms retain their identities with moderated burst damage
 });
 
 test('monster gold yield is reduced while rare encounters remain more rewarding', () => {
-  assert.equal(DUNGEON_MODES.tutorial.enemyDropGold, 0.20);
-  assert.equal(DUNGEON_MODES.beginner.enemyDropGold, 0.23);
+  assert.equal(DUNGEON_MODES.tutorial.enemyDropGold, 0.19);
+  assert.equal(DUNGEON_MODES.beginner.enemyDropGold, 0.22);
   assert.deepEqual(
     [DUNGEON_MODES.intermediate.enemyDropGold, DUNGEON_MODES.advanced.enemyDropGold, DUNGEON_MODES.expert.enemyDropGold],
-    [0.24, 0.25, 0.26],
+    [0.23, 0.24, 0.25],
   );
-  assert.equal(getGoldDropChance(0.26), 0.26);
-  assert.equal(getGoldDropChance(0.26, true), 0.39);
+  assert.equal(getGoldDropChance(0.26), 0.2288);
+  assert.equal(getGoldDropChance(0.26, true), 0.3432);
   assert.equal(getGoldDropAmount(171), 123);
   assert.equal(getGoldDropAmount(171, true), 257);
   assert.equal(RARE_GOLD_DROP_CHANCE_MULTIPLIER, 1.5);
+  assert.equal(NORMAL_GOLD_DROP_CHANCE_MULTIPLIER, 0.88);
   assert.equal(RARE_GOLD_AMOUNT_MULTIPLIER, 1.5);
   assert.deepEqual(RARE_VALUABLE_DROP_CHANCES, { hunter: 0.12, otherRare: 0.04 });
   assert.deepEqual(getRareValuableDropChances('beginner'), { hunter: 0.16, otherRare: 0.055 });
   assert.deepEqual(getRareValuableDropChances('expert'), { hunter: 0.12, otherRare: 0.04 });
-  assert.equal(getGoldDropChance(0.23, true, 'beginner'), 0.4025);
+  assert.equal(getGoldDropChance(0.22, true, 'beginner'), 0.2904);
   assert.equal(getGoldDropAmount(171, false, 'beginner'), 145);
   assert.equal(getGoldDropAmount(171, true, 'beginner'), 299);
 });
