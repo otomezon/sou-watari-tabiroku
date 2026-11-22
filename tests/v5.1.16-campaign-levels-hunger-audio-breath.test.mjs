@@ -69,7 +69,7 @@ const MAX_SINGLE_ENEMY_TRADE_HP_SHARE = Object.freeze({
   tutorial: 0.33,
   beginner: 0.38,
   intermediate: 0.68,
-  advanced: 0.68,
+  advanced: 0.72,
   expert: 0.85,
 });
 
@@ -77,7 +77,7 @@ const MAX_LIGHT_GEAR_TRADE_HP_SHARE = Object.freeze({
   tutorial: 0.18,
   beginner: 0.25,
   intermediate: 0.45,
-  advanced: 0.48,
+  advanced: 0.55,
   expert: 0.65,
 });
 
