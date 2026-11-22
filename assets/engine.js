@@ -129,7 +129,7 @@ const FLOOR_MONSTER_BALANCE_VERSION = 7;
 
 // Full-campaign targets are smoothly interpolated from each opening floor to the final normal floor.
 const FLOOR_ENCOUNTER_POWER_CURVE = Object.freeze({
-    tutorial: Object.freeze({ start: 0.62, end: 0.68 }),
+    tutorial: Object.freeze({ start: 0.56, end: 0.60 }),
     beginner: Object.freeze({ start: 0.72, end: 0.80 }),
     intermediate: Object.freeze({ start: 0.80, end: 0.90 }),
     advanced: Object.freeze({ start: 0.88, end: 0.98 }),
@@ -278,7 +278,7 @@ export function getExpectedMonsterDefenseCap(modeId, floor, defeatRate = EXPECTE
 /** Balance durable monsters against a 50% progression estimate while limiting burst damage. */
 export function getFloorMonsterCalibration(modeId, floor, defeatRate = EXPECTED_MONSTER_DEFEAT_RATE) {
     const maximumAdjustment = ({
-        tutorial: 1.22,
+        tutorial: 1.18,
         beginner: 1.32,
         intermediate: 1.42,
         advanced: 1.52,
