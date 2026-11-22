@@ -14,8 +14,8 @@ const root = new URL('../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
 
 const EXPECTED_CURVES = Object.freeze({
-  tutorial: [0.62, 0.68],
-  beginner: [0.72, 0.80],
+  tutorial: [0.56, 0.60],
+  beginner: [0.60, 0.63],
   intermediate: [0.80, 0.90],
   advanced: [0.88, 0.98],
   expert: [0.98, 1.10],
@@ -38,7 +38,7 @@ test('all five campaigns ramp encounter pressure smoothly from the first floor t
     for (let floor = 1; floor <= floors; floor += 1) {
       const scale = getFloorMonsterCalibration(modeId, floor);
       const maximumAdjustment = ({
-        tutorial: 1.22, beginner: 1.32, intermediate: 1.42, advanced: 1.52, expert: 1.62,
+        tutorial: 1.18, beginner: 1.18, intermediate: 1.42, advanced: 1.52, expert: 1.62,
       })[modeId];
       assert.ok(Number.isFinite(scale) && scale >= 0.65 && scale <= maximumAdjustment,
         `${modeId} F${floor}: invalid calibration ${scale}`);
@@ -112,8 +112,8 @@ test('the new encounter curve keeps the intended difficulty order from tutorial 
   const finalFloor = MODE_ORDER.map((mode) =>
     getFloorEncounterPowerTarget(mode, getModeConfig(mode).floors));
 
-  assert.deepEqual(firstFloor, [0.62, 0.72, 0.80, 0.88, 0.98]);
-  assert.deepEqual(finalFloor, [0.68, 0.80, 0.90, 0.98, 1.10]);
+  assert.deepEqual(firstFloor, [0.56, 0.60, 0.80, 0.88, 0.98]);
+  assert.deepEqual(finalFloor, [0.60, 0.63, 0.90, 0.98, 1.10]);
   const expectedOpeningCounts = MODE_ORDER.map((mode) => {
     const config = getModeConfig(mode);
     return (config.minMonsters + config.maxMonsters) / 2 - 1;
