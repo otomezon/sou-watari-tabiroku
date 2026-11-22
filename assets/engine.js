@@ -503,22 +503,21 @@ function getTerrainDistanceMap(tiles, target) {
 
 /** Adjacent tiles from which a single-cell target can be attacked. */
 function getTargetApproachCells(tiles, target) {
-    const targetKey = pointKey(target);
     const candidates = new Map();
     for (const direction of CHASE_DIRECTIONS) {
         const delta = DIRECTION_DELTA[direction];
         const point = { x: target.x + delta.x, y: target.y + delta.y };
         const key = pointKey(point);
-        if (key === targetKey || !canStepBetween(tiles, point, target)) continue;
+        if (!canStepBetween(tiles, point, target)) continue;
         candidates.set(key, point);
     }
     return [...candidates.values()];
 }
 
 /**
- * Move toward a stable, currently free attack position around the target.
- * Other monsters are treated as occupied cells; if they block every approach,
- * wait in the queue rather than switching sides and oscillating.
+ * Choose and retain one free attack slot around the target.
+ * All other monsters are path blockers. If every approach is blocked, wait;
+ * do not alternate between retreating and advancing toward the same queue.
  */
 function nextCrowdAwarePathStep(state, monster, target, targetId = 'player') {
     const tiles = state.dungeon.tiles;
@@ -526,7 +525,6 @@ function nextCrowdAwarePathStep(state, monster, target, targetId = 'player') {
     const targetAnchor = `${targetId}:${pointKey(target)}`;
     const blocked = collectBlockedMonsterCells(state.monsters, monster.id);
     blocked.add(pointKey(state.player));
-
     const approachCells = getTargetApproachCells(tiles, target)
         .filter((point) => !blocked.has(pointKey(point)));
     if (!approachCells.length) {
@@ -536,24 +534,19 @@ function nextCrowdAwarePathStep(state, monster, target, targetId = 'player') {
     }
 
     const previousPosition = monster.crowdPreviousPosition;
-    const pathBlocked = new Set(blocked);
+    const routeBlocked = new Set(blocked);
     if (previousPosition && previousPosition !== originKey)
-        pathBlocked.add(previousPosition);
-
-    const canReach = (point) => {
-        const key = pointKey(point);
-        if (blocked.has(key)) return null;
-        const step = nextPathStep(tiles, monster, point, pathBlocked);
-        if (!step || pointKey(step) === previousPosition) return null;
-        return step;
+        routeBlocked.add(previousPosition);
+    const findStep = (point) => {
+        const step = nextPathStep(tiles, monster, point, routeBlocked);
+        return step && pointKey(step) !== previousPosition ? step : null;
     };
 
-    // Keep the same attack slot while it remains available. This is the main
-    // anti-jitter rule when several monsters approach the same player.
+    // Keep the chosen attack slot while it remains free and reachable.
     if (monster.crowdTargetAnchor === targetAnchor && monster.crowdTargetKey) {
         const preferred = approachCells.find((point) => pointKey(point) === monster.crowdTargetKey);
         if (preferred) {
-            const step = canReach(preferred);
+            const step = findStep(preferred);
             if (step) {
                 monster.crowdPreviousPosition = originKey;
                 return step;
@@ -561,21 +554,15 @@ function nextCrowdAwarePathStep(state, monster, target, targetId = 'player') {
         }
     }
 
-    const distanceMapCache = new Map();
     const ranked = approachCells.map((point) => {
-        const key = pointKey(point);
-        let distances = distanceMapCache.get(key);
-        if (!distances) {
-            distances = getTerrainDistanceMap(tiles, point);
-            distanceMapCache.set(key, distances);
-        }
-        return { point, terrainDistance: distances.get(originKey) ?? Number.POSITIVE_INFINITY };
-    }).sort((a, b) => a.terrainDistance - b.terrainDistance ||
+        const distances = getTerrainDistanceMap(tiles, point);
+        return { point, distance: distances.get(originKey) ?? Number.POSITIVE_INFINITY };
+    }).sort((a, b) => a.distance - b.distance ||
         a.point.y - b.point.y || a.point.x - b.point.x);
 
     for (const candidate of ranked) {
-        if (!Number.isFinite(candidate.terrainDistance)) continue;
-        const step = canReach(candidate.point);
+        if (!Number.isFinite(candidate.distance)) continue;
+        const step = findStep(candidate.point);
         if (!step) continue;
         monster.crowdTargetAnchor = targetAnchor;
         monster.crowdTargetKey = pointKey(candidate.point);
@@ -583,8 +570,7 @@ function nextCrowdAwarePathStep(state, monster, target, targetId = 'player') {
         return step;
     }
 
-    // No reachable attack slot: remain behind the blocking monster instead of
-    // walking backward or repeatedly switching to another side of the room.
+    // No reachable attack slot: hold position behind the blocker until the lane opens.
     monster.crowdTargetAnchor = targetAnchor;
     delete monster.crowdTargetKey;
     return null;
