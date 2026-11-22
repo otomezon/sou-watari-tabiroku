@@ -1,4 +1,4 @@
-export const RARE_VALUABLE_DROP_CHANCES = Object.freeze({ hunter: 0.12, otherRare: 0.04 });
+export const RARE_VALUABLE_DROP_CHANCES = Object.freeze({ hunter: 0.08, otherRare: 0.025 });
 export const RARE_GOLD_DROP_CHANCE_MULTIPLIER = 1.5;
 export const NORMAL_GOLD_DROP_CHANCE_MULTIPLIER = 0.88;
 export const RARE_GOLD_AMOUNT_MULTIPLIER = 1.5;
@@ -69,7 +69,7 @@ export function getSlowVariantAttackMultiplier(modeId, floor) {
 export function getRareValuableDropChances(modeId) {
     // Preserve the original early-campaign reward loop; economy tuning starts at intermediate.
     return modeId === 'tutorial' || modeId === 'beginner'
-        ? { hunter: 0.16, otherRare: 0.055 }
+        ? { hunter: 0.10, otherRare: 0.03 }
         : RARE_VALUABLE_DROP_CHANCES;
 }
 
