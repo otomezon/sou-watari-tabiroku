@@ -17,7 +17,7 @@ const EXPECTED_CURVES = Object.freeze({
   beginner: [0.60, 0.63],
   intermediate: [0.68, 0.74],
   advanced: [0.67, 0.73],
-  expert: [0.76, 0.84],
+  expert: [0.76, 0.82],
 });
 
 test('all five campaigns ramp encounter pressure smoothly from the first floor to the final floor', () => {
@@ -108,7 +108,7 @@ test('the new encounter curve keeps the intended difficulty order from tutorial 
     getFloorEncounterPowerTarget(mode, getModeConfig(mode).floors));
 
   assert.deepEqual(firstFloor, [0.56, 0.60, 0.68, 0.67, 0.76]);
-  assert.deepEqual(finalFloor, [0.60, 0.63, 0.74, 0.73, 0.84]);
+  assert.deepEqual(finalFloor, [0.60, 0.63, 0.74, 0.73, 0.82]);
   const expectedOpeningCounts = MODE_ORDER.map((mode) => {
     const config = getModeConfig(mode);
     return (config.minMonsters + config.maxMonsters) / 2 - 1;
