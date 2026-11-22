@@ -277,7 +277,7 @@ export class SoundManager {
                 offset += 3.05;
             } else if (effect === 'monster-level') {
                 this.playMonsterLevelUpFanfare(now + offset);
-                offset += 1.28;
+                offset += 2.35;
             } else if (effect === 'gameover') {
                 void this.playEventCue(effect, now + offset);
                 offset += 3.8;
@@ -447,28 +447,43 @@ export class SoundManager {
     playHunterLevelUpFanfare(requestedStart) {
         this.playLevelUpFanfare(requestedStart, -2);
     }
-    /** Monster growth gets a concise, bright metallic fanfare, separate from the player's long phrase. */
+    /** Monster growth uses a distinct, bright fanfare with a brisker pulse but enough body to register. */
     playMonsterLevelUpFanfare(requestedStart) {
         if (!this.context || !this.sfxGain || this.settings.muteSfx || this.settings.sfxVolume <= 0)
             return;
         const start = Math.max(this.context.currentTime + 0.018, requestedStart ?? this.context.currentTime + 0.018);
         const melody = [
-            [0.02, 392.00, 0.13],
-            [0.15, 493.88, 0.13],
-            [0.28, 587.33, 0.14],
-            [0.42, 783.99, 0.15],
-            [0.59, 987.77, 0.17],
-            [0.77, 1174.66, 0.19],
+            [0.02, 392.00, 0.18],
+            [0.21, 493.88, 0.18],
+            [0.40, 587.33, 0.18],
+            [0.59, 783.99, 0.19],
+            [0.80, 698.46, 0.18],
+            [0.99, 880.00, 0.19],
+            [1.20, 987.77, 0.20],
+            [1.42, 1174.66, 0.22],
+            [1.67, 1567.98, 0.30],
         ];
 
-        // A crisp square-wave lead and a restrained upper harmonic keep every step distinct.
+        // The square-wave lead is intentionally unlike the player's sawtooth melody.
+        // Its faster note spacing makes it feel more urgent without cutting the cue short.
         for (const [time, frequency, duration] of melody) {
-            this.playFanfareTone(frequency, start + time, duration, 0.118, 'square', 3600, 0.005);
-            this.playFanfareTone(frequency * 2, start + time + 0.008, duration * 0.72, 0.026, 'triangle', 5200, 0.004);
+            this.playFanfareTone(frequency, start + time, duration, 0.108, 'square', 3900, 0.006);
+            this.playFanfareTone(frequency * 2, start + time + 0.008, duration * 0.72, 0.022, 'triangle', 5400, 0.004);
         }
 
-        // A short bell-like finish signals the completed transformation.
-        this.playFanfareTone(1567.98, start + 0.98, 0.24, 0.075, 'sine', 5600, 0.003);
+        // Three restrained harmonic beds give the short notes a fuller, recognizable phrase.
+        const chords = [
+            [0.00, 0.72, [196.00, 246.94, 293.66]],
+            [0.72, 0.72, [220.00, 277.18, 329.63]],
+            [1.44, 0.72, [261.63, 329.63, 392.00]],
+        ];
+        for (const [time, duration, notes] of chords) {
+            for (const frequency of notes)
+                this.playFanfareTone(frequency, start + time, duration, 0.014, 'triangle', 2100, 0.045);
+        }
+
+        // A bell-like tail closes the transformation cleanly at just over two seconds.
+        this.playFanfareTone(2093.00, start + 1.91, 0.30, 0.052, 'sine', 5600, 0.004);
     }
     playEffect(effect, startAt) {
         if (!this.context || this.context.state === 'closed' || !this.sfxGain)
