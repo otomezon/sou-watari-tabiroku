@@ -129,8 +129,17 @@ test('repeated player attacks and enemy turns keep every campaign save-valid', (
         if (state.defeatedMonsters > defeatedBefore) attacks += 1;
       }
 
-      assert.equal(validateGameState(state), true,
-        `${modeId}: invalid save state after action ${action}, floor ${state.floor}`);
+      const isSaveValid = validateGameState(state);
+      assert.equal(isSaveValid, true,
+        `${modeId}: invalid save state after action ${action}, floor ${state.floor}: ${JSON.stringify({
+          schemaVersion: state.schemaVersion, status: state.status, messageLength: state.message?.length,
+          player: { x: state.player.x, y: state.player.y, hp: state.player.hp, level: state.player.level },
+          start: state.dungeon.start, stairs: state.dungeon.stairs,
+          shopPresent: state.shop !== null,
+          monsterPositions: state.monsters.map(({ id, x, y, hp, maxHp, attack, defense }) => ({ id, x, y, hp, maxHp, attack, defense })),
+          groundItems: state.groundItems.map(({ x, y, item }) => ({ x, y, kind: item?.kind })),
+          groundGold: state.groundGold, inventoryCount: state.inventory.length,
+        })}`);
     }
     assert.ok(attacks > 0, `${modeId}: scripted combat should include a player kill`);
   }
