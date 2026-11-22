@@ -15,6 +15,7 @@ release:
     - reduce_rare_monster_premium_reward_rates
     - use_weighted_monster_routes_to_prevent_crowd_path_oscillation
     - validate_attack_direction_targets_and_combat_stats
+    - allow_monsters_to_occupy_stair_tiles_in_valid_saves
     - recreate_closed_audio_context_and_isolate_sound_failures
     - migrate_existing_enemy_balance_v6_saves_to_v7_once
   tests:
@@ -23,4 +24,5 @@ release:
     - crowd_ai_strictly_progressing_route_around_blocker
     - malformed_attack_direction_and_combat_stats
     - closed_audio_context_and_nonfatal_attack_sound_errors
+    - stair_occupancy_and_repeated_combat_save_integrity
     - old_enemy_balance_save_migration
