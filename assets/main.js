@@ -6,7 +6,7 @@ import { getShopSellPrice, remainingShopGoods, unpaidShopGoods } from "./shop.js
 import { RenderManager } from "./renderer.js";
 import { DEFAULT_AUDIO_SETTINGS, SaveManager } from "./storage.js";
 import { DUNGEON_MODES, MODE_ORDER, getModeConfig } from "./modes.js";
-const APP_VERSION = '5.1.20';
+const APP_VERSION = '5.1.21';
 const byId = (id) => {
     const element = document.getElementById(id);
     if (!element)
@@ -145,7 +145,7 @@ class GameApp {
             const previousBossBalanceVersion = loaded.monsters?.find((monster) => monster.boss)?.bossBalanceVersion ?? 0;
             const needsFloorMonsterBalanceMigration = loaded.status === 'playing' &&
                 loaded.monsters?.some((monster) => !monster.boss && !monster.shopkeeper &&
-                    (monster.floorBalanceVersion ?? 0) < 4);
+                    (monster.floorBalanceVersion ?? 0) < 5);
             this.state = loaded;
             this.engine = new GameEngine(loaded);
             const currentBossBalanceVersion = loaded.monsters?.find((monster) => monster.boss)?.bossBalanceVersion ?? 0;
@@ -199,7 +199,7 @@ class GameApp {
                 const hunterLevelUps = this.engine.getHunterLevelUpCount();
                 const hunterLevelCues = Array.from({ length: hunterLevelUps }, () => 'hunter-level');
                 const monsterLevelUps = this.engine.getMonsterLevelUpCount();
-                const monsterLevelCues = Array.from({ length: monsterLevelUps }, () => 'level');
+                const monsterLevelCues = Array.from({ length: monsterLevelUps }, () => 'monster-level');
                 const leveledUp = this.state.player.level > oldLevel;
                 const actionCues = defaultEffect === 'attack' ? ['attack'] : [];
                 const resultCues = postActionStatus === 'gameover'
@@ -351,12 +351,12 @@ class GameApp {
             list.append(node('div', 'empty-state', '持ち物はありません。\nダンジョンでアイテムを探そう。'));
         for (const stack of this.state.inventory)
             list.append(this.inventoryEntry(stack));
-        list.append(node('p', 'modal-note', '満腹度は最大120。新しい冒険は120から始まり、有効なプレイヤー行動4回ごとに1減少します。食料でまとまった量を回復できます。薬草・回復薬でも少し回復します。満腹度がある間は9ターンごとにHPが自然回復し、0の間は6ターンごとにHPが減少します（変化はメッセージ表示されません）。食事・薬の使用と装備変更も1ターン消費します。'));
+        list.append(node('p', 'modal-note', '満腹度は最大120。新しい冒険は120から始まり、有効なプレイヤー行動5回ごとに1減少します。食料でまとまった量を回復できます。薬草・回復薬でも少し回復します。満腹度がある間は9ターンごとにHPが自然回復し、0の間は6ターンごとにHPが減少します（変化はメッセージ表示されません）。食事・薬の使用と装備変更も1ターン消費します。'));
         this.openModal('持ち物', list);
     }
     inventoryEntry(stack) {
         const row = node('div', 'inventory-entry');
-        row.append(node('div', 'item-icon', itemIcon(stack.item.kind)));
+        row.append(node('div', 'item-icon', itemIcon(stack.item)));
         const info = node('div', 'item-info');
         info.append(node('strong', '', itemDisplayName(stack.item)));
         const isGear = stack.item.kind === 'weapon' || stack.item.kind === 'shield' || stack.item.kind === 'armor';
@@ -401,7 +401,7 @@ class GameApp {
             box.append(node('span', '', slot.title));
             const item = this.state.equipment[slot.key];
             const row = node('div', 'inventory-entry');
-            row.append(node('div', 'item-icon', item ? itemIcon(item.kind) : '—'));
+            row.append(node('div', 'item-icon', item ? itemIcon(item) : '—'));
             const info = node('div', 'item-info');
             info.append(node('strong', '', item ? itemDisplayName(item) : '装備なし'));
             const condition = item ? ` · 耐久 ${itemDurability(item)}/${itemMaxDurability(item)}` : '';
@@ -521,7 +521,7 @@ class GameApp {
             content.append(node('div', 'empty-state', '売却できる持ち物がありません。'));
         for (const stack of sellable) {
             const row = node('div', 'inventory-entry shop-entry');
-            row.append(node('div', 'item-icon', itemIcon(stack.item.kind)));
+            row.append(node('div', 'item-icon', itemIcon(stack.item)));
             const info = node('div', 'item-info');
             info.append(node('strong', '', `${itemDisplayName(stack.item)}${stack.count > 1 ? ` ×${stack.count}` : ''}`));
             info.append(node('small', '', itemKindLabel(stack.item.kind)));

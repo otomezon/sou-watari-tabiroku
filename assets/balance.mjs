@@ -1,5 +1,6 @@
 export const RARE_VALUABLE_DROP_CHANCES = Object.freeze({ hunter: 0.12, otherRare: 0.04 });
 export const RARE_GOLD_DROP_CHANCE_MULTIPLIER = 1.5;
+export const NORMAL_GOLD_DROP_CHANCE_MULTIPLIER = 0.88;
 export const RARE_GOLD_AMOUNT_MULTIPLIER = 1.5;
 export const NORMAL_GOLD_AMOUNT_MULTIPLIER = 0.72;
 
@@ -75,7 +76,8 @@ export function getGoldDropChance(baseChance, rareVariant = false, modeId = 'exp
     const rareMultiplier = modeId === 'tutorial' || modeId === 'beginner'
         ? 1.75
         : RARE_GOLD_DROP_CHANCE_MULTIPLIER;
-    return rareVariant ? Math.min(0.60, baseChance * rareMultiplier) : baseChance;
+    const rareScale = rareVariant ? rareMultiplier : 1;
+    return Math.min(0.60, baseChance * NORMAL_GOLD_DROP_CHANCE_MULTIPLIER * rareScale);
 }
 
 export function getGoldDropAmount(randomBase, rareVariant = false, modeId = 'expert') {

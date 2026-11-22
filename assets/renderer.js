@@ -82,7 +82,7 @@ export class RenderManager {
             const point = toScreen(ground);
             if (!this.onScreen(point))
                 continue;
-            this.drawItem(point.x, point.y, ground.item.kind);
+            this.drawItem(point.x, point.y, ground.item);
         }
         for (const monster of state.monsters) {
             const point = toScreen(monster);
@@ -242,27 +242,24 @@ export class RenderManager {
     }
     drawElementalAreaEffect(effect, originX, originY) {
         const ctx = this.context;
-        const width = 1;
-        const height = Math.max(1, Math.min(7, effect.height ?? 1));
-        const halfWidth = Math.floor(width / 2);
-        const halfHeight = Math.floor(height / 2);
+        const cells = Array.isArray(effect.cells) && effect.cells.length
+            ? effect.cells
+            : [{ x: effect.x, y: effect.y }];
         const blizzard = effect.element === 'blizzard';
-        for (let y = effect.y - halfHeight; y <= effect.y + halfHeight; y += 1) {
-            for (let x = effect.x - halfWidth; x <= effect.x + halfWidth; x += 1) {
-                const screenX = (x - originX) * TILE;
-                const screenY = (y - originY) * TILE;
-                if (screenX < -TILE || screenY < -TILE || screenX >= WIDTH || screenY >= HEIGHT) continue;
-                const centerTile = x === effect.x && y === effect.y;
-                ctx.fillStyle = blizzard
-                    ? (centerTile ? 'rgba(83, 184, 239, .48)' : 'rgba(91, 177, 225, .25)')
-                    : (centerTile ? 'rgba(237, 102, 43, .48)' : 'rgba(227, 117, 54, .25)');
-                ctx.fillRect(screenX + 2, screenY + 2, TILE - 4, TILE - 4);
-                ctx.strokeStyle = blizzard ? 'rgba(183, 238, 255, .96)' : 'rgba(255, 195, 129, .96)';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(screenX + 3, screenY + 3, TILE - 6, TILE - 6);
-                ctx.fillStyle = blizzard ? 'rgba(222, 249, 255, .84)' : 'rgba(255, 231, 179, .84)';
-                ctx.fillRect(screenX + 15, screenY + 15, 6, 6);
-            }
+        for (const cell of cells) {
+            const screenX = (cell.x - originX) * TILE;
+            const screenY = (cell.y - originY) * TILE;
+            if (screenX < -TILE || screenY < -TILE || screenX >= WIDTH || screenY >= HEIGHT) continue;
+            const impactTile = cell.x === effect.x && cell.y === effect.y;
+            ctx.fillStyle = blizzard
+                ? (impactTile ? 'rgba(83, 184, 239, .48)' : 'rgba(91, 177, 225, .25)')
+                : (impactTile ? 'rgba(237, 102, 43, .48)' : 'rgba(227, 117, 54, .25)');
+            ctx.fillRect(screenX + 2, screenY + 2, TILE - 4, TILE - 4);
+            ctx.strokeStyle = blizzard ? 'rgba(183, 238, 255, .96)' : 'rgba(255, 195, 129, .96)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(screenX + 3, screenY + 3, TILE - 6, TILE - 6);
+            ctx.fillStyle = blizzard ? 'rgba(222, 249, 255, .84)' : 'rgba(255, 231, 179, .84)';
+            ctx.fillRect(screenX + 15, screenY + 15, 6, 6);
         }
     }
     drawStairs(x, y, turn) {
@@ -277,8 +274,10 @@ export class RenderManager {
         ctx.fillStyle = '#f6df9b';
         ctx.fillRect(x + 14, y + (turn % 2 ? 11 : 12), 4, 3);
     }
-    drawItem(x, y, kind) {
+    drawItem(x, y, item) {
         const ctx = this.context;
+        const kind = typeof item === 'string' ? item : item?.kind;
+        const templateId = typeof item === 'object' ? item?.templateId : '';
         if (kind === 'valuable') {
             ctx.fillStyle = 'rgba(108,173,231,.22)';
             ctx.fillRect(x + 5, y + 5, 22, 22);
@@ -294,14 +293,118 @@ export class RenderManager {
             ctx.fillRect(x + 13, y + 10, 5, 3);
             return;
         }
+        if (kind === 'weapon') {
+            ctx.fillStyle = 'rgba(177,198,211,.20)';
+            ctx.fillRect(x + 5, y + 5, 22, 22);
+            ctx.strokeStyle = '#dce8ec';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(x + 10, y + 24);
+            ctx.lineTo(x + 23, y + 8);
+            ctx.stroke();
+            ctx.strokeStyle = '#e5bd72';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(x + 8, y + 17);
+            ctx.lineTo(x + 16, y + 23);
+            ctx.moveTo(x + 6, y + 26);
+            ctx.lineTo(x + 12, y + 20);
+            ctx.stroke();
+            return;
+        }
+        if (kind === 'shield') {
+            ctx.fillStyle = 'rgba(112,163,189,.22)';
+            ctx.fillRect(x + 5, y + 5, 22, 22);
+            ctx.fillStyle = '#6f9caf';
+            ctx.strokeStyle = '#c4e2e8';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(x + 16, y + 6);
+            ctx.lineTo(x + 25, y + 9);
+            ctx.lineTo(x + 23, y + 20);
+            ctx.lineTo(x + 16, y + 27);
+            ctx.lineTo(x + 9, y + 20);
+            ctx.lineTo(x + 7, y + 9);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#d8bd7f';
+            ctx.fillRect(x + 14, y + 10, 4, 10);
+            return;
+        }
+        if (kind === 'armor') {
+            ctx.fillStyle = 'rgba(163,162,150,.22)';
+            ctx.fillRect(x + 5, y + 5, 22, 22);
+            ctx.fillStyle = '#87979a';
+            ctx.strokeStyle = '#d2ddcf';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(x + 10, y + 7);
+            ctx.lineTo(x + 14, y + 9);
+            ctx.lineTo(x + 18, y + 9);
+            ctx.lineTo(x + 22, y + 7);
+            ctx.lineTo(x + 25, y + 13);
+            ctx.lineTo(x + 21, y + 17);
+            ctx.lineTo(x + 20, y + 26);
+            ctx.lineTo(x + 12, y + 26);
+            ctx.lineTo(x + 11, y + 17);
+            ctx.lineTo(x + 7, y + 13);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#d8bd7f';
+            ctx.fillRect(x + 14, y + 10, 4, 12);
+            return;
+        }
+        if (kind === 'food') {
+            ctx.fillStyle = 'rgba(220,177,104,.23)';
+            ctx.fillRect(x + 5, y + 5, 22, 22);
+            if (templateId === 'rice-ball') {
+                ctx.fillStyle = '#f4f0dd';
+                ctx.strokeStyle = '#d8d0b7';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(x + 16, y + 6);
+                ctx.lineTo(x + 26, y + 24);
+                ctx.lineTo(x + 6, y + 24);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                ctx.fillStyle = '#315a49';
+                ctx.fillRect(x + 12, y + 19, 8, 6);
+            }
+            else {
+                ctx.fillStyle = '#bd8042';
+                ctx.beginPath();
+                ctx.ellipse(x + 16, y + 18, 11, 7, -0.08, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#f2cf89';
+                ctx.beginPath();
+                ctx.ellipse(x + 15, y + 15, 8, 4, -0.08, Math.PI, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#f7e0a6';
+                ctx.fillRect(x + 11, y + 15, 3, 2);
+                ctx.fillRect(x + 18, y + 13, 3, 2);
+            }
+            return;
+        }
+        // A potion has a rounded flask, narrow neck and stopper, unlike the food silhouettes above.
         ctx.fillStyle = 'rgba(117,190,168,.2)';
         ctx.fillRect(x + 5, y + 5, 22, 22);
-        ctx.fillStyle = '#78b9a4';
-        ctx.fillRect(x + 12, y + 8, 8, 15);
-        ctx.fillStyle = '#c1e5bc';
-        ctx.fillRect(x + 13, y + 5, 6, 5);
+        ctx.fillStyle = '#5baf91';
+        ctx.beginPath();
+        ctx.moveTo(x + 13, y + 8);
+        ctx.lineTo(x + 19, y + 8);
+        ctx.lineTo(x + 19, y + 13);
+        ctx.quadraticCurveTo(x + 25, y + 17, x + 22, y + 23);
+        ctx.quadraticCurveTo(x + 16, y + 27, x + 10, y + 23);
+        ctx.quadraticCurveTo(x + 7, y + 17, x + 13, y + 13);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#d8e7c0';
+        ctx.fillRect(x + 13, y + 5, 6, 4);
         ctx.fillStyle = '#d9c58b';
-        ctx.fillRect(x + 14, y + 13, 4, 5);
+        ctx.fillRect(x + 12, y + 16, 7, 3);
     }
     drawPlayer(x, y) {
         const ctx = this.context;
@@ -412,8 +515,9 @@ export class RenderManager {
         ctx.fillText(levelText, x + 1 + levelBadgeWidth / 2, y + 27.5);
         if (monster.rareVariant) {
             const speed = monster.actionSpeed ?? 'normal';
-            const badge = monster.hunterVariant ? '狩' : speed === 'fast' ? 'Ⅱ' : speed === 'slow' ? '½' : '★';
-            ctx.fillStyle = monster.hunterVariant ? '#76528f' : speed === 'fast' ? '#9c574f' : speed === 'slow' ? '#607c91' : '#9b8050';
+            const reflective = Number(monster.reflectDamageRate) > 0;
+            const badge = monster.hunterVariant ? '狩' : reflective ? '↩' : speed === 'fast' ? 'Ⅱ' : speed === 'slow' ? '½' : '★';
+            ctx.fillStyle = monster.hunterVariant ? '#76528f' : reflective ? '#4e8d88' : speed === 'fast' ? '#9c574f' : speed === 'slow' ? '#607c91' : '#9b8050';
             ctx.fillRect(x + 20, y + 23, 11, 9);
             ctx.fillStyle = '#fff1cf';
             ctx.font = 'bold 8px sans-serif';
