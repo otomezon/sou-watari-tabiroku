@@ -9,11 +9,11 @@ const root = new URL('../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
 
 const OPENING_RANGES = {
-  tutorial: { floor1: [2, 4], floor2: [2, 4] },
-  beginner: { floor1: [3, 6], floor2: [3, 6] },
-  intermediate: { floor1: [4, 7], floor2: [4, 7] },
-  advanced: { floor1: [4, 8], floor2: [4, 8] },
-  expert: { floor1: [5, 9], floor2: [5, 9] },
+  tutorial: { floor1: [3, 5], floor2: [3, 5] },
+  beginner: { floor1: [4, 7], floor2: [4, 7] },
+  intermediate: { floor1: [5, 8], floor2: [5, 8] },
+  advanced: { floor1: [5, 9], floor2: [5, 9] },
+  expert: { floor1: [6, 10], floor2: [6, 10] },
 };
 
 function assertSafeOpening(state, range) {
