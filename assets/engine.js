@@ -129,11 +129,11 @@ const FLOOR_MONSTER_BALANCE_VERSION = 7;
 
 // Full-campaign targets are smoothly interpolated from each opening floor to the final normal floor.
 const FLOOR_ENCOUNTER_POWER_CURVE = Object.freeze({
-    tutorial: Object.freeze({ start: 0.59, end: 0.63 }),
-    beginner: Object.freeze({ start: 0.63, end: 0.66 }),
-    intermediate: Object.freeze({ start: 0.71, end: 0.77 }),
-    advanced: Object.freeze({ start: 0.70, end: 0.76 }),
-    expert: Object.freeze({ start: 0.79, end: 0.85 }),
+    tutorial: Object.freeze({ start: 0.58, end: 0.62 }),
+    beginner: Object.freeze({ start: 0.62, end: 0.65 }),
+    intermediate: Object.freeze({ start: 0.70, end: 0.76 }),
+    advanced: Object.freeze({ start: 0.68, end: 0.74 }),
+    expert: Object.freeze({ start: 0.78, end: 0.84 }),
 });
 // v5.2.1 calibration is retained verbatim for one-time migration of existing v6 saves.
 const LEGACY_V6_FLOOR_ENCOUNTER_POWER_CURVE = Object.freeze({
@@ -277,7 +277,7 @@ export function getExpectedMonsterDefenseCap(modeId, floor, defeatRate = EXPECTE
 
 /** Balance durable monsters against a 50% progression estimate while limiting burst damage. */
 export function getFloorMonsterCalibration(modeId, floor, defeatRate = EXPECTED_MONSTER_DEFEAT_RATE) {
-    const maximumAdjustment = modeId === 'expert' ? 1.40 : 1.23;
+    const maximumAdjustment = modeId === 'expert' ? 1.38 : 1.21;
     return calculateFloorMonsterCalibration(
         modeId, floor, defeatRate, FLOOR_ENCOUNTER_POWER_CURVE, 0.65, maximumAdjustment,
         FLOOR_MONSTER_HP_MULTIPLIER, FLOOR_MONSTER_ATTACK_MULTIPLIER, FLOOR_MONSTER_DEFENSE_MULTIPLIER,
