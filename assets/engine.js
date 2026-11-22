@@ -829,9 +829,11 @@ export class GameEngine {
                         ? getLegacyFloorMonsterCalibration(this.state.modeId, this.state.floor, LEGACY_V1_MONSTER_DEFEAT_RATE)
                         : 1;
             const previousScale = Math.max(0.01, previousCalibration);
-            const hpMigrationScale = calibration * FLOOR_MONSTER_HP_MULTIPLIER / previousScale;
-            const attackMigrationScale = calibration * FLOOR_MONSTER_ATTACK_MULTIPLIER / previousScale;
-            const defenseMigrationScale = calibration * FLOOR_MONSTER_DEFENSE_MULTIPLIER / previousScale;
+            // v4 already applied the separate HP/attack/defense multipliers. Older saves did not.
+            const multiplierMigrationScale = previousVersion >= 4 ? 1 : 1;
+            const hpMigrationScale = calibration * (previousVersion >= 4 ? multiplierMigrationScale : FLOOR_MONSTER_HP_MULTIPLIER) / previousScale;
+            const attackMigrationScale = calibration * (previousVersion >= 4 ? multiplierMigrationScale : FLOOR_MONSTER_ATTACK_MULTIPLIER) / previousScale;
+            const defenseMigrationScale = calibration * (previousVersion >= 4 ? multiplierMigrationScale : FLOOR_MONSTER_DEFENSE_MULTIPLIER) / previousScale;
             const oldMaxHp = Math.max(1, Number(monster.maxHp) || 1);
             const oldHp = Math.max(0, Number(monster.hp) || 0);
             const hpRatio = Math.min(1, oldHp / oldMaxHp);
