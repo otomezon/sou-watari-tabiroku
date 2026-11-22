@@ -1,7 +1,7 @@
 release:
   project: 層渡りの旅録
   version: 5.2.0
-  previous_version: 5.1.20
+  previous_version: 5.1.21
   type: minor
   title: 全キャンペーン・全フロアの難易度再調整
   invariants:
