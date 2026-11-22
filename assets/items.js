@@ -188,13 +188,13 @@ export function createItem(floor, random, kind, modeId = 'beginner', quality = '
     };
 }
 export function itemEnhancement(item) {
-    return item.enhancement ?? 0;
+    return item?.enhancement ?? 0;
 }
 export function itemDurability(item) {
-    return item.durability ?? item.maxDurability ?? 100;
+    return item ? (item.durability ?? item.maxDurability ?? 100) : 0;
 }
 export function itemMaxDurability(item) {
-    return item.maxDurability ?? item.durability ?? 100;
+    return item ? (item.maxDurability ?? item.durability ?? 100) : 0;
 }
 export function itemDisplayName(item) {
     return `${item.name}${itemEnhancement(item) > 0 ? ` +${itemEnhancement(item)}` : ''}`;
