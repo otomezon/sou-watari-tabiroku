@@ -58,32 +58,27 @@ test('consecutive monster level-ups are queued faster than the longer player fan
   assert.deepEqual(playerStarts, [20, 23.05]);
 });
 
-test('magic-eater and ordinary monster level-ups generate exactly the same fanfare', () => {
+test('player and hunter level-up phrases remain on the original shared player melody', () => {
   const sound = new SoundManager();
   sound.context = { currentTime: 30, state: 'running' };
   sound.sfxGain = {};
-
-  const monsterTones = [];
-  sound.playFanfareTone = (...args) => monsterTones.push(args);
-  sound.playMonsterLevelUpFanfare(31);
-
-  const magicEaterTones = [];
-  sound.playFanfareTone = (...args) => magicEaterTones.push(args);
+  const calls = [];
+  sound.playLevelUpFanfare = (...args) => calls.push(args);
   sound.playHunterLevelUpFanfare(31);
-
-  assert.deepEqual(magicEaterTones, monsterTones,
-    'the magic-eater cue must use the exact same notes, timbre, durations, and mix');
+  assert.deepEqual(calls, [[31, -2]]);
 });
 
-test('the hunter-level effect route for magic eaters uses the shared monster fanfare and queue interval', () => {
+test('the hunter-level route retains its original sound and queue interval', () => {
   const sound = new SoundManager();
   sound.context = { currentTime: 40, state: 'running' };
   sound.sfxGain = {};
-  const starts = [];
-  sound.playMonsterLevelUpFanfare = (startAt) => starts.push(startAt);
+  const hunterStarts = [];
+  const monsterStarts = [];
+  sound.playHunterLevelUpFanfare = (startAt) => hunterStarts.push(startAt);
+  sound.playMonsterLevelUpFanfare = (startAt) => monsterStarts.push(startAt);
 
   sound.effect('hunter-level');
   sound.effectSequence(['hunter-level', 'monster-level']);
-  assert.deepEqual(starts, [undefined, 40, 42.35],
-    'magic eaters and ordinary monsters must share the same 2.35-second queue spacing');
+  assert.deepEqual(hunterStarts, [undefined, 40]);
+  assert.deepEqual(monsterStarts, [43.05]);
 });
