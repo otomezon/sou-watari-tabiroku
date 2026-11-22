@@ -17,7 +17,7 @@ const EXPECTED_CURVES = Object.freeze({
   tutorial: [0.58, 0.62],
   beginner: [0.62, 0.65],
   intermediate: [0.70, 0.76],
-  advanced: [0.68, 0.74],
+  advanced: [0.67, 0.73],
   expert: [0.78, 0.84],
 });
 
@@ -38,7 +38,7 @@ test('all five campaigns ramp encounter pressure smoothly from the first floor t
     for (let floor = 1; floor <= floors; floor += 1) {
       const scale = getFloorMonsterCalibration(modeId, floor);
       const maximumAdjustment = ({
-        tutorial: 1.21, beginner: 1.21, intermediate: 1.21, advanced: 1.21, expert: 1.38,
+        tutorial: 1.19, beginner: 1.19, intermediate: 1.19, advanced: 1.19, expert: 1.38,
       })[modeId];
       assert.ok(Number.isFinite(scale) && scale >= 0.65 && scale <= maximumAdjustment,
         `${modeId} F${floor}: invalid calibration ${scale}`);
@@ -112,8 +112,8 @@ test('the new encounter curve keeps the intended difficulty order from tutorial 
   const finalFloor = MODE_ORDER.map((mode) =>
     getFloorEncounterPowerTarget(mode, getModeConfig(mode).floors));
 
-  assert.deepEqual(firstFloor, [0.58, 0.62, 0.70, 0.68, 0.78]);
-  assert.deepEqual(finalFloor, [0.62, 0.65, 0.76, 0.74, 0.84]);
+  assert.deepEqual(firstFloor, [0.58, 0.62, 0.70, 0.67, 0.78]);
+  assert.deepEqual(finalFloor, [0.62, 0.65, 0.76, 0.73, 0.84]);
 
   const expectedOpeningCounts = MODE_ORDER.map((mode) => {
     const config = getModeConfig(mode);
