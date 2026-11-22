@@ -62,7 +62,7 @@ test('a normal wyvern breathes outward from its position along a horizontal line
   assert.ok(state.message.includes('Lv.2に成長'));
 });
 
-test('frost drakes use blizzard across the same vertical 1x5 area', () => {
+test('frost drakes send blizzard along the same line from their position', () => {
   const state = makeDragonState('frost-drake', 0x51302);
   const dragon = state.monsters[0];
   state.monsters.push(
@@ -96,11 +96,14 @@ test('dragon breath cannot pass through walls', () => {
   assert.equal(state.player.hp, playerHpBefore);
 });
 
-test('elemental area warnings are rendered on the marked turn', async () => {
-  const renderer = await readFile(new URL('../assets/renderer.js', import.meta.url), 'utf8');
-  assert.match(renderer, /elementalAreaEffect\.turn === state\.turn/);
-  assert.match(renderer, /drawElementalAreaEffect/);
+test('elemental attack warnings render the same origin-to-player cells used by collision logic', async () => {
+  const [engine, renderer] = await Promise.all([
+    readFile(new URL('../assets/engine.js', import.meta.url), 'utf8'),
+    readFile(new URL('../assets/renderer.js', import.meta.url), 'utf8'),
+  ]);
   assert.match(engine, /const cells = getLineCells\(monster, center\)/);
+  assert.match(engine, /hitCells\.has\(pointKey\(cell\)\)/);
+  assert.match(renderer, /elementalAreaEffect\.turn === state\.turn/);
   assert.match(renderer, /Array\.isArray\(effect\.cells\)/);
   assert.match(renderer, /for \(const cell of cells\)/);
 });
