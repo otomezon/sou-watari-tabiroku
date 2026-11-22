@@ -10,7 +10,8 @@ release:
     item_catalog_templates_unchanged: true
     boss_base_profiles_unchanged: true
   changes:
-    - raise_all_campaign_floor_encounter_targets_and_enemy_stat_caps
+    - add_one_regular_enemy_to_each_floor_in_all_campaigns
+    - raise_intermediate_and_deep_campaign_enemy_power_targets_and_caps
     - reduce_floor_item_spawn_and_normal_enemy_item_drop_rates
     - reduce_rare_monster_premium_reward_rates
     - use_weighted_monster_routes_to_prevent_crowd_path_oscillation
