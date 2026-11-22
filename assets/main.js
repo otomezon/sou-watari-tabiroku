@@ -6,9 +6,9 @@ import { getShopSellPrice, remainingShopGoods, unpaidShopGoods } from "./shop.js
 import { RenderManager } from "./renderer.js";
 import { DEFAULT_AUDIO_SETTINGS, SaveManager } from "./storage.js";
 import { DUNGEON_MODES, MODE_ORDER, getModeConfig } from "./modes.js";
-const APP_VERSION = '5.2.4';
+const APP_VERSION = '5.2.5';
 const ACTION_DELAY_MS = 65;
-const GAME_OVER_RESULT_DELAY_MS = 1120;
+const GAME_OVER_RESULT_DELAY_MS = 900;
 const wait = (milliseconds) => new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 const byId = (id) => {
     const element = document.getElementById(id);
@@ -238,8 +238,11 @@ class GameApp {
                 }
                 if (postActionStatus !== 'playing') {
                     if (postActionStatus === 'gameover') {
+                        const transitionBlood = byId('gameover-transition-blood');
                         byId('game-screen').classList.add('is-dying');
+                        transitionBlood.classList.add('is-active');
                         await wait(GAME_OVER_RESULT_DELAY_MS);
+                        transitionBlood.classList.remove('is-active');
                     }
                     this.sound.stopBgm();
                     this.showResult();
@@ -312,7 +315,7 @@ class GameApp {
         this.sound.stopBgm();
         byId('app').classList.remove('is-playing');
         byId('game-screen').classList.remove('is-dying');
-        byId('result-screen').classList.remove('is-gameover-arrival');
+        byId('gameover-transition-blood').classList.remove('is-active');
         byId('title-screen').classList.remove('hidden');
         byId('game-screen').classList.add('hidden');
         byId('result-screen').classList.add('hidden');
@@ -324,7 +327,7 @@ class GameApp {
         this.closeModal();
         byId('app').classList.add('is-playing');
         byId('game-screen').classList.remove('is-dying');
-        byId('result-screen').classList.remove('is-gameover-arrival');
+        byId('gameover-transition-blood').classList.remove('is-active');
         byId('title-screen').classList.add('hidden');
         byId('result-screen').classList.add('hidden');
         byId('game-screen').classList.remove('hidden');
@@ -332,6 +335,7 @@ class GameApp {
     showResult() {
         if (!this.state)
             return;
+        byId('gameover-transition-blood').classList.remove('is-active');
         this.closeModal();
         const cleared = this.state.status === 'clear';
         const mode = getModeConfig(this.state.modeId);
@@ -339,7 +343,6 @@ class GameApp {
         byId('title-screen').classList.add('hidden');
         byId('game-screen').classList.add('hidden');
         byId('result-screen').classList.remove('hidden');
-        byId('result-screen').classList.toggle('is-gameover-arrival', !cleared);
         byId('result-symbol').textContent = cleared ? '✧' : '✦';
         byId('result-eyebrow').textContent = cleared ? 'DUNGEON CONQUERED' : 'AN ADVENTURE ENDS';
         byId('result-title').textContent = cleared ? 'ダンジョン踏破！' : '力尽きてしまった…';
