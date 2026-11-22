@@ -13,7 +13,7 @@ const root = new URL('../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
 
 const EXPECTED_CURVES = Object.freeze({
-  tutorial: [0.60, 0.66],
+  tutorial: [0.56, 0.60],
   beginner: [0.64, 0.69],
   intermediate: [0.68, 0.74],
   advanced: [0.67, 0.73],
@@ -106,8 +106,8 @@ test('the new encounter curve keeps the intended difficulty order from tutorial 
   const finalFloor = MODE_ORDER.map((mode) =>
     getFloorEncounterPowerTarget(mode, getModeConfig(mode).floors));
 
-  assert.deepEqual(firstFloor, [0.60, 0.64, 0.68, 0.67, 0.76]);
-  assert.deepEqual(finalFloor, [0.66, 0.69, 0.74, 0.73, 0.84]);
+  assert.deepEqual(firstFloor, [0.56, 0.64, 0.68, 0.67, 0.76]);
+  assert.deepEqual(finalFloor, [0.60, 0.69, 0.74, 0.73, 0.84]);
   const expectedOpeningCounts = MODE_ORDER.map((mode) => {
     const config = getModeConfig(mode);
     return (config.minMonsters + config.maxMonsters) / 2 - 1;
