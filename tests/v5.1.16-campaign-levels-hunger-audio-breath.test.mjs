@@ -174,9 +174,9 @@ test('ordinary enemies stay challenging but a typical no-gear duel remains survi
   }
 });
 
-test('new regular monsters carry balance version 4 and legacy unscaled monsters migrate once', () => {
+test('new regular monsters carry balance version 5 and legacy unscaled monsters migrate once', () => {
   const state = createNewGame(0x5162026, 'beginner');
-  assert.ok(state.monsters.every((monster) => monster.floorBalanceVersion === 4));
+  assert.ok(state.monsters.every((monster) => monster.floorBalanceVersion === 5));
   state.monsters = [{
     id: 'legacy-monster', kind: 'slime', name: '旧バランスの魔物',
     x: state.player.x + 2, y: state.player.y, hp: 30, maxHp: 60,
@@ -185,7 +185,7 @@ test('new regular monsters carry balance version 4 and legacy unscaled monsters 
   const expectedAdjustment = getFloorMonsterCalibration('beginner', 1);
   new GameEngine(state);
   const migrated = state.monsters[0];
-  assert.equal(migrated.floorBalanceVersion, 4);
+  assert.equal(migrated.floorBalanceVersion, 5);
   assert.equal(migrated.maxHp, Math.round(60 * expectedAdjustment * FLOOR_MONSTER_HP_MULTIPLIER));
   assert.ok(Math.abs(migrated.hp / migrated.maxHp - 0.5) < 0.02);
   assert.equal(migrated.attack, Math.round(10 * expectedAdjustment * FLOOR_MONSTER_ATTACK_MULTIPLIER));
@@ -218,7 +218,7 @@ test('version-1, version-2, and version-3 floor monsters migrate proportionally 
     new GameEngine(state);
     const migrated = state.monsters[0];
     const ratio = currentAdjustment / previousAdjustment;
-    assert.equal(migrated.floorBalanceVersion, 4);
+    assert.equal(migrated.floorBalanceVersion, 5);
     assert.equal(migrated.maxHp, Math.round(80 * ratio * FLOOR_MONSTER_HP_MULTIPLIER));
     assert.ok(Math.abs(migrated.hp / migrated.maxHp - 0.5) < 0.02);
     assert.equal(migrated.attack, Math.round(20 * ratio * FLOOR_MONSTER_ATTACK_MULTIPLIER));
@@ -247,16 +247,17 @@ test('player level-up and received-hit cues share the start of the fanfare', asy
   const [main, audio] = await Promise.all([read('assets/main.js'), read('assets/audio.js')]);
   assert.match(main, /\? \['level', \.\.\.damageCues\] : \[\]/);
   assert.match(main, /needsFloorMonsterBalanceMigration/);
-  assert.match(main, /floorBalanceVersion \?\? 0\) < 4/);
+  assert.match(main, /floorBalanceVersion \?\? 0\) < 5/);
   assert.match(audio, /while \(effects\[index \+ 1\] === 'damage'\)/);
   assert.match(audio, /playDamageEffect\(fanfareStart \+ synchronizedHit \* 0\.24\)/);
 });
 
-test('dragon breath renderer displays the same vertical rectangular zone as collision logic', async () => {
+test('dragon breath renderer displays the same path cells as collision logic', async () => {
   const [engine, renderer] = await Promise.all([read('assets/engine.js'), read('assets/renderer.js')]);
   assert.match(engine, /const areaWidth = 1;/);
   assert.match(engine, /const areaHeight = 5;/);
   assert.match(engine, /cell\.x >= left && cell\.x <= right && cell\.y >= top && cell\.y <= bottom/);
-  assert.match(renderer, /const width = 1;/);
-  assert.match(renderer, /effect\.height \?\? 1/);
+  assert.match(engine, /const cells = getLineCells\(monster, center\)/);
+  assert.match(renderer, /Array\.isArray\(effect\.cells\)/);
+  assert.match(renderer, /for \(const cell of cells\)/);
 });
