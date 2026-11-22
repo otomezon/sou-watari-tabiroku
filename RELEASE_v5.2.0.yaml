@@ -1,0 +1,24 @@
+release:
+  project: 層渡りの旅録
+  version: 5.2.0
+  previous_version: 5.1.20
+  type: minor
+  title: 全キャンペーン・全フロアの難易度再調整
+  invariants:
+    starter_equipment: none
+    starter_inventory:
+      - one_existing_floor_one_food_template
+    save_schema: 12
+    boss_base_profiles_unchanged: true
+    no_new_food_templates: true
+  changes:
+    - smoothly_ramp_per_monster_encounter_target_across_every_floor
+    - set_campaign_targets_tutorial_60_to_66_beginner_64_to_69_intermediate_68_to_74_advanced_67_to_73_expert_76_to_84
+    - compensate_advanced_per_monster_pressure_for_higher_spawn_density
+    - raise_all_campaign_calibration_upper_bound_to_1_45
+    - preserve_separate_hp_attack_defense_multipliers
+    - use_existing_deterministic_floor_one_food_as_starter_item
+    - remove_unreleased_rice_ball_template_and_custom_sprite
+    - preserve_stair_pathfinding_dragon_breath_monster_fanfare_weapon_durability_and_loot_updates
+    - migrate_enemy_balance_v1_to_v5_to_v6_without_double_applying_multipliers
+    - preserve_hp_ratio_save_schema_12_and_boss_base_profiles
