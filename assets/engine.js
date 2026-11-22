@@ -477,6 +477,86 @@ function collectBlockedMonsterCells(monsters, excludeId) {
     }
     return blocked;
 }
+
+const CHASE_DIRECTIONS = ['up', 'right', 'down', 'left', 'up-right', 'down-right', 'down-left', 'up-left'];
+
+/** Terrain-only distances let a monster recognize a queue in front of it instead of routing far away. */
+function getTerrainDistanceMap(tiles, target) {
+    const distances = new Map();
+    if (!isWalkable(tiles, target)) return distances;
+    const queue = [target];
+    distances.set(pointKey(target), 0);
+    for (let head = 0; head < queue.length; head += 1) {
+        const current = queue[head];
+        const nextDistance = distances.get(pointKey(current)) + 1;
+        for (const direction of CHASE_DIRECTIONS) {
+            const delta = DIRECTION_DELTA[direction];
+            const next = { x: current.x + delta.x, y: current.y + delta.y };
+            const key = pointKey(next);
+            if (distances.has(key) || !canStepBetween(tiles, current, next)) continue;
+            distances.set(key, nextDistance);
+            queue.push(next);
+        }
+    }
+    return distances;
+}
+
+/**
+ * Follow the shortest terrain route while respecting occupied cells.
+ * If another monster is standing on the route, only make a small local sidestep;
+ * otherwise wait for the monster ahead to move. This prevents the crowd from
+ * treating one another as a reason to wander to the far side of the dungeon.
+ */
+function nextCrowdAwarePathStep(state, monster, target) {
+    const tiles = state.dungeon.tiles;
+    const distances = getTerrainDistanceMap(tiles, target);
+    const originKey = pointKey(monster);
+    const currentDistance = distances.get(originKey);
+    if (!Number.isFinite(currentDistance) || currentDistance <= 1) return null;
+
+    const blocked = collectBlockedMonsterCells(state.monsters, monster.id);
+    // A monster target is the destination, not an obstacle; all other monsters remain occupied.
+    const targetMonster = state.monsters.find((other) =>
+        other.id !== monster.id && other.hp > 0 && monsterCovers(other, target));
+    if (targetMonster) {
+        for (const cell of monsterFootprintCells(targetMonster))
+            blocked.delete(pointKey(cell));
+    }
+    // Monsters chase prey around the player but must never step into the player's tile.
+    if (target.x !== state.player.x || target.y !== state.player.y)
+        blocked.add(pointKey(state.player));
+
+    // Prefer the true shortest route whenever its next cell is free.
+    const direct = nextPathStep(tiles, monster, target, new Set());
+    if (direct && !blocked.has(pointKey(direct))) {
+        delete monster.crowdPreviousPosition;
+        return direct;
+    }
+
+    const candidates = [];
+    for (const direction of CHASE_DIRECTIONS) {
+        const delta = DIRECTION_DELTA[direction];
+        const next = { x: monster.x + delta.x, y: monster.y + delta.y };
+        const key = pointKey(next);
+        const distance = distances.get(key);
+        if (!Number.isFinite(distance) || distance > currentDistance + 2 ||
+            blocked.has(key) || !canStepBetween(tiles, monster, next)) continue;
+        if (key === monster.crowdPreviousPosition) continue;
+        if (delta.x !== 0 && delta.y !== 0) {
+            const sideX = pointKey({ x: monster.x + delta.x, y: monster.y });
+            const sideY = pointKey({ x: monster.x, y: monster.y + delta.y });
+            if (blocked.has(sideX) && blocked.has(sideY)) continue;
+        }
+        candidates.push({ point: next, distance });
+    }
+    candidates.sort((a, b) => a.distance - b.distance ||
+        Math.max(Math.abs(a.point.x - target.x), Math.abs(a.point.y - target.y)) -
+        Math.max(Math.abs(b.point.x - target.x), Math.abs(b.point.y - target.y)));
+    const best = candidates[0];
+    if (!best) return null;
+    monster.crowdPreviousPosition = originKey;
+    return best.point;
+}
 function canOccupyFootprint(tiles, position, size, blocked) {
     for (let y = 0; y < size; y += 1) {
         for (let x = 0; x < size; x += 1) {
@@ -1582,9 +1662,7 @@ export class GameEngine {
                     return;
                 }
                 else {
-                    const blocked = collectBlockedMonsterCells(this.state.monsters, monster.id);
-                    blocked.add(pointKey(this.state.player));
-                    const step = nextPathStep(this.state.dungeon.tiles, monster, prey, blocked);
+                    const step = nextCrowdAwarePathStep(this.state, monster, prey);
                     if (step) {
                         monster.x = step.x;
                         monster.y = step.y;
@@ -1630,9 +1708,7 @@ export class GameEngine {
                     }
                 }
                 else {
-                    const blocked = collectBlockedMonsterCells(this.state.monsters, monster.id);
-                    blocked.add(pointKey(this.state.player));
-                    const step = nextPathStep(this.state.dungeon.tiles, monster, target, blocked);
+                    const step = nextCrowdAwarePathStep(this.state, monster, target);
                     if (step) {
                         monster.x = step.x;
                         monster.y = step.y;
@@ -1705,8 +1781,7 @@ export class GameEngine {
         }
         if (distance > 14)
             return;
-        const blocked = collectBlockedMonsterCells(this.state.monsters, monster.id);
-        const step = nextPathStep(this.state.dungeon.tiles, monster, this.state.player, blocked);
+        const step = nextCrowdAwarePathStep(this.state, monster, this.state.player);
         if (step) {
             monster.x = step.x;
             monster.y = step.y;
@@ -1793,6 +1868,7 @@ export class GameEngine {
             this.state.message += ` レベルアップ！ Lv.${this.state.player.level}になった。`;
     }
     handleGameOver() {
+        const finalBlowMessage = String(this.state.message ?? '').slice(0, 260);
         this.state.player.hp = 0;
         this.state.player.level = 1;
         this.state.player.exp = 0;
@@ -1805,7 +1881,7 @@ export class GameEngine {
         this.state.shop = null;
         this.state.equipment = { weapon: null, shield: null, armor: null };
         this.state.status = 'gameover';
-        this.state.message = '力尽きた……。持ち物と装備をすべて失った。';
+        this.state.message = `${finalBlowMessage} 力尽きた……。持ち物と装備をすべて失った。`.trim();
         this.state.updatedAt = Date.now();
     }
 }

@@ -1,0 +1,23 @@
+release:
+  project: 層渡りの旅録
+  version: 5.2.1
+  previous_version: 5.2.0
+  type: patch
+  title: モンスターAI・アイテム進行・演出テンポの改善
+  invariants:
+    save_schema: 12
+    enemy_balance_version: 6
+    item_catalog_templates_unchanged: true
+    boss_base_profiles_unchanged: true
+  changes:
+    - add_crowd_aware_monster_pathfinding_with_local_sidestep_and_queue_wait
+    - stop_premium_items_from_previewing_future_floor_templates
+    - add_65ms_presentation_spacing_to_player_actions
+    - preserve_fatal_hit_message_and_delay_game_over_result_by_950ms
+    - preload_boss_bgm_during_exploration
+    - shorten_boss_theme_crossfade_to_160ms
+  tests:
+    - monster_crowd_sidestep_and_corridor_wait
+    - premium_loot_floor_lock_all_modes_and_item_kinds
+    - game_over_fatal_message_and_transition_delay
+    - action_pacing_and_boss_bgm_preload

@@ -63,6 +63,9 @@ export class SoundManager {
         if (!this.context || !this.bgmGain)
             return;
         const track = boss ? 'boss' : getModeConfig(modeId).bgmTrack;
+        // Decode the boss theme while the player is still exploring so the floor transition is immediate.
+        if (!boss)
+            void this.loadTrack('boss').catch((error) => console.warn('Boss BGM preload failed.', error));
         if (this.activeTrack === track && this.source)
             return;
         if (this.pendingTrack === track)
@@ -87,8 +90,9 @@ export class SoundManager {
             const nextGain = this.context.createGain();
             nextSource.buffer = buffer;
             nextSource.loop = true;
+            const fadeInSeconds = track === 'boss' ? 0.16 : 0.55;
             nextGain.gain.setValueAtTime(0.0001, now);
-            nextGain.gain.exponentialRampToValueAtTime(1, now + 0.55);
+            nextGain.gain.exponentialRampToValueAtTime(1, now + fadeInSeconds);
             nextSource.connect(nextGain).connect(this.bgmGain);
             nextSource.start(now);
             const previousSource = this.source;
@@ -96,7 +100,8 @@ export class SoundManager {
             if (previousSource && previousGain) {
                 previousGain.gain.cancelScheduledValues(now);
                 previousGain.gain.setValueAtTime(Math.max(0.0001, previousGain.gain.value), now);
-                previousGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.32);
+                const fadeOutSeconds = track === 'boss' ? 0.16 : 0.32;
+                previousGain.gain.exponentialRampToValueAtTime(0.0001, now + fadeOutSeconds);
                 window.setTimeout(() => {
                     try {
                         previousSource.stop();
@@ -104,7 +109,7 @@ export class SoundManager {
                     catch { /* already stopped */ }
                     previousSource.disconnect();
                     previousGain.disconnect();
-                }, 380);
+                }, track === 'boss' ? 190 : 380);
             }
             this.source = nextSource;
             this.sourceGain = nextGain;

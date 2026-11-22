@@ -136,12 +136,10 @@ function rollEnhancement(floor, random, quality = 'normal') {
     }
     return 0;
 }
-/** Premium drops may preview a little future gear, but never skip the early progression. */
-function getItemSelectionFloor(floor, modeId, quality) {
-    if (quality === 'normal')
-        return floor;
-    const lookAhead = floor >= 12 ? 3 : floor >= 6 ? 2 : floor >= 3 ? 1 : 0;
-    return Math.min(getModeConfig(modeId).floors, floor + lookAhead);
+/** Item templates are always limited to the current floor; premium only improves enhancement quality. */
+export function getItemSelectionFloor(floor, modeId = 'beginner', _quality = 'normal') {
+    const maxFloor = getModeConfig(modeId).floors;
+    return Math.max(1, Math.min(maxFloor, Math.floor(Number(floor) || 1)));
 }
 /** Floor caches are scarcer; their absolute equipment chance stays close to v2.2. */
 export function createFloorLoot(floor, random, modeId) {
