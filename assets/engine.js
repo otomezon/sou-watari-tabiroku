@@ -132,7 +132,7 @@ const FLOOR_ENCOUNTER_POWER_CURVE = Object.freeze({
     tutorial: Object.freeze({ start: 0.60, end: 0.66 }),
     beginner: Object.freeze({ start: 0.64, end: 0.69 }),
     intermediate: Object.freeze({ start: 0.68, end: 0.74 }),
-    advanced: Object.freeze({ start: 0.70, end: 0.76 }),
+    advanced: Object.freeze({ start: 0.67, end: 0.73 }),
     expert: Object.freeze({ start: 0.76, end: 0.84 }),
 });
 // v5.1.21 target curve, retained only to migrate saves created by that unreleased branch.
