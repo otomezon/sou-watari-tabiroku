@@ -6,7 +6,7 @@ import { getShopSellPrice, remainingShopGoods, unpaidShopGoods } from "./shop.js
 import { RenderManager } from "./renderer.js";
 import { DEFAULT_AUDIO_SETTINGS, SaveManager } from "./storage.js";
 import { DUNGEON_MODES, MODE_ORDER, getModeConfig } from "./modes.js";
-const APP_VERSION = '5.1.20';
+const APP_VERSION = '5.1.21';
 const byId = (id) => {
     const element = document.getElementById(id);
     if (!element)
@@ -145,7 +145,7 @@ class GameApp {
             const previousBossBalanceVersion = loaded.monsters?.find((monster) => monster.boss)?.bossBalanceVersion ?? 0;
             const needsFloorMonsterBalanceMigration = loaded.status === 'playing' &&
                 loaded.monsters?.some((monster) => !monster.boss && !monster.shopkeeper &&
-                    (monster.floorBalanceVersion ?? 0) < 4);
+                    (monster.floorBalanceVersion ?? 0) < 5);
             this.state = loaded;
             this.engine = new GameEngine(loaded);
             const currentBossBalanceVersion = loaded.monsters?.find((monster) => monster.boss)?.bossBalanceVersion ?? 0;
@@ -199,7 +199,7 @@ class GameApp {
                 const hunterLevelUps = this.engine.getHunterLevelUpCount();
                 const hunterLevelCues = Array.from({ length: hunterLevelUps }, () => 'hunter-level');
                 const monsterLevelUps = this.engine.getMonsterLevelUpCount();
-                const monsterLevelCues = Array.from({ length: monsterLevelUps }, () => 'level');
+                const monsterLevelCues = Array.from({ length: monsterLevelUps }, () => 'monster-level');
                 const leveledUp = this.state.player.level > oldLevel;
                 const actionCues = defaultEffect === 'attack' ? ['attack'] : [];
                 const resultCues = postActionStatus === 'gameover'
