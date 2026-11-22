@@ -44,7 +44,7 @@ test('floor monster calibration stays within the refined, difficulty-specific ra
   for (const [mode, totalFloors] of Object.entries(floors)) {
     for (let floor = 1; floor <= totalFloors; floor += 1) {
       const adjustment = getFloorMonsterCalibration(mode, floor);
-      const maximumAdjustment = ({ tutorial: 1.18, beginner: 1.18, intermediate: 1.32, advanced: 1.52, expert: 1.62 })[mode];
+      const maximumAdjustment = ({ tutorial: 1.18, beginner: 1.18, intermediate: 1.32, advanced: 1.32, expert: 1.62 })[mode];
       assert.ok(adjustment >= 0.65 && adjustment <= maximumAdjustment, `${mode} F${floor}: ${adjustment}`);
       assert.ok(Number.isFinite(getLegacyV3FloorMonsterCalibration(mode, floor)));
       assert.ok(Number.isFinite(getLegacyV4FloorMonsterCalibration(mode, floor)));
