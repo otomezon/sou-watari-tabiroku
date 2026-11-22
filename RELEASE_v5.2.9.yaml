@@ -1,0 +1,22 @@
+release:
+  project: 層渡りの旅録
+  version: 5.2.9
+  previous_version: 5.2.8
+  type: patch
+  title: 魔喰いと通常モンスターのレベルアップ音を統一
+  invariants:
+    save_schema: 12
+    enemy_balance_version: 7
+    player_levelup_sound_unchanged: true
+    magic_eater_growth_rules_unchanged: true
+    enemy_stats_unchanged: true
+    enemy_action_frequency_unchanged: true
+    enemy_spawn_counts_unchanged: true
+    item_drop_rates_unchanged: true
+  changes:
+    - route_magic_eater_hunter_level_cue_to_monster_fanfare
+    - use_same_duration_timbre_harmony_and_queue_spacing_for_all_monster_levelups
+  tests:
+    - verify_magic_eater_and_monster_fanfare_are_identical
+    - verify_hunter_level_route_uses_shared_monster_sound
+    - verify_player_levelup_sound_is_unchanged
