@@ -131,7 +131,7 @@ const FLOOR_MONSTER_BALANCE_VERSION = 7;
 const FLOOR_ENCOUNTER_POWER_CURVE = Object.freeze({
     tutorial: Object.freeze({ start: 0.56, end: 0.60 }),
     beginner: Object.freeze({ start: 0.60, end: 0.63 }),
-    intermediate: Object.freeze({ start: 0.80, end: 0.90 }),
+    intermediate: Object.freeze({ start: 0.72, end: 0.80 }),
     advanced: Object.freeze({ start: 0.88, end: 0.98 }),
     expert: Object.freeze({ start: 0.98, end: 1.10 }),
 });
@@ -280,7 +280,7 @@ export function getFloorMonsterCalibration(modeId, floor, defeatRate = EXPECTED_
     const maximumAdjustment = ({
         tutorial: 1.18,
         beginner: 1.18,
-        intermediate: 1.42,
+        intermediate: 1.32,
         advanced: 1.52,
         expert: 1.62,
     })[modeId] ?? 1.32;
