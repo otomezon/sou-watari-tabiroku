@@ -423,7 +423,7 @@ export class SoundManager {
         this.playLevelUpFanfare(requestedStart, -7, true);
     }
     playEffect(effect, startAt) {
-        if (!this.context || !this.sfxGain)
+        if (!this.context || this.context.state === 'closed' || !this.sfxGain)
             return;
         const map = {
             move: { frequency: 250, duration: 0.055, type: 'square', level: 0.13, sweep: 210 },
@@ -437,21 +437,31 @@ export class SoundManager {
             clear: { frequency: 523.25, duration: 0.64, type: 'sine', level: 0.17, sweep: 1046.5 },
         };
         const spec = map[effect];
-        const oscillator = this.context.createOscillator();
-        const envelope = this.context.createGain();
-        oscillator.type = spec.type;
-        oscillator.frequency.setValueAtTime(spec.frequency, startAt);
-        if (spec.sweep)
-            oscillator.frequency.exponentialRampToValueAtTime(spec.sweep, startAt + spec.duration);
-        envelope.gain.setValueAtTime(0.0001, startAt);
-        envelope.gain.exponentialRampToValueAtTime(spec.level, startAt + Math.min(0.012, spec.duration * 0.22));
-        envelope.gain.exponentialRampToValueAtTime(0.0001, startAt + spec.duration);
-        oscillator.connect(envelope).connect(this.sfxGain);
-        oscillator.start(startAt);
-        oscillator.stop(startAt + spec.duration + 0.015);
-        oscillator.onended = () => {
-            oscillator.disconnect();
-            envelope.disconnect();
-        };
+        if (!spec)
+            return;
+        let oscillator;
+        let envelope;
+        try {
+            oscillator = this.context.createOscillator();
+            envelope = this.context.createGain();
+            oscillator.type = spec.type;
+            oscillator.frequency.setValueAtTime(spec.frequency, startAt);
+            if (spec.sweep)
+                oscillator.frequency.exponentialRampToValueAtTime(spec.sweep, startAt + spec.duration);
+            envelope.gain.setValueAtTime(0.0001, startAt);
+            envelope.gain.exponentialRampToValueAtTime(spec.level, startAt + Math.min(0.012, spec.duration * 0.22));
+            envelope.gain.exponentialRampToValueAtTime(0.0001, startAt + spec.duration);
+            oscillator.connect(envelope).connect(this.sfxGain);
+            oscillator.start(startAt);
+            oscillator.stop(startAt + spec.duration + 0.015);
+            oscillator.onended = () => {
+                oscillator.disconnect();
+                envelope.disconnect();
+            };
+        }
+        catch (error) {
+            try { oscillator?.disconnect(); envelope?.disconnect(); } catch { /* audio device already closed */ }
+            console.warn('Sound effect was skipped.', error);
+        }
     }
 }
