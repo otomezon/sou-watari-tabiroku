@@ -6,9 +6,10 @@ const root = new URL('../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
 
 test('game over fades the dungeon out and brings the result screen in', async () => {
-  const [main, styles] = await Promise.all([
+  const [main, styles, html] = await Promise.all([
     read('assets/main.js'),
     read('assets/style.css'),
+    read('index.html'),
   ]);
 
   assert.match(main, /const GAME_OVER_RESULT_DELAY_MS = 1120/);
@@ -19,4 +20,8 @@ test('game over fades the dungeon out and brings the result screen in', async ()
   assert.match(styles, /@keyframes game-over-fade-out/);
   assert.match(styles, /\.result-screen\.is-gameover-arrival\s*\{/);
   assert.match(styles, /@keyframes gameover-result-arrive/);
+  assert.match(styles, /@keyframes fatal-crimson-pulse/);
+  assert.match(styles, /@keyframes blood-trickle/);
+  assert.match(html, /class="gameover-blood" aria-hidden="true"/);
+  assert.match(html, /<span><\/span><span><\/span><span><\/span><span><\/span><span><\/span><span><\/span>/);
 });

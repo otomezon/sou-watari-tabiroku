@@ -22,6 +22,35 @@ function openState(modeId, seed) {
   return state;
 }
 
+test('a slow monster approaches an unobstructed player in a straight line instead of veering diagonally', () => {
+  const state = openState('intermediate', 0x522205);
+  state.player.x = 8;
+  state.player.y = 5;
+  const slowMonster = {
+    id: 'slow-straight-approach', kind: 'ogre', name: '鈍足の剛腕',
+    x: 3, y: 5, hp: 80, maxHp: 80, attack: 8, defense: 2, exp: 1,
+    boss: false, rareVariant: true, actionSpeed: 'slow', actionProgress: 0,
+    floorBalanceVersion: 7,
+  };
+  state.monsters = [slowMonster];
+  const engine = new GameEngine(state);
+  const movedPositions = [];
+
+  for (let tick = 0; tick < 8; tick += 1) {
+    const before = { x: slowMonster.x, y: slowMonster.y };
+    engine.enemyPhase(MIN_RANDOM);
+    if (slowMonster.x !== before.x || slowMonster.y !== before.y) {
+      movedPositions.push({ x: slowMonster.x, y: slowMonster.y });
+      assert.equal(slowMonster.y, 5,
+        'on an unobstructed horizontal approach, the slow monster should not drift into a diagonal lane');
+    }
+  }
+
+  assert.deepEqual(movedPositions, [
+    { x: 4, y: 5 }, { x: 5, y: 5 }, { x: 6, y: 5 }, { x: 7, y: 5 },
+  ]);
+});
+
 test('a rear monster commits to one free attack slot and does not step backward and forward', () => {
   const state = openState('intermediate', 0x522201);
   const front = {

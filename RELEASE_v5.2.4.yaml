@@ -1,0 +1,22 @@
+release:
+  project: 層渡りの旅録
+  version: 5.2.4
+  previous_version: 5.2.3
+  type: patch
+  title: 鈍足敵AIの直線的な接近とゲームオーバー死亡演出の改善
+  invariants:
+    save_schema: 12
+    enemy_balance_version: 7
+    enemy_stats_unchanged: true
+    enemy_action_frequency_unchanged: true
+    item_drop_rates_unchanged: true
+  changes:
+    - prefer_low_lateral_deviation_when_equal_length_monster_approach_routes_exist
+    - prefer_straight_first_step_for_equal_length_ai_paths
+    - add_subtle_crimson_fatal_hit_vignette
+    - animate_stylized_blood_trails_behind_gameover_result_content
+    - respect_reduced_motion_preference
+  tests:
+    - slow_monster_keeps_straight_line_on_open_horizontal_approach
+    - gameover_death_effect_contains_crimson_pulse_and_blood_trails
+    - existing_enemy_ai_combat_save_and_balance_regressions
