@@ -130,7 +130,7 @@ const FLOOR_MONSTER_BALANCE_VERSION = 6;
 // Full-campaign targets are smoothly interpolated from each opening floor to the final normal floor.
 const FLOOR_ENCOUNTER_POWER_CURVE = Object.freeze({
     tutorial: Object.freeze({ start: 0.56, end: 0.60 }),
-    beginner: Object.freeze({ start: 0.64, end: 0.69 }),
+    beginner: Object.freeze({ start: 0.60, end: 0.63 }),
     intermediate: Object.freeze({ start: 0.68, end: 0.74 }),
     advanced: Object.freeze({ start: 0.67, end: 0.73 }),
     expert: Object.freeze({ start: 0.76, end: 0.84 }),
