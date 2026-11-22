@@ -151,7 +151,7 @@ test('v5.2.2 historical patch metadata remains intact under the current v5.2.5 a
     read('RELEASE_v5.2.2.yaml'), read('assets/engine.js'),
   ]);
   assert.match(main, /APP_VERSION = '5\.2\.5'/);
-  assert.match(manifest, /"version": "5\.2.4"/);
+  assert.match(manifest, /"version": "5\.2.5"/);
   assert.match(sw, /sou-watari-tabiroku-v5-2-5/);
   assert.match(engine, /schemaVersion: 12/);
   assert.match(main, /floorBalanceVersion \?\? 0\) < 7/);
