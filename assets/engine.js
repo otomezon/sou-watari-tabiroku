@@ -560,23 +560,36 @@ function nextCrowdAwarePathStep(state, monster, target, targetId = 'player') {
         return null;
     }
 
-    const findStep = (point) => nextPathStep(tiles, monster, point, blocked);
-
-    // Keep the chosen attack slot while it remains free and reachable.
-    if (monster.crowdTargetAnchor === targetAnchor && monster.crowdTargetKey) {
-        const preferred = approachCells.find((point) => pointKey(point) === monster.crowdTargetKey);
-        if (preferred) {
-            const step = findStep(preferred);
-            if (step)
-                return step;
-        }
-    }
-
+    const findStep = (point) => nextPathStep(tiles, monster, point, blocked, true);
+    const towardX = target.x - monster.x;
+    const towardY = target.y - monster.y;
     const ranked = approachCells.map((point) => {
         const distances = getTerrainDistanceMap(tiles, point);
-        return { point, distance: distances.get(originKey) ?? Number.POSITIVE_INFINITY };
+        const lateralDeviation = Math.abs(
+            (point.x - monster.x) * towardY - (point.y - monster.y) * towardX,
+        );
+        return {
+            point,
+            distance: distances.get(originKey) ?? Number.POSITIVE_INFINITY,
+            lateralDeviation,
+        };
     }).sort((a, b) => a.distance - b.distance ||
+        a.lateralDeviation - b.lateralDeviation ||
         a.point.y - b.point.y || a.point.x - b.point.x);
+
+    // Keep the chosen attack slot only while it is still as direct as the best
+    // available route. This also lets older saves discard a previously awkward
+    // diagonal target after the improved approach ranking is introduced.
+    if (monster.crowdTargetAnchor === targetAnchor && monster.crowdTargetKey) {
+        const preferred = ranked.find((entry) => pointKey(entry.point) === monster.crowdTargetKey);
+        const best = ranked[0];
+        if (preferred && best &&
+            preferred.distance === best.distance &&
+            preferred.lateralDeviation === best.lateralDeviation) {
+            const step = findStep(preferred.point);
+            if (step) return step;
+        }
+    }
 
     for (const candidate of ranked) {
         if (!Number.isFinite(candidate.distance)) continue;
