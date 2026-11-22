@@ -1,0 +1,22 @@
+release:
+  project: 層渡りの旅録
+  version: 5.2.6
+  previous_version: 5.2.5
+  type: patch
+  title: ゲームオーバーのクロスフェード・血の表現・終了時の無音化
+  invariants:
+    save_schema: 12
+    enemy_balance_version: 7
+    enemy_stats_unchanged: true
+    enemy_action_frequency_unchanged: true
+    enemy_spawn_counts_unchanged: true
+    item_drop_rates_unchanged: true
+  changes:
+    - overlap_dungeon_dissolve_and_result_screen_crossfade
+    - replace_parallel_blood_bars_with_organic_svg_stains_and_drips
+    - instantly_mute_all_audio_and_close_context_on_page_exit
+  tests:
+    - gameover_crossfade_overlaps_dungeon_and_result_screens
+    - organic_blood_svg_reveal_and_clear
+    - pagehide_and_beforeunload_shutdown_without_emitting_sound
+    - existing_combat_save_enemy_ai_and_balance_regressions
