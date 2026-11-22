@@ -227,3 +227,37 @@ test('deterministic multi-turn combat never leaves an unsaveable state', () => {
     }
   }
 });
+
+test('attacking and enemy turns keep saved state valid in every campaign', () => {
+  const directionEntries = Object.entries(DIRECTION_DELTA);
+  for (const modeId of MODE_ORDER) {
+    const state = createNewGame(0x5222001 + MODE_ORDER.indexOf(modeId), modeId);
+    state.player.maxHp = 10000;
+    state.player.hp = 10000;
+    const engine = new GameEngine(state);
+    let attacks = 0;
+
+    for (let action = 0; action < 80 && state.status === 'playing'; action += 1) {
+      const nearest = [...state.monsters].sort((a, b) =>
+        Math.max(Math.abs(a.x - state.player.x), Math.abs(a.y - state.player.y)) -
+        Math.max(Math.abs(b.x - state.player.x), Math.abs(b.y - state.player.y)))[0];
+      const step = nearest
+        ? nextPathStep(state.dungeon.tiles, state.player, nearest, new Set())
+        : null;
+      if (!step) {
+        engine.wait();
+      } else {
+        const dx = step.x - state.player.x;
+        const dy = step.y - state.player.y;
+        const direction = directionEntries.find(([, delta]) => delta.x === dx && delta.y === dy)?.[0];
+        assert.ok(direction, `${modeId}: invalid player path step ${dx},${dy}`);
+        const defeatedBefore = state.defeatedMonsters;
+        engine.move(direction);
+        if (state.defeatedMonsters > defeatedBefore) attacks += 1;
+      }
+      assert.equal(validateGameState(state), true,
+        `${modeId}: invalid saved state after combat action ${action}, floor ${state.floor}`);
+    }
+    assert.ok(attacks > 0, `${modeId}: scripted combat must include at least one kill`);
+  }
+});
