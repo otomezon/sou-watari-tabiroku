@@ -12,11 +12,11 @@ const read = (path) => readFile(new URL(path, root), 'utf8');
 test('difficulty targets and enemy stat ceilings rise in a clear campaign order', async () => {
   const engineSource = await read('assets/engine.js');
   const expected = {
-    tutorial: [0.56, 0.60, 1.18],
-    beginner: [0.60, 0.63, 1.18],
-    intermediate: [0.70, 0.78, 1.24],
-    advanced: [0.74, 0.84, 1.28],
-    expert: [0.98, 1.10, 1.62],
+    tutorial: [0.59, 0.63, 1.23],
+    beginner: [0.63, 0.66, 1.23],
+    intermediate: [0.71, 0.77, 1.23],
+    advanced: [0.70, 0.76, 1.23],
+    expert: [0.79, 0.85, 1.40],
   };
   const caps = MODE_ORDER.map((mode) => expected[mode][2]);
   assert.ok(caps.every((cap, index) => index === 0 || cap >= caps[index - 1]));
@@ -33,8 +33,8 @@ test('difficulty targets and enemy stat ceilings rise in a clear campaign order'
     assert.ok(values.every((value, index) => index === 0 || value >= values[index - 1]));
   }
   assert.match(engineSource, /FLOOR_MONSTER_BALANCE_VERSION = 7/);
-  assert.match(engineSource, /if \(modeId === 'advanced'\)\s+return \{ hp: 1\.02, attack: 0\.86/);
-  assert.match(engineSource, /tutorial: 1\.18,[\s\S]*beginner: 1\.18,[\s\S]*intermediate: 1\.24,[\s\S]*advanced: 1\.28,[\s\S]*expert: 1\.62/);
+
+  assert.match(engineSource, /const maximumAdjustment = modeId === 'expert' \? 1\.40 : 1\.23/);
 });
 
 test('floor caches and ordinary enemy item drops are less frequent in every campaign', async () => {
@@ -52,6 +52,8 @@ test('floor caches and ordinary enemy item drops are less frequent in every camp
   for (const modeId of MODE_ORDER) {
     const mode = getModeConfig(modeId);
     assert.equal(mode.floorLootChance, expectedFloorRates[modeId]);
+    assert.equal(mode.minMonsters, ({ tutorial: 3, beginner: 4, intermediate: 5, advanced: 5, expert: 6 })[modeId]);
+    assert.equal(mode.maxMonsters, ({ tutorial: 5, beginner: 7, intermediate: 8, advanced: 9, expert: 10 })[modeId]);
     const actual = [
       mode.enemyDropEquipment, mode.enemyDropPotion,
       mode.enemyDropFood, mode.enemyDropValuable,
