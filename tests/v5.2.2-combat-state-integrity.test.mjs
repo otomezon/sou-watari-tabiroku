@@ -96,8 +96,17 @@ test('a monster can occupy a stair tile and the resulting state remains save-val
   assert.equal(validateGameState(state), true);
   engine.performMonsterAction(pursuer, MIN_RANDOM);
   assert.deepEqual({ x: pursuer.x, y: pursuer.y }, { x: 6, y: 5 });
-  assert.equal(validateGameState(state), true,
-    'the save validator must allow an enemy to stand on a stair tile');
+  const stairSaveValid = validateGameState(state);
+  assert.equal(stairSaveValid, true,
+    `the save validator must allow an enemy to stand on a stair tile: ${JSON.stringify({
+      schemaVersion: state.schemaVersion, status: state.status, floor: state.floor,
+      player: state.player, start: state.dungeon.start, stairs: state.dungeon.stairs,
+      bossArena: state.dungeon.bossArena, shop: state.shop,
+      monsters: state.monsters.map(({ id, x, y, hp, maxHp, attack, defense, boss, hunterVariant, rareVariant }) =>
+        ({ id, x, y, hp, maxHp, attack, defense, boss, hunterVariant, rareVariant })),
+      groundItems: state.groundItems, groundGold: state.groundGold, inventory: state.inventory,
+    })}`);
+
 });
 
 test('repeated player attacks and enemy turns keep every campaign save-valid', () => {
