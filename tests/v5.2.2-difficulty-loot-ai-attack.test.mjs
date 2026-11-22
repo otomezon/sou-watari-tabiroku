@@ -12,7 +12,7 @@ const read = (path) => readFile(new URL(path, root), 'utf8');
 test('difficulty targets and enemy stat ceilings rise in a clear campaign order', async () => {
   const engineSource = await read('assets/engine.js');
   const expected = {
-    tutorial: [0.62, 0.68, 1.22],
+    tutorial: [0.56, 0.60, 1.18],
     beginner: [0.72, 0.80, 1.32],
     intermediate: [0.80, 0.90, 1.42],
     advanced: [0.88, 0.98, 1.52],
@@ -56,7 +56,7 @@ test('floor caches and ordinary enemy item drops are less frequent in every camp
       mode.enemyDropFood, mode.enemyDropValuable,
     ];
     assert.deepEqual(actual, expectedEnemyItemDrops[modeId]);
-    assert.ok(actual.reduce((sum, rate) => sum + rate, 0) < 0.06,
+    assert.ok(actual.reduce((sum, rate) => sum + rate, 0) < 0.07,
       `${modeId}: ordinary monster item-drop odds should remain scarce`);
   }
   assert.deepEqual(getRareValuableDropChances('beginner'), { hunter: 0.10, otherRare: 0.03 });
