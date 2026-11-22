@@ -173,7 +173,7 @@ export function validateGameState(value) {
                 if (cell.x < 0 || cell.y < 0 || cell.x >= state.dungeon.width || cell.y >= state.dungeon.height || !isWalkable(state.dungeon.tiles, cell))
                     return false;
                 const key = `${cell.x},${cell.y}`;
-                if (occupied.has(key) || (stairs && cell.x === stairs.x && cell.y === stairs.y))
+                if (occupied.has(key))
                     return false;
                 occupied.add(key);
             }
