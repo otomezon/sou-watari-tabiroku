@@ -204,6 +204,36 @@ export class SoundManager {
             gain.disconnect();
         }, 230);
     }
+    /** Stops every BGM/SFX voice silently when the page is being discarded. */
+    shutdown() {
+        this.trackRequest += 1;
+        this.pendingTrack = null;
+        this.activeTrack = null;
+        const context = this.context;
+        if (!context || context.state === 'closed')
+            return;
+        try {
+            const now = context.currentTime;
+            if (this.master?.gain) {
+                this.master.gain.cancelScheduledValues(now);
+                this.master.gain.setValueAtTime(0, now);
+            }
+            if (this.source) {
+                try { this.source.stop(); } catch { /* already stopped */ }
+                this.source.disconnect();
+            }
+            this.sourceGain?.disconnect();
+        } catch {
+            // Page shutdown is best-effort and must never emit a new sound.
+        }
+        this.source = null;
+        this.sourceGain = null;
+        this.context = null;
+        this.master = null;
+        this.bgmGain = null;
+        this.sfxGain = null;
+        void context.close().catch(() => undefined);
+    }
     /** Short action sounds use synthesis; mandatory progression/end cues use authored audio assets. */
     effect(effect) {
         if (effect === 'level') {
